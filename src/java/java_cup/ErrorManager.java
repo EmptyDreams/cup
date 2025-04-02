@@ -53,7 +53,7 @@ public class ErrorManager{
     }
     private static String convSymbol(Symbol symbol){
         String result = (symbol.value == null)? "" : " (\""+ symbol.value +"\")";
-        Field [] fields = symbol.class.getFields();
+        Field [] fields = sym.class.getFields();
         for (Field field : fields) {
             if (!Modifier.isPublic(field.getModifiers())) continue;
             try {
