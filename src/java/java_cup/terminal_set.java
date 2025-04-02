@@ -223,24 +223,24 @@ public class terminal_set {
   /** Convert to string. */
   @Override
   public String toString() {
-    String result;
+    StringBuilder result;
     boolean comma_flag;
 
-    result = "{";
+    result = new StringBuilder("{");
     comma_flag = false;
     for (int t = 0; t < terminal.number(); t++) {
       if (_elements.get(t)) {
         if (comma_flag)
-          result += ", ";
+          result.append(", ");
         else
           comma_flag = true;
 
-        result += terminal.find(t).name();
+        result.append(terminal.find(t).name());
       }
     }
-    result += "}";
+    result.append('}');
 
-    return result;
+    return result.toString();
   }
 
   /*-----------------------------------------------------------*/

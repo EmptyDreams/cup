@@ -5,8 +5,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class ScannerBuffer implements Scanner {
-	private Scanner inner;
-	private List<Symbol> buffer = new LinkedList<>();
+	private final Scanner inner;
+	private final List<Symbol> buffer = new LinkedList<>();
 
 	/**
 	 * Wraps around a custom scanner and stores all so far produced tokens in a

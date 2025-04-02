@@ -1,7 +1,8 @@
 
 package java_cup;
 
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class represents a production in the grammar. It contains a LHS non
@@ -60,7 +61,7 @@ public class production {
    * actions at the end where they can be handled as part of a reduce by the
    * parser.
    */
-  public production(non_terminal lhs_sym, production_part rhs_parts[], int rhs_l, String action_str)
+  public production(non_terminal lhs_sym, production_part[] rhs_parts, int rhs_l, String action_str)
       throws internal_error {
     int i;
     action_part tail_action;
@@ -91,12 +92,8 @@ public class production {
      * action
      */
 
-    if (rhs_l > 0) {
-      if (rhs_parts[rhs_l - 1].is_action()) {
-        rightlen = rhs_l - 1;
-      } else {
-        rightlen = rhs_l;
-      }
+    if (rhs_l > 0 && rhs_parts[rhs_l - 1].is_action()) {
+      rightlen = rhs_l - 1;
     }
 
     /* get the generated declaration code for the necessary labels. */
@@ -159,7 +156,7 @@ public class production {
     _index = next_index++;
 
     /* put us in the global collection of productions */
-    _all.put(Integer.valueOf(_index), this);
+    _all.put(_index, this);
 
     /* put us in the production list of the lhs non terminal */
     lhs_sym.add_production(this);
@@ -168,7 +165,7 @@ public class production {
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
   /** Constructor with no action string. */
-  public production(non_terminal lhs_sym, production_part rhs_parts[], int rhs_l) throws internal_error {
+  public production(non_terminal lhs_sym, production_part[] rhs_parts, int rhs_l) throws internal_error {
     this(lhs_sym, rhs_parts, rhs_l, null);
   }
 
@@ -178,8 +175,8 @@ public class production {
    * Constructor with precedence and associativity of production contextually
    * define
    */
-  public production(non_terminal lhs_sym, production_part rhs_parts[], int rhs_l, String action_str, int prec_num,
-      int prec_side) throws internal_error {
+  public production(non_terminal lhs_sym, production_part[] rhs_parts, int rhs_l, String action_str, int prec_num,
+                    int prec_side) throws internal_error {
     this(lhs_sym, rhs_parts, rhs_l, action_str);
 
     /* set the precedence */
@@ -192,7 +189,7 @@ public class production {
   /*
    * Constructor w/ no action string and contextual precedence defined
    */
-  public production(non_terminal lhs_sym, production_part rhs_parts[], int rhs_l, int prec_num, int prec_side)
+  public production(non_terminal lhs_sym, production_part[] rhs_parts, int rhs_l, int prec_num, int prec_side)
       throws internal_error {
     this(lhs_sym, rhs_parts, rhs_l, null);
     /* set the precedence */
@@ -209,7 +206,7 @@ public class production {
   /**
    * Table of all productions. Elements are stored using their index as the key.
    */
-  protected static Hashtable<Integer, production> _all = new Hashtable<>();
+  protected static Map<Integer, production> _all = new HashMap<>();
 
   /** Access to all productions. */
   public static Iterable<production> all() {
@@ -218,7 +215,7 @@ public class production {
 
   /** Lookup a production by index. */
   public static production find(int indx) {
-    return _all.get(Integer.valueOf(indx));
+    return _all.get(indx);
   }
 
   // Hm Added clear to clear all static fields
@@ -274,7 +271,7 @@ public class production {
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
   /** A collection of parts for the right hand side. */
-  protected production_part _rhs[];
+  protected production_part[] _rhs;
 
   /** Access to the collection of parts for the right hand side. */
   public production_part rhs(int indx) throws internal_error {
@@ -442,10 +439,9 @@ public class production {
    * @param rhs          array of RHS parts.
    * @param rhs_len      how much of rhs to consider valid.
    * @param final_action the final action string of the production.
-   * @param lhs_type     the object type associated with the LHS symbol.
    */
-  protected String declare_labels(production_part rhs[], int rhs_len, String final_action) {
-    String declaration = "";
+  protected String declare_labels(production_part[] rhs, int rhs_len, String final_action) {
+    StringBuilder declaration = new StringBuilder();
 
     symbol_part part;
     int pos;
@@ -459,11 +455,11 @@ public class production {
         if ((label = part.label()) != null || emit._xmlactions) {
           if (label == null)
             label = part.the_symbol().name() + pos;
-          declaration = declaration + make_declaration(label, part.the_symbol().stack_type(), rhs_len - pos - 1);
+          declaration.append(make_declaration(label, part.the_symbol().stack_type(), rhs_len - pos - 1));
         }
       }
     }
-    return declaration;
+    return declaration.toString();
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -475,7 +471,7 @@ public class production {
    * @param len       amount of that array that is valid.
    * @return remaining valid length.
    */
-  protected int merge_adjacent_actions(production_part rhs_parts[], int len) {
+  protected int merge_adjacent_actions(production_part[] rhs_parts, int len) {
     int from_loc, to_loc, merge_cnt;
 
     /* bail out early if we have no work to do */
@@ -523,7 +519,7 @@ public class production {
    * @param len       how many of those are valid.
    * @return the removed action part.
    */
-  protected action_part strip_trailing_action(production_part rhs_parts[], int len) {
+  protected action_part strip_trailing_action(production_part[] rhs_parts, int len) {
     action_part result;
 
     /* bail out early if we have nothing to do */
@@ -717,49 +713,49 @@ public class production {
   /** Convert to a string. */
   @Override
   public String toString() {
-    String result;
+    StringBuilder result;
 
     /* catch any internal errors */
     try {
-      result = "production [" + index() + "]: ";
-      result += lhs() != null ? lhs().toString() : "$$NULL-LHS$$";
-      result += " :: = ";
+      result = new StringBuilder("production [" + index() + "]: ");
+      result.append(lhs() != null ? lhs().toString() : "$$NULL-LHS$$");
+      result.append(" :: = ");
       for (int i = 0; i < rhs_length(); i++)
-        result += rhs(i) + " ";
-      result += ";";
+        result.append(rhs(i)).append(' ');
+      result.append(';');
       if (action() != null && action().code_string() != null)
-        result += " {" + action().code_string() + "}";
+        result.append(" {").append(action().code_string()).append('}');
 
       if (nullable_known())
         if (nullable())
-          result += "[NULLABLE]";
+          result.append("[NULLABLE]");
         else
-          result += "[NOT NULLABLE]";
+          result.append("[NOT NULLABLE]");
     } catch (internal_error e) {
       /*
        * crash on internal error since we can't throw it from here (because superclass
        * does not throw anything.
        */
       e.crash();
-      result = null;
+      throw new AssertionError();
     }
 
-    return result;
+    return result.toString();
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
   /** Convert to a simpler string. */
   public String to_simple_string() throws internal_error {
-    String result;
+    StringBuilder result;
 
-    result = lhs() != null ? lhs().the_symbol().name() : "NULL_LHS";
-    result += " ::= ";
+    result = new StringBuilder(lhs() != null ? lhs().the_symbol().name() : "NULL_LHS");
+    result.append(" ::= ");
     for (int i = 0; i < rhs_length(); i++)
       if (!rhs(i).is_action())
-        result += ((symbol_part) rhs(i)).the_symbol().name() + " ";
+        result.append(((symbol_part) rhs(i)).the_symbol().name()).append(' ');
 
-    return result;
+    return result.toString();
   }
 
   /*-----------------------------------------------------------*/

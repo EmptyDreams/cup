@@ -1,8 +1,9 @@
 
 package java_cup;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * This class represents a set of symbols and provides a series of set
@@ -29,7 +30,7 @@ public class symbol_set implements Iterable<symbol> {
    */
   public symbol_set(symbol_set other) throws internal_error {
     not_null(other);
-    _all = new Hashtable<>(other._all);
+    _all = new HashMap<>(other._all);
   }
 
 
@@ -40,7 +41,7 @@ public class symbol_set implements Iterable<symbol> {
   /**
    * A hash table to hold the set. Symbols are keyed using their name string.
    */
-  protected Hashtable<String, symbol> _all = new Hashtable<>(11);
+  protected Map<String, symbol> _all = new HashMap<>(11);
 
   /** Access to all elements of the set. */
   @Override
@@ -223,21 +224,19 @@ public class symbol_set implements Iterable<symbol> {
   /** Convert to a string. */
   @Override
   public String toString() {
-    String result;
+    StringBuilder result = new StringBuilder("{");
     boolean comma_flag;
-
-    result = "{";
     comma_flag = false;
     for (var s : this) {
       if (comma_flag)
-        result += ", ";
+        result.append(", ");
       else
         comma_flag = true;
-      result += s.name();
+      result.append(s.name());
     }
-    result += "}";
+    result.append('}');
 
-    return result;
+    return result.toString();
   }
 
   /*-----------------------------------------------------------*/

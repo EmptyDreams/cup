@@ -19,5 +19,5 @@ package java_cup.runtime;
  ***************************************************/
 public interface Scanner {
   /** Return the next token, or <code>null</code> on end-of-file. */
-  public Symbol next_token() throws java.lang.Exception;
+  Symbol next_token() throws java.lang.Exception;
 }

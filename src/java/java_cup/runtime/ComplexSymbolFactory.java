@@ -21,8 +21,6 @@ public class ComplexSymbolFactory implements SymbolFactory {
 
         /**
          * Copy Constructor for other ComplexSymbolFactory based Locations
-         * 
-         * @param other
          */
         public Location(Location other) {
             this(other.unit, other.line, other.column, other.offset);
@@ -81,7 +79,7 @@ public class ComplexSymbolFactory implements SymbolFactory {
         /**
          * getColumn
          * 
-         * @returns column if known, else -1
+         * @return column if known, else -1
          */
         public int getColumn() {
             return column;
@@ -90,7 +88,7 @@ public class ComplexSymbolFactory implements SymbolFactory {
         /**
          * getLine
          * 
-         * @returns line if known, else -1
+         * @return line if known, else -1
          */
         public int getLine() {
             return line;
@@ -98,10 +96,6 @@ public class ComplexSymbolFactory implements SymbolFactory {
 
         /**
          * move moves this Location by the given differences.
-         * 
-         * @param linediff
-         * @param coldiff
-         * @param offsetdiff
          */
         public void move(int linediff, int coldiff, int offsetdiff) {
             if (line >= 0)
@@ -115,7 +109,7 @@ public class ComplexSymbolFactory implements SymbolFactory {
         /**
          * Cloning factory method
          * 
-         * @param other
+         * @param other Location to be cloned
          * @return new cloned Location
          */
         public static Location clone(Location other) {
@@ -125,7 +119,7 @@ public class ComplexSymbolFactory implements SymbolFactory {
         /**
          * getUnit
          * 
-         * @returns compilation unit if known, else 'unknown'
+         * @return compilation unit if known, else 'unknown'
          */
         public String getUnit() {
             return unit;
@@ -134,7 +128,7 @@ public class ComplexSymbolFactory implements SymbolFactory {
         /**
          * getLine
          * 
-         * @returns line if known, else -1
+         * @return line if known, else -1
          */
         @Override
         public String toString() {
@@ -162,7 +156,7 @@ public class ComplexSymbolFactory implements SymbolFactory {
         /**
          * getOffset
          * 
-         * @returns offset to start if known, else -1
+         * @return offset to start if known, else -1
          */
         public int getOffset() {
             return offset;
@@ -205,10 +199,8 @@ public class ComplexSymbolFactory implements SymbolFactory {
         public ComplexSymbol(String name, int id, Symbol left, Symbol right) {
             super(id, left, right);
             this.name = name;
-            if (left != null)
-                xleft = ((ComplexSymbol) left).xleft;
-            if (right != null)
-                xright = ((ComplexSymbol) right).xright;
+            xleft = ((ComplexSymbol) left).xleft;
+            xright = ((ComplexSymbol) right).xright;
         }
 
         public ComplexSymbol(String name, int id, Location left, Location right) {
@@ -221,19 +213,15 @@ public class ComplexSymbolFactory implements SymbolFactory {
         public ComplexSymbol(String name, int id, Symbol left, Symbol right, Object value) {
             super(id, left.left, right.right, value);
             this.name = name;
-            if (left != null)
-                xleft = ((ComplexSymbol) left).xleft;
-            if (right != null)
-                xright = ((ComplexSymbol) right).xright;
+            xleft = ((ComplexSymbol) left).xleft;
+            xright = ((ComplexSymbol) right).xright;
         }
 
         public ComplexSymbol(String name, int id, Symbol left, Object value) {
             super(id, left.right, left.right, value);
             this.name = name;
-            if (left != null) {
-                xleft = ((ComplexSymbol) left).xright;
-                xright = ((ComplexSymbol) left).xright;
-            }
+            xleft = ((ComplexSymbol) left).xright;
+            xright = ((ComplexSymbol) left).xright;
         }
 
         public ComplexSymbol(String name, int id, Location left, Location right, Object value) {

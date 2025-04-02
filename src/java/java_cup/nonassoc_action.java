@@ -59,8 +59,8 @@ public class nonassoc_action extends parse_action {
     return 0xCafe321;
   }
 
-  @Override
   /** Convert to string. */
+  @Override
   public String toString() {
     return "NONASSOC";
   }

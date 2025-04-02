@@ -56,13 +56,11 @@ public class parse_reduce_table {
   /** Convert to a string. */
   @Override
   public String toString() {
-    String result;
+    StringBuilder result = new StringBuilder("-------- REDUCE_TABLE --------\n");
     lalr_state goto_st;
     int cnt;
-
-    result = "-------- REDUCE_TABLE --------\n";
     for (int row = 0; row < num_states(); row++) {
-      result += "From state #" + row + "\n";
+      result.append("From state #").append(row).append('\n');
       cnt = 0;
       for (int col = 0; col < parse_reduce_row.size(); col++) {
         /* pull out the table entry */
@@ -70,24 +68,24 @@ public class parse_reduce_table {
 
         /* if it has action in it, print it */
         if (goto_st != null) {
-          result += " [non term " + col + "->";
-          result += "state " + goto_st.index() + "]";
+          result.append(" [non term ").append(col).append("->");
+          result.append("state ").append(goto_st.index()).append(']');
 
           /* end the line after the 3rd one */
           cnt++;
           if (cnt == 3) {
-            result += "\n";
+            result.append('\n');
             cnt = 0;
           }
         }
       }
       /* finish the line if we haven't just done that */
       if (cnt != 0)
-        result += "\n";
+        result.append("\n");
     }
-    result += "-----------------------------";
+    result.append("-----------------------------");
 
-    return result;
+    return result.toString();
   }
 
   /*-----------------------------------------------------------*/

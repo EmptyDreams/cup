@@ -4,7 +4,6 @@ package java_cup.runtime;
 import java.lang.reflect.Field;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Stack;
 
 import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
 
@@ -286,7 +285,7 @@ public abstract class lr_parser {
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
   /** The parse stack itself. */
-  protected Stack<Symbol> stack = new Stack<>();
+  protected ArrayStack<Symbol> stack = new ArrayStack<>();
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
@@ -340,7 +339,7 @@ public abstract class lr_parser {
    * @param stack   the parse stack of that object.
    * @param top     the index of the top element of the parse stack.
    */
-  public abstract Symbol do_action(int act_num, lr_parser parser, Stack<Symbol> stack, int top)
+  public abstract Symbol do_action(int act_num, lr_parser parser, ArrayStack<Symbol> stack, int top)
       throws java.lang.Exception;
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -426,7 +425,7 @@ public abstract class lr_parser {
       if (((Symbol) info).left != -1)
         System.err.println(" at character " + ((Symbol) info).left + " of input");
       else
-        System.err.println("");
+        System.err.println();
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -450,7 +449,7 @@ public abstract class lr_parser {
    */
   public Class<?> getSymbolContainer() {
     return null;
-  };
+  }
 
   protected void report_expected_token_ids() {
     List<Integer> ids = expected_token_ids();
@@ -464,7 +463,7 @@ public abstract class lr_parser {
   /**
    * Translates numerical symbol ids to the (non)terminal names from the spec
    * 
-   * @param internal id for (non)terminal
+   * @param id id for (non)terminal
    * @return (non)terminal name as string
    */
   public String symbl_name_from_id(int id) {
@@ -473,9 +472,7 @@ public abstract class lr_parser {
       try {
         if (f.getInt(null) == id)
           return f.getName();
-      } catch (IllegalArgumentException e) {
-        // e.printStackTrace();
-      } catch (IllegalAccessException e) {
+      } catch (IllegalArgumentException | IllegalAccessException e) {
         // e.printStackTrace();
       }
     }
@@ -496,7 +493,7 @@ public abstract class lr_parser {
         continue;
       if (!validate_expected_symbol(row[i]))
         continue;
-      ret.add(Integer.valueOf(row[i]));
+      ret.add((int) row[i]);
     }
     return ret;
   }
@@ -730,7 +727,7 @@ public abstract class lr_parser {
         tos++;
       }
       /* finally if the entry is zero, we have an error */
-      else if (act == 0) {
+      else {
         /* call user syntax error reporting routine */
         syntax_error(cur_token);
 
@@ -809,13 +806,13 @@ public abstract class lr_parser {
    * Do debug output for stack state. [CSA]
    */
   public void debug_stack() {
-    StringBuffer sb = new StringBuffer("## STACK:");
+    StringBuilder sb = new StringBuilder("## STACK:");
     for (int i = 0; i < stack.size(); i++) {
       Symbol s = stack.elementAt(i);
-      sb.append(" <state " + s.parse_state + ", sym " + s.sym + ">");
+      sb.append(" <state ").append(s.parse_state).append(", sym ").append(s.sym).append('>');
       if ((i % 3) == 2 || (i == (stack.size() - 1))) {
         debug_message(sb.toString());
-        sb = new StringBuffer("         ");
+        sb = new StringBuilder("         ");
       }
     }
   }
@@ -917,7 +914,7 @@ public abstract class lr_parser {
         debug_message("# Goto state #" + act);
       }
       /* finally if the entry is zero, we have an error */
-      else if (act == 0) {
+      else {
         /* call user syntax error reporting routine */
         syntax_error(cur_token);
 
@@ -1083,7 +1080,7 @@ public abstract class lr_parser {
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
   /** Lookahead Symbols used for attempting error recovery "parse aheads". */
-  protected Symbol lookahead[];
+  protected Symbol[] lookahead;
 
   /** Position in lookahead input buffer used for "parse ahead". */
   protected int lookahead_pos;
@@ -1320,7 +1317,7 @@ public abstract class lr_parser {
        * finally if the entry is zero, we have an error (shouldn't happen here,
        * but...)
        */
-      else if (act == 0) {
+      else {
         report_fatal_error("Syntax error", lhs_sym);
         return;
       }
@@ -1333,7 +1330,7 @@ public abstract class lr_parser {
   /** Utility function: unpacks parse tables from strings */
   protected static short[][] unpackFromStrings(String[] sa) {
     // Concatanate initialization strings.
-    StringBuffer sb = new StringBuffer(sa[0]);
+    StringBuilder sb = new StringBuilder(sa[0]);
     for (int i = 1; i < sa.length; i++)
       sb.append(sa[i]);
     int n = 0; // location in initialization string

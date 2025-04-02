@@ -1,8 +1,9 @@
 
 package java_cup;
 
-import java.util.Hashtable;
-import java.util.Stack;
+import java_cup.runtime.ArrayStack;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class represents a state in the LALR viable prefix recognition machine.
@@ -87,7 +88,7 @@ public class lalr_state {
   /*-----------------------------------------------------------*/
 
   /** Collection of all states. */
-  protected static Hashtable<lalr_item_set, lalr_state> _all = new Hashtable<>();
+  protected static Map<lalr_item_set, lalr_state> _all = new HashMap<>();
 
   /** Collection of all states. */
   public static Iterable<lalr_state> all_states() {
@@ -115,7 +116,7 @@ public class lalr_state {
    * of items -- which uniquely define the state). This table stores state objects
    * using (a copy of) their kernel item sets as keys.
    */
-  protected static Hashtable<lalr_item_set, lalr_state> _all_kernels = new Hashtable<>();
+  protected static Map<lalr_item_set, lalr_state> _all_kernels = new HashMap<>();
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
@@ -193,7 +194,7 @@ public class lalr_state {
       System.out.print(" ::= ");
       for (int i = 0; i < itm.the_production().rhs_length(); i++) {
         if (i == itm.dot_pos())
-          System.out.print("\u00B7 ");
+          System.out.print("· ");
         var part = itm.the_production().rhs(i);
         if (part.is_action())
           System.out.print("{action} ");
@@ -201,7 +202,7 @@ public class lalr_state {
           System.out.print(((symbol_part) part).the_symbol().name() + " ");
       }
       if (itm.dot_at_end())
-        System.out.print("\u00B7 ");
+        System.out.print("· ");
       System.out.println("]");
     }
     System.out.println("}");
@@ -288,7 +289,7 @@ public class lalr_state {
     lalr_state start_state;
     lalr_item_set start_items;
     lalr_item_set kernel;
-    Stack<lalr_state> work_stack = new Stack<>();
+    ArrayStack<lalr_state> work_stack = new ArrayStack<>();
     lalr_item new_itm, existing;
 
     /* sanity check */
@@ -523,7 +524,7 @@ public class lalr_state {
   /**
    * Procedure that attempts to fix a shift/reduce error by using precedences.
    * --frankf 6/26/96
-   * 
+   * <br/>
    * if a production (also called rule) or the lookahead terminal has a
    * precedence, then the table can be fixed. if the rule has greater precedence
    * than the terminal, a reduce by that rule in inserted in the table. If the
@@ -535,10 +536,9 @@ public class lalr_state {
    *
    * @param p                the production
    * @param term_index       the index of the lokahead terminal
-   * @param parse_action_row a row of the action table
+   * @param table_row        a row of the action table
    * @param act              the rule in conflict with the table entry
    */
-
   protected boolean fix_with_precedence(production p, int term_index, parse_action_row table_row, parse_action act)
 
       throws internal_error {
@@ -688,26 +688,26 @@ public class lalr_state {
   protected void report_reduce_reduce(lalr_item itm1, lalr_item itm2) throws internal_error {
     boolean comma_flag = false;
 
-    String message = "*** Reduce/Reduce conflict found in state #" + index() + "\n" + "  between "
-        + itm1.to_simple_string() + "\n" + "  and     " + itm2.to_simple_string() + "\n" + "  under symbols: {";
+    StringBuilder message = new StringBuilder("*** Reduce/Reduce conflict found in state #" + index() + "\n" + "  between "
+            + itm1.to_simple_string() + "\n" + "  and     " + itm2.to_simple_string() + "\n" + "  under symbols: {");
     for (int t = 0; t < terminal.number(); t++) {
       if (itm1.lookahead().contains(t) && itm2.lookahead().contains(t)) {
         if (comma_flag)
-          message += (", ");
+          message.append(", ");
         else
           comma_flag = true;
-        message += (terminal.find(t).name());
+        message.append(terminal.find(t).name());
       }
     }
-    message += "}\n  Resolved in favor of ";
+    message.append("}\n  Resolved in favor of ");
     if (itm1.the_production().index() < itm2.the_production().index())
-      message += "the first production.\n";
+      message.append("the first production.\n");
     else
-      message += "the second production.\n";
+      message.append("the second production.\n");
 
     /* count the conflict */
     emit.num_conflicts++;
-    ErrorManager.getManager().emit_warning(message);
+    ErrorManager.getManager().emit_warning(message.toString());
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -722,8 +722,8 @@ public class lalr_state {
     symbol shift_sym;
 
     /* emit top part of message including the reduce item */
-    String message = "*** Shift/Reduce conflict found in state #" + index() + "\n" + "  between "
-        + red_itm.to_simple_string() + "\n";
+    StringBuilder message = new StringBuilder("*** Shift/Reduce conflict found in state #" + index() + "\n" + "  between "
+            + red_itm.to_simple_string() + "\n");
 
     int relevancecounter = 0;
     /* find and report on all items that shift under our conflict symbol */
@@ -737,16 +737,16 @@ public class lalr_state {
         if (!shift_sym.is_non_term() && shift_sym.index() == conflict_sym) {
           relevancecounter++;
           /* yes, report on it */
-          message += "  and     " + itm.to_simple_string() + "\n";
+          message.append("  and     ").append(itm.to_simple_string()).append("\n");
         }
       }
     }
-    message += "  under symbol " + terminal.find(conflict_sym).name() + "\n" + "  Resolved in favor of shifting.\n";
+    message.append("  under symbol ").append(terminal.find(conflict_sym).name()).append("\n").append("  Resolved in favor of shifting.\n");
     if (relevancecounter == 0)
       return;
     /* count the conflict */
     emit.num_conflicts++;
-    ErrorManager.getManager().emit_warning(message);
+    ErrorManager.getManager().emit_warning(message.toString());
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -782,19 +782,18 @@ public class lalr_state {
   /** Convert to a string. */
   @Override
   public String toString() {
-    String result;
+    StringBuilder result;
     lalr_transition tr;
 
     /* dump the item set */
-    result = "lalr_state [" + index() + "]: " + _items + "\n";
+    result = new StringBuilder("lalr_state [" + index() + "]: " + _items + "\n");
 
     /* do the transitions */
     for (tr = transitions(); tr != null; tr = tr.next()) {
-      result += tr;
-      result += "\n";
+      result.append(tr).append('\n');
     }
 
-    return result;
+    return result.toString();
   }
 
   /*-----------------------------------------------------------*/

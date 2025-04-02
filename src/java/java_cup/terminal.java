@@ -1,7 +1,8 @@
 package java_cup;
 
-import java.util.Hashtable;
-  
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * This class represents a terminal symbol in the grammar. Each terminal has a
  * textual name, an index, and a string which indicates the type of object it
@@ -44,7 +45,7 @@ public class terminal extends symbol {
     _precedence_side = precedence_side;
 
     /* add to by_index set */
-    _all_by_index.put(Integer.valueOf(_index), this);
+    _all_by_index.put(_index, this);
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -82,7 +83,7 @@ public class terminal extends symbol {
   /**
    * Table of all terminals. Elements are stored using name strings as the key
    */
-  protected static Hashtable<String,terminal> _all = new Hashtable<>();
+  protected static Map<String,terminal> _all = new HashMap<>();
 
   // Hm Added clear to clear all static fields
   public static void clear() {
@@ -109,11 +110,11 @@ public class terminal extends symbol {
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
   /** Table of all terminals indexed by their index number. */
-  protected static Hashtable<Integer,terminal> _all_by_index = new Hashtable<>();
+  protected static Map<Integer,terminal> _all_by_index = new HashMap<>();
 
   /** Lookup a terminal by index. */
   public static terminal find(int indx) {
-    Integer the_indx = Integer.valueOf(indx);
+    Integer the_indx = indx;
 
     return _all_by_index.get(the_indx);
   }

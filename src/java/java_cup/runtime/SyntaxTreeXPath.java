@@ -56,7 +56,7 @@ public class SyntaxTreeXPath {
 			else if (tag.length == 2)
 				result &= elem.tagname.endsWith(tag[1]);
 			else
-				result &= false;
+				result = false;
 		} else { // match with start
 			if (tag.length == 2)
 				result &= elem.tagname.startsWith(tag[1]);
@@ -72,8 +72,9 @@ public class SyntaxTreeXPath {
 			if (predicate.startsWith("@")) {
 				if (predicate.substring(1).startsWith("variant"))
 					if ((elem instanceof XMLElement.NonTerminal)
-							&& Integer.parseInt(predicate.substring(9)) == ((XMLElement.NonTerminal) elem).getVariant())
-						result &= true;
+							&& Integer.parseInt(predicate.substring(9)) == ((XMLElement.NonTerminal) elem).getVariant()) {
+//						result = true;
+                    }
 					else
 						return false;
 				else

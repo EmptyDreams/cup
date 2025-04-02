@@ -3,13 +3,12 @@ package java_cup.runtime;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Stack;
 
 public class SyntaxTreeTransform {
 	private static final XMLElement[] X = new XMLElement[0];
 
 	private static class ListFlattener extends SyntaxTreeDFS.AbstractVisitor {
-		private List<String> name;
+		private final List<String> name;
 
 		public ListFlattener(String... name) {
 			super();
@@ -21,8 +20,8 @@ public class SyntaxTreeTransform {
 			return stack.pop();
 		}
 
-		private Stack<XMLElement> stack = new Stack<>();
-		private Stack<Integer> intstack = new Stack<>();
+		private final ArrayStack<XMLElement> stack = new ArrayStack<>();
+		private final ArrayStack<Integer> intstack = new ArrayStack<>();
 
 		@Override
 		public void defaultPre(XMLElement element, List<XMLElement> children) {
@@ -71,7 +70,7 @@ public class SyntaxTreeTransform {
 			return stack.pop();
 		}
 
-		private Stack<XMLElement> stack = new Stack<XMLElement>();
+		private final ArrayStack<XMLElement> stack = new ArrayStack<>();
 
 		@Override
 		public void defaultPost(XMLElement arg0, List<XMLElement> arg1) {

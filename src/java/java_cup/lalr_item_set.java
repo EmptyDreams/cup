@@ -1,8 +1,9 @@
 
 package java_cup;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * This class represents a set of LALR items. For purposes of building these
@@ -28,6 +29,7 @@ public class lalr_item_set implements Iterable<lalr_item> {
 
   /** Constructor for an empty set. */
   public lalr_item_set() {
+    _all = new HashMap<>(11);
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -39,7 +41,8 @@ public class lalr_item_set implements Iterable<lalr_item> {
    */
   public lalr_item_set(lalr_item_set other) throws internal_error {
     not_null(other);
-    _all = new Hashtable<>(other._all);
+    _all = new HashMap<>(other._all);
+    hashcode_cache = other.hashcode_cache;
   }
 
   /*-----------------------------------------------------------*/
@@ -47,10 +50,10 @@ public class lalr_item_set implements Iterable<lalr_item> {
   /*-----------------------------------------------------------*/
 
   /**
-   * A hash table to implement the set. We store the items using themselves as
+   * A hash map to implement the set. We store the items using themselves as
    * keys.
    */
-  protected Hashtable<lalr_item, lalr_item> _all = new Hashtable<>(11);
+  protected Map<lalr_item, lalr_item> _all;
 
   /** Access to all elements of the set. */
   @Override
@@ -204,7 +207,7 @@ public class lalr_item_set implements Iterable<lalr_item> {
 
   /** Remove and return one item from the set (done in hash order). */
   public lalr_item get_one() throws internal_error {
-    if (_all.values().size() == 0)
+    if (_all.isEmpty())
       return null;
     var result = iterator().next();
     remove(result);
@@ -338,10 +341,10 @@ public class lalr_item_set implements Iterable<lalr_item> {
       for (var e : this)
         result ^= e.hashCode();
 
-      hashcode_cache = Integer.valueOf(result);
+      hashcode_cache = result;
     }
 
-    return hashcode_cache.intValue();
+    return hashcode_cache;
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -353,9 +356,9 @@ public class lalr_item_set implements Iterable<lalr_item> {
 
     result.append("{\n");
     for (var e : this)
-      result.append("  " + e + "\n");
+      result.append("  ").append(e).append('\n');
 
-    result.append("}");
+    result.append('}');
     return result.toString();
   }
   /*-----------------------------------------------------------*/

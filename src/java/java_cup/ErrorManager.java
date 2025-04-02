@@ -52,13 +52,13 @@ public class ErrorManager{
         errors++;
     }
     private static String convSymbol(Symbol symbol){
-        String result = (symbol.value == null)? "" : " (\""+symbol.value.toString()+"\")";
-        Field [] fields = sym.class.getFields();
-        for (int i = 0; i < fields.length ; i++){
-            if (!Modifier.isPublic(fields[i].getModifiers())) continue;
+        String result = (symbol.value == null)? "" : " (\""+ symbol.value +"\")";
+        Field [] fields = symbol.class.getFields();
+        for (Field field : fields) {
+            if (!Modifier.isPublic(field.getModifiers())) continue;
             try {
-                if (fields[i].getInt(null) == symbol.sym) return fields[i].getName()+result;
-            }catch (Exception ex) {
+                if (field.getInt(null) == symbol.sym) return field.getName() + result;
+            } catch (Exception ignored) {
             }
         }
         return symbol.toString()+result;

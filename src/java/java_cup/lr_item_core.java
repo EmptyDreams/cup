@@ -219,43 +219,43 @@ public class lr_item_core {
    * subclass that overrides toString()).
    */
   public String to_simple_string() throws internal_error {
-    String result;
+    StringBuilder result;
     production_part part;
 
     if (_the_production.lhs() != null && _the_production.lhs().the_symbol() != null
         && _the_production.lhs().the_symbol().name() != null)
-      result = _the_production.lhs().the_symbol().name();
+      result = new StringBuilder(_the_production.lhs().the_symbol().name());
     else
-      result = "$$NULL$$";
+      result = new StringBuilder("$$NULL$$");
 
-    result += " ::= ";
+    result.append(" ::= ");
 
     for (int i = 0; i < _the_production.rhs_length(); i++) {
       /* do we need the dot before this one? */
       if (i == _dot_pos)
-        result += "\u00B7 ";
+        result.append("· ");
 
       /* print the name of the part */
       if (_the_production.rhs(i) == null) {
-        result += "$$NULL$$ ";
+        result.append("$$NULL$$ ");
       } else {
         part = _the_production.rhs(i);
         if (part == null)
-          result += "$$NULL$$ ";
+          result.append("$$NULL$$ ");
         else if (part.is_action())
-          result += "{ACTION} ";
+          result.append("{ACTION} ");
         else if (((symbol_part) part).the_symbol() != null && ((symbol_part) part).the_symbol().name() != null)
-          result += ((symbol_part) part).the_symbol().name() + " ";
+          result.append(((symbol_part) part).the_symbol().name()).append(" ");
         else
-          result += "$$NULL$$ ";
+          result.append("$$NULL$$ ");
       }
     }
 
     /* put the dot after if needed */
     if (_dot_pos == _the_production.rhs_length())
-      result += "\u00B7 ";
+      result.append("· ");
 
-    return result;
+    return result.toString();
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */

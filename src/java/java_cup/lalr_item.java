@@ -1,6 +1,6 @@
 package java_cup;
 
-import java.util.Stack;
+import java_cup.runtime.ArrayStack;
 
 /**
  * This class represents an LALR item. Each LALR item consists of a production,
@@ -50,7 +50,7 @@ public class lalr_item extends lr_item_core {
   public lalr_item(production prod, int pos, terminal_set look) throws internal_error {
     super(prod, pos);
     _lookahead = look;
-    _propagate_items = new Stack<>();
+    _propagate_items = new ArrayStack<>();
     needs_propagation = true;
   }
 
@@ -92,10 +92,10 @@ public class lalr_item extends lr_item_core {
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
   /** Links to items that the lookahead needs to be propagated to. */
-  protected Stack<lalr_item> _propagate_items;
+  protected ArrayStack<lalr_item> _propagate_items;
 
   /** Links to items that the lookahead needs to be propagated to */
-  public Stack<lalr_item> propagate_items() {
+  public ArrayStack<lalr_item> propagate_items() {
     return _propagate_items;
   }
 
@@ -122,7 +122,7 @@ public class lalr_item extends lr_item_core {
   /**
    * Propagate incoming lookaheads through this item to others need to be changed.
    * 
-   * @params incoming symbols to potentially be added to lookahead of this item.
+   * @param incoming symbols to potentially be added to lookahead of this item.
    */
   public void propagate_lookaheads(terminal_set incoming) throws internal_error {
     boolean change = false;
@@ -143,8 +143,9 @@ public class lalr_item extends lr_item_core {
       needs_propagation = false;
 
       /* propagate our lookahead into each item we are linked to */
-      for (int i = 0; i < propagate_items().size(); i++)
-        propagate_items().elementAt(i).propagate_lookaheads(lookahead());
+      for (lalr_item item : propagate_items()) {
+        item.propagate_lookaheads(lookahead());
+      }
     }
   }
 
@@ -315,7 +316,7 @@ public class lalr_item extends lr_item_core {
       res.append("{");
       for (int t = 0; t < terminal.number(); t++)
         if (lookahead().contains(t))
-          res.append(terminal.find(t).name() + " ");
+          res.append(terminal.find(t).name()).append(' ');
       res.append("}");
     } else
       res.append("NULL LOOKAHEAD!!");

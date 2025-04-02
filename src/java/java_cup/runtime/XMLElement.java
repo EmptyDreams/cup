@@ -54,10 +54,10 @@ public abstract class XMLElement {
 						writer.writeStartElement("keyword");
 						writer.writeAttribute("left", cs.getLeft() + "");
 						writer.writeAttribute("right", cs.getRight() + "");
-						writer.writeCharacters(cs.getName() + "");
+						writer.writeCharacters(cs.getName());
 						writer.writeEndElement();
 					}
-				} else if (s instanceof Symbol) {
+				} else if (s != null) {
 					writer.writeStartElement("token");
 					writer.writeCharacters(s.toString());
 					writer.writeEndElement();
@@ -85,11 +85,11 @@ public abstract class XMLElement {
 
 	public List<XMLElement> getChildren() {
 		return new LinkedList<>();
-	};
+	}
 
 	public boolean hasChildren() {
 		return false;
-	};
+	}
 
 	public static class NonTerminal extends XMLElement {
 		@Override
@@ -114,7 +114,7 @@ public abstract class XMLElement {
 			return response;
 		}
 
-		private int variant;
+		private final int variant;
 
 		public int getVariant() {
 			return variant;
@@ -153,10 +153,10 @@ public abstract class XMLElement {
 			if (list.isEmpty()) {
 				return "<nonterminal id=\"" + tagname + "\" variant=\"" + variant + "\" />";
 			}
-			String ret = "<nonterminal id=\"" + tagname + "\" left=\"" + left() + "\" right=\"" + right()
-					+ "\" variant=\"" + variant + "\">";
+			StringBuilder ret = new StringBuilder("<nonterminal id=\"" + tagname + "\" left=\"" + left() + "\" right=\"" + right()
+                    + "\" variant=\"" + variant + "\">");
 			for (XMLElement e : list)
-				ret += e.toString();
+				ret.append(e.toString());
 			return ret + "</nonterminal>";
 		}
 
@@ -180,10 +180,6 @@ public abstract class XMLElement {
 	}
 
 	public static class Error extends XMLElement {
-		@Override
-		public boolean hasChildren() {
-			return false;
-		}
 
 		@Override
 		public List<XMLElement> selectById(String s) {
@@ -222,10 +218,6 @@ public abstract class XMLElement {
 	}
 
 	public static class Terminal extends XMLElement {
-		@Override
-		public boolean hasChildren() {
-			return false;
-		}
 
 		@Override
 		public List<XMLElement> selectById(String s) {
@@ -234,7 +226,7 @@ public abstract class XMLElement {
 				ret.add(this);
 			}
 			return ret;
-		};
+		}
 
 		Location l, r;
 		Object value;

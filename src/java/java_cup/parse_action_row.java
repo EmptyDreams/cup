@@ -45,14 +45,14 @@ public class parse_action_row {
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
   /** Table of reduction counts (reused by compute_default()). */
-  protected static int reduction_count[] = null;
+  protected static int[] reduction_count = null;
 
   /*-----------------------------------------------------------*/
   /*--- (Access to) Instance Variables ------------------------*/
   /*-----------------------------------------------------------*/
 
   /** Actual action entries for the row. */
-  public parse_action under_term[];
+  public parse_action[] under_term;
 
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -109,4 +109,3 @@ public class parse_action_row {
   /*-----------------------------------------------------------*/
 
 }
-

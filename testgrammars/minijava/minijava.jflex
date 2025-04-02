@@ -16,7 +16,7 @@ import java_cup.runtime.ComplexSymbolFactory.Location;
 %column
 
 %{
-    StringBuffer string = new StringBuffer();
+    StringBuilder string = new StringBuilder();
     public Lexer(java.io.Reader in, ComplexSymbolFactory sf){
 	this(in);
 	symbolFactory = sf;

@@ -96,33 +96,31 @@ public class parse_action_table {
    */
   @Override
   public String toString() {
-    String result;
+    StringBuilder result = new StringBuilder("-------- ACTION_TABLE --------\n");
     int cnt;
-
-    result = "-------- ACTION_TABLE --------\n";
     for (int row = 0; row < num_states(); row++) {
-      result += "From state #" + row + "\n";
+      result.append("From state #").append(row).append('\n');
       cnt = 0;
       for (int col = 0; col < parse_action_row.size(); col++) {
         /* if the action is not an error print it */
         if (under_state[row].under_term[col].kind() != parse_action.ERROR) {
-          result += " [term " + col + ":" + under_state[row].under_term[col] + "]";
+          result.append(" [term ").append(col).append(':').append(under_state[row].under_term[col]).append(']');
 
           /* end the line after the 2nd one */
           cnt++;
           if (cnt == 2) {
-            result += "\n";
+            result.append('\n');
             cnt = 0;
           }
         }
       }
       /* finish the line if we haven't just done that */
       if (cnt != 0)
-        result += "\n";
+        result.append('\n');
     }
-    result += "------------------------------";
+    result.append("------------------------------");
 
-    return result;
+    return result.toString();
   }
 
   /*-----------------------------------------------------------*/

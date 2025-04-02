@@ -1,7 +1,7 @@
 package java_cup;
 
+import java_cup.runtime.ArrayStack;
 import java.io.PrintWriter;
-import java.util.Stack;
 
 /**
  * This class handles emitting generated code for the resulting parser. The
@@ -50,7 +50,7 @@ import java.util.Stack;
  * This class is "static" (contains only static data and methods).
  * <p>
  *
- * @see java_cup.main
+ * @see java_cup.Main
  * @version last update: 11/25/95
  * @author Scott Hudson
  */
@@ -156,7 +156,7 @@ public class emit {
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
   /** List of imports (Strings containing class names) to go with actions. */
-  public static Stack<String> import_list = new Stack<>();
+  public static ArrayStack<String> import_list = new ArrayStack<>();
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
@@ -247,7 +247,7 @@ public class emit {
     _locations = false;
     _lr_values = true;
     action_code = null;
-    import_list = new Stack<>();
+    import_list = new ArrayStack<>();
     init_code = null;
     not_reduced = 0;
     num_conflicts = 0;
@@ -412,10 +412,10 @@ public class emit {
       out.println("  /** Method " + instancecounter + " with the actual generated action code for actions "
           + (instancecounter * UPPERLIMIT) + " to " + ((instancecounter + 1) * UPPERLIMIT) + ". */");
       out.println("  public final java_cup.runtime.Symbol " + pre("do_action_part")
-          + String.format("%08d", Integer.valueOf(instancecounter)) + "(");
+          + String.format("%08d", instancecounter) + "(");
       out.println("    int                        " + pre("act_num,"));
       out.println("    java_cup.runtime.lr_parser " + pre("parser,"));
-      out.println("    java.util.Stack<java_cup.runtime.Symbol>    " + pre("stack,"));
+      out.println("    java_cup.runtime.ArrayStack<java_cup.runtime.Symbol>    " + pre("stack,"));
       out.println("    int                        " + pre("top)"));
       out.println("    throws java.lang.Exception");
       out.println("    {");
@@ -438,8 +438,8 @@ public class emit {
         /* give them their own block to work in */
         out.println("            {");
 
-        /**
-         * TUM 20060608 intermediate result patch
+        /*
+          TUM 20060608 intermediate result patch
          */
         String result = "null";
         if (prod instanceof action_production) {
@@ -470,7 +470,7 @@ public class emit {
             continue;
           // skip this non-terminal unless it corresponds to
           // an embedded action production.
-          if (((non_terminal) s).is_embedded_action == false)
+          if (!((non_terminal) s).is_embedded_action)
             continue;
           // OK, it fits. Make a conditional assignment to RESULT.
           int index = prod.rhs_length() - i - 1; // last rhs is on top.
@@ -493,7 +493,7 @@ public class emit {
         }
 
         /* if there is an action string, emit it */
-        if (prod.action() != null && prod.action().code_string() != null && !prod.action().equals(""))
+        if (prod.action() != null && prod.action().code_string() != null)
           out.println(prod.action().code_string());
 
         /*
@@ -554,13 +554,13 @@ public class emit {
     out.println("  public final java_cup.runtime.Symbol " + pre("do_action") + "(");
     out.println("    int                        " + pre("act_num,"));
     out.println("    java_cup.runtime.lr_parser " + pre("parser,"));
-    out.println("    java.util.Stack<java_cup.runtime.Symbol>     " + pre("stack,"));
+    out.println("    java_cup.runtime.ArrayStack<java_cup.runtime.Symbol>     " + pre("stack,"));
     out.println("    int                        " + pre("top)"));
     out.println("    throws java.lang.Exception");
     out.println("    {");
 
     if (production.number() < UPPERLIMIT) { // Make it simple for the optimizer to inline!
-      out.println("              return " + pre("do_action_part") + String.format("%08d", Integer.valueOf(0)) + "(");
+      out.println("              return " + pre("do_action_part") + String.format("%08d", 0) + "(");
       out.println("                               " + pre("act_num,"));
       out.println("                               " + pre("parser,"));
       out.println("                               " + pre("stack,"));
@@ -587,7 +587,7 @@ public class emit {
           + ((instancecounter + 1) * UPPERLIMIT) + ". . . . . . . . . . . .*/");
       out.println("          case " + instancecounter + ": ");
       out.println("              return " + pre("do_action_part")
-          + String.format("%08d", Integer.valueOf(instancecounter)) + "(");
+          + String.format("%08d", instancecounter) + "(");
       out.println("                               " + pre("act_num,"));
       out.println("                               " + pre("parser,"));
       out.println("                               " + pre("stack,"));
@@ -618,7 +618,7 @@ public class emit {
    * @param out stream to produce output on.
    */
   protected static void emit_production_table(PrintWriter out) {
-    production all_prods[];
+    production[] all_prods;
 
     long start_time = System.currentTimeMillis();
 
@@ -728,9 +728,9 @@ public class emit {
       /* finish off the row with a default entry */
       action_table[i][nentries++] = -1;
       if (row.default_reduce != -1)
-        action_table[i][nentries++] = (short) -(row.default_reduce + 1);
+        action_table[i][nentries] = (short) -(row.default_reduce + 1);
       else
-        action_table[i][nentries++] = 0;
+        action_table[i][nentries] = 0;
     }
 
     /* finish off the init of the table */
@@ -788,7 +788,7 @@ public class emit {
 
       /* end row with default value */
       reduce_goto_table[i][nentries++] = -1;
-      reduce_goto_table[i][nentries++] = -1;
+      reduce_goto_table[i][nentries] = -1;
     }
 
     /* emit the table. */
@@ -848,7 +848,7 @@ public class emit {
 
   // output an escape sequence for the given character code.
   protected static int do_escaped(PrintWriter out, char c) {
-    StringBuffer escape = new StringBuffer();
+    StringBuilder escape = new StringBuilder();
     if (c <= 0xFF) {
       escape.append(Integer.toOctalString(c));
       while (escape.length() < 3)
@@ -860,14 +860,14 @@ public class emit {
       escape.insert(0, 'u');
     }
     escape.insert(0, '\\');
-    out.print(escape.toString());
+    out.print(escape);
 
     // return number of bytes this takes up in UTF-8 encoding.
     if (c == 0)
       return 2;
-    if (c >= 0x01 && c <= 0x7F)
+    if (c <= 0x7F)
       return 1;
-    if (c >= 0x80 && c <= 0x7FF)
+    if (c <= 0x7FF)
       return 2;
     return 3;
   }
@@ -898,8 +898,9 @@ public class emit {
     emit_package(out);
 
     /* user supplied imports */
-    for (int i = 0; i < import_list.size(); i++)
-      out.println("import " + import_list.elementAt(i) + ";");
+    for (String s : import_list) {
+      out.println("import " + s + ";");
+    }
     if (locations())
       out.println("import java_cup.runtime.ComplexSymbolFactory.Location;");
     out.println("import java_cup.runtime.XMLElement;");
@@ -961,7 +962,7 @@ public class emit {
     out.println("  public java_cup.runtime.Symbol do_action(");
     out.println("    int                        act_num,");
     out.println("    java_cup.runtime.lr_parser parser,");
-    out.println("    java.util.Stack<java_cup.runtime.Symbol>    stack,");
+    out.println("    java_cup.runtime.ArrayStack<java_cup.runtime.Symbol>    stack,");
     out.println("    int                        top)");
     out.println("    throws java.lang.Exception");
     out.println("  {");
@@ -1067,10 +1068,10 @@ public class emit {
       out.println("  /** Method " + instancecounter + " with the actual generated action code for actions "
           + (instancecounter * UPPERLIMIT) + " to " + ((instancecounter + 1) * UPPERLIMIT) + ". */");
       out.println("  public final java_cup.runtime.Symbol " + pre("do_action_part")
-          + String.format("%08d", Integer.valueOf(instancecounter)) + "(");
+          + String.format("%08d", instancecounter) + "(");
       out.println("    int                        " + pre("act_num,"));
       out.println("    java_cup.runtime.lr_parser " + pre("parser,"));
-      out.println("    java.util.Stack<java_cup.runtime.Symbol>    " + pre("stack,"));
+      out.println("    java_cup.runtime.ArrayStack<java_cup.runtime.Symbol>    " + pre("stack,"));
       out.println("    int                        " + pre("top)"));
       out.println("    throws java.lang.Exception");
       out.println("    {");
@@ -1096,7 +1097,7 @@ public class emit {
         out.println("                XMLElement RESULT;");
 
         // Generate the XML Output
-        String nested = "";
+        StringBuilder nested = new StringBuilder();
         for (int rhsi = 0; rhsi < prod.rhs_length(); rhsi++) {
           if (!(prod.rhs(rhsi) instanceof symbol_part))
             continue;
@@ -1108,13 +1109,20 @@ public class emit {
             label = sym.the_symbol().name() + rhsi;
           }
           if (sym.the_symbol().is_non_term())
-            nested += ",(XMLElement)" + label;
+            nested.append(",(XMLElement)").append(label);
           else
-            nested += ",new XMLElement.Terminal(" + label + "xleft,\"" + label + "\"," + label + "," + label
-                + "xright)";
+            nested.append(",new XMLElement.Terminal(")
+                    .append(label)
+                    .append("xleft,\"")
+                    .append(label)
+                    .append("\",")
+                    .append(label)
+                    .append(",")
+                    .append(label)
+                    .append("xright)");
         }
 
-        if (prod.action() != null && prod.action().code_string() != null && !prod.action().equals(""))
+        if (prod.action() != null && prod.action().code_string() != null)
           out.println(prod.action().code_string());
 
         // determine the variant:
@@ -1181,13 +1189,13 @@ public class emit {
     out.println("  public final java_cup.runtime.Symbol " + pre("do_action") + "(");
     out.println("    int                        " + pre("act_num,"));
     out.println("    java_cup.runtime.lr_parser " + pre("parser,"));
-    out.println("    java.util.Stack<java_cup.runtime.Symbol>    " + pre("stack,"));
+    out.println("    java_cup.runtime.ArrayStack<java_cup.runtime.Symbol>    " + pre("stack,"));
     out.println("    int                        " + pre("top)"));
     out.println("    throws java.lang.Exception");
     out.println("    {");
 
     if (production.number() < UPPERLIMIT) { // Make it simple for the optimizer to inline!
-      out.println("              return " + pre("do_action_part") + String.format("%08d", Integer.valueOf(0)) + "(");
+      out.println("              return " + pre("do_action_part") + String.format("%08d", 0) + "(");
       out.println("                               " + pre("act_num,"));
       out.println("                               " + pre("parser,"));
       out.println("                               " + pre("stack,"));
@@ -1214,7 +1222,7 @@ public class emit {
           + ((instancecounter + 1) * UPPERLIMIT) + ". . . . . . . . . . . .*/");
       out.println("          case " + instancecounter + ": ");
       out.println("              return " + pre("do_action_part")
-          + String.format("%08d", Integer.valueOf(instancecounter)) + "(");
+          + String.format("%08d", instancecounter) + "(");
       out.println("                               " + pre("act_num,"));
       out.println("                               " + pre("parser,"));
       out.println("                               " + pre("stack,"));

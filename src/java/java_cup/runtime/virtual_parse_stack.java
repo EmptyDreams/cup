@@ -1,8 +1,6 @@
 
 package java_cup.runtime;
 
-import java.util.Stack;
-
 /**
  * This class implements a temporary or "virtual" parse stack that replaces the
  * top portion of the actual parse stack (the part that has been changed by some
@@ -25,14 +23,14 @@ public class virtual_parse_stack {
   /*-----------------------------------------------------------*/
 
   /** Constructor to build a virtual stack out of a real stack. */
-  public virtual_parse_stack(Stack<Symbol> shadowing_stack) throws java.lang.Exception {
+  public virtual_parse_stack(ArrayStack<Symbol> shadowing_stack) throws java.lang.Exception {
     /* sanity check */
     if (shadowing_stack == null)
       throw new Exception("Internal parser error: attempt to create null virtual stack");
 
     /* set up our internals */
     real_stack = shadowing_stack;
-    vstack = new Stack<>();
+    vstack = new ArrayStack<>();
     real_next = 0;
 
     /* get one element onto the virtual portion of the stack */
@@ -47,7 +45,7 @@ public class virtual_parse_stack {
    * The real stack that we shadow. This is accessed when we move off the bottom
    * of the virtual portion of the stack, but is always left unmodified.
    */
-  protected Stack<Symbol> real_stack;
+  protected ArrayStack<Symbol> real_stack;
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
@@ -67,7 +65,7 @@ public class virtual_parse_stack {
    * When this portion of the stack becomes empty we transfer elements from the
    * underlying stack onto this stack.
    */
-  protected Stack<Integer> vstack;
+  protected ArrayStack<Integer> vstack;
 
   /*-----------------------------------------------------------*/
   /*--- General Methods ---------------------------------------*/
@@ -91,7 +89,7 @@ public class virtual_parse_stack {
     real_next++;
 
     /* put the state number from the Symbol onto the virtual stack */
-    vstack.push(Integer.valueOf(stack_sym.parse_state));
+    vstack.push(stack_sym.parse_state);
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -112,7 +110,7 @@ public class virtual_parse_stack {
     if (vstack.empty())
       throw new Exception("Internal parser error: top() called on empty virtual stack");
 
-    return vstack.peek().intValue();
+    return vstack.peek();
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -134,7 +132,7 @@ public class virtual_parse_stack {
 
   /** Push a state number onto the stack. */
   public void push(int state_num) {
-    vstack.push(Integer.valueOf(state_num));
+    vstack.push(state_num);
   }
 
   /*-----------------------------------------------------------*/

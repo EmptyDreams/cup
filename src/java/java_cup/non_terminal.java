@@ -1,6 +1,7 @@
 package java_cup;
 
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class represents a non-terminal symbol in the grammar. Each non terminal
@@ -41,7 +42,7 @@ public class non_terminal extends symbol {
     _index = next_index++;
 
     /* add to by_index set */
-    _all_by_index.put(Integer.valueOf(_index), this);
+    _all_by_index.put(_index, this);
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -63,7 +64,7 @@ public class non_terminal extends symbol {
    * Table of all non-terminals -- elements are stored using name strings as the
    * key
    */
-  protected static Hashtable<String, non_terminal> _all = new Hashtable<>();
+  protected static Map<String, non_terminal> _all = new HashMap<>();
 
   // Hm Added clear to clear all static fields
   public static void clear() {
@@ -89,11 +90,11 @@ public class non_terminal extends symbol {
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
   /** Table of all non terminals indexed by their index number. */
-  protected static Hashtable<Integer, non_terminal> _all_by_index = new Hashtable<>();
+  protected static Map<Integer, non_terminal> _all_by_index = new HashMap<>();
 
   /** Lookup a non terminal by index. */
   public static non_terminal find(int indx) {
-    return _all_by_index.get(Integer.valueOf(indx));
+    return _all_by_index.get(indx);
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -147,7 +148,7 @@ public class non_terminal extends symbol {
   /**
    * TUM 20060608 bugfix for embedded action codes
    */
-  static non_terminal create_new(String prefix, String type) throws internal_error {
+  static non_terminal create_new(String prefix, String type) {
     if (prefix == null)
       prefix = "NT$";
     return new non_terminal(prefix + next_nt++, type);
@@ -213,7 +214,7 @@ public class non_terminal extends symbol {
   /*-----------------------------------------------------------*/
 
   /** Table of all productions with this non terminal on the LHS. */
-  protected Hashtable<production, production> _productions = new Hashtable<>(11);
+  protected Map<production, production> _productions = new HashMap<>(11);
 
   /** Access to productions with this non terminal on the LHS. */
   public Iterable<production> productions() {

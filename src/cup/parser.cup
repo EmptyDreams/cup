@@ -19,7 +19,7 @@
       These serve the same purpose as in a normal Java source file
       (and will appear in the generated code for the parser). In this 
       case we are part of the java_cup package and we import both the
-      java_cup runtime system and Hashtable from the standard Java
+      java_cup runtime system and HashMap from the standard Java
       utilities package.
 
     Action code
@@ -90,8 +90,10 @@
 
 package java_cup;
 import java_cup.runtime.*;
-import java.util.Hashtable;
-import java.util.Stack;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+
 /*----------------------------------------------------------------*/ 
 
 action code {:
@@ -133,7 +135,7 @@ action code {:
 
   /** string to build up multiple part names */
   protected String multipart_name = new String();
-  protected Stack<String> multipart_names = new Stack<>();
+  protected ArrayStack<String> multipart_names = new ArrayStack<>();
   /** append a new name segment to the accumulated multipart name */
 
 //  TUM CHANGES
@@ -149,10 +151,10 @@ action code {:
 // TUM CHANGES
 
   /** table of declared symbols -- contains production parts indexed by name */
-  protected Hashtable<String,production_part> symbols = new Hashtable<>();
+  protected Map<String,production_part> symbols = new HashMap();
 
   /** table of just non terminals -- contains non_terminals indexed by name */
-  protected Hashtable<String,non_terminal> non_terms = new Hashtable<>();
+  protected Map<String,non_terminal> non_terms = new HashMap();
 
   /** declared start non_terminal */
   protected non_terminal start_nt = null;
@@ -938,12 +940,3 @@ opt_semi ::= /* nothing */
 empty ::= /* nothing */;
 
 /*----------------------------------------------------------------*/ 
-
-
-
-
-
-
-
-
-

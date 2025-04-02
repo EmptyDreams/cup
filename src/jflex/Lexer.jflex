@@ -19,7 +19,7 @@ import java.io.InputStreamReader;
 	this(new InputStreamReader(System.in));
         symbolFactory = sf;
     }
-    private StringBuffer sb;
+    private StringBuilder sb;
     private ComplexSymbolFactory symbolFactory;
     private int csline,cscolumn;
     public Symbol symbol(String name, int code){
@@ -73,7 +73,7 @@ ident = ([:jletter:] | "_" ) ([:jletterdigit:] | [:jletter:] | "_" )*
   ">"           { return symbol("GT",GT);                      }
   "<"           { return symbol("LT",LT);                      }
   {Comment}     {                                              }
-  "{:"          { sb = new StringBuffer(); csline=yyline+1; cscolumn=yycolumn+1; yybegin(CODESEG);    }
+  "{:"          { sb = new StringBuilder(); csline=yyline+1; cscolumn=yycolumn+1; yybegin(CODESEG);    }
   "package"     { return symbol("PACKAGE",PACKAGE);            } 
   "import"      { return symbol("IMPORT",IMPORT);	       }
   "static"      { return symbol("STATIC",STATIC);	       }

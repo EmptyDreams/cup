@@ -4,13 +4,13 @@ import java.util.HashMap;
 import java.util.List;
 
 public class SyntaxTreeDFS {
-	public static interface ElementHandler {
-		public void handle(XMLElement parent, List<XMLElement> children);
+	public interface ElementHandler {
+		void handle(XMLElement parent, List<XMLElement> children);
 	}
 
 	public static abstract class AbstractVisitor implements Visitor {
-		private HashMap<String, ElementHandler> preMap = new HashMap<>();
-		private HashMap<String, ElementHandler> postMap = new HashMap<>();
+		private final HashMap<String, ElementHandler> preMap = new HashMap<>();
+		private final HashMap<String, ElementHandler> postMap = new HashMap<>();
 
 		public abstract void defaultPre(XMLElement element, List<XMLElement> children);
 
@@ -43,10 +43,10 @@ public class SyntaxTreeDFS {
 		}
 	}
 
-	public static interface Visitor {
-		public void preVisit(XMLElement element);
+	public interface Visitor {
+		void preVisit(XMLElement element);
 
-		public void postVisit(XMLElement element);
+		void postVisit(XMLElement element);
 	}
 
 	public static void dfs(XMLElement element, Visitor visitor) {
