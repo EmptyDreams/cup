@@ -21,7 +21,7 @@ public class SyntaxTreeTransform {
 		}
 
 		private final ArrayStack<XMLElement> stack = new ArrayStack<>();
-		private final ArrayStack<Integer> intstack = new ArrayStack<>();
+		private final IntArrayStack intstack = new IntArrayStack();
 
 		@Override
 		public void defaultPre(XMLElement element, List<XMLElement> children) {

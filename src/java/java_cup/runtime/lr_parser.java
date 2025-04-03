@@ -2,6 +2,7 @@
 package java_cup.runtime;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -452,11 +453,9 @@ public abstract class lr_parser {
   }
 
   protected void report_expected_token_ids() {
-    List<Integer> ids = expected_token_ids();
-    LinkedList<String> list = new LinkedList<>();
-    for (Integer expected : ids) {
-      list.add(symbl_name_from_id(expected));
-    }
+    IntArrayStack ids = expected_token_ids();
+    List<String> list = new ArrayList<>(ids.size());
+    ids.forEachInt(i -> list.add(symbl_name_from_id(i)));
     System.out.println("instead expected token classes are " + list);
   }
 
@@ -484,8 +483,8 @@ public abstract class lr_parser {
    * 
    * @return list of integer (non)temrinal ids
    */
-  public List<Integer> expected_token_ids() {
-    List<Integer> ret = new LinkedList<>();
+  public IntArrayStack expected_token_ids() {
+    IntArrayStack ret = new IntArrayStack();
     int parse_state = stack.peek().parse_state;
     short[] row = action_tab[parse_state];
     for (int i = 0; i < row.length; i += 2) {
@@ -493,7 +492,7 @@ public abstract class lr_parser {
         continue;
       if (!validate_expected_symbol(row[i]))
         continue;
-      ret.add((int) row[i]);
+      ret.push(row[i]);
     }
     return ret;
   }

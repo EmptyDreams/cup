@@ -1207,7 +1207,7 @@ their string representations via calls to <code>symbol_name_from_id()</code>.
 Such an action can look like:</p>
 <pre><tt>    stmt ::= expr SEMI | while_stmt SEMI | if_stmt SEMI | ... |
 	     error:e {: 
-                 List<Integer> expected = expected_token_ids();
+                 IntArrayStack expected = expected_token_ids();
                  myIDE.registerParseError(exleft,exright,expected);
              :} SEMI
 	     ;</tt></pre>
