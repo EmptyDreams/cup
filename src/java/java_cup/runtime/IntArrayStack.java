@@ -2,6 +2,19 @@ package java_cup.runtime;
 
 import java.util.function.IntConsumer;
 
+/**
+ * An array-based int stack implementation that avoids boxing overhead.
+ *
+ * <p>This specialized stack stores primitive int values directly without
+ * requiring Integer object wrappers.</p>
+ *
+ * <p>The implementation intentionally does not implement the {@code List<Integer>}
+ * interface. This prevents signature conflicts between {@code int get(int)}
+ * and {@code Integer get(int)} methods, thus minimizing required changes
+ * to existing code.</p>
+ *
+ * @author kmar
+ */
 public class IntArrayStack {
 
     private int[] data;

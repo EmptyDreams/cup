@@ -4,8 +4,21 @@ import java.util.*;
 import java.util.function.*;
 
 /**
+ * <p>An int-to-Object Map implementation that avoids boxing/unboxing overhead.</p>
  *
- * @param <E>
+ * <p>This class stores keys in ascending order using an internal array structure.
+ * Binary search is employed for efficient lookups during read operations.</p>
+ *
+ * Usage constraints:
+ * <ol>
+ *   <li>New keys can only be inserted if they are greater than all existing keys</li>
+ *   <li>Existing values cannot be modified or removed (except through clear())</li>
+ *   <li>Does not support iterating over keys or key-value pairs<br/>
+ *      (use values() method to iterate over stored objects)</li>
+ * </ol>
+ *
+ * @param <E> The type of objects stored in this map
+ * @author kmar
  */
 @SuppressWarnings("unchecked")
 public class MonotonicIntObjectArrayMap<E> implements Map<Integer, E> {
