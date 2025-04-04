@@ -169,12 +169,12 @@ public class Main {
    * 
    * @param argv an array of strings containing command line arguments.
    */
-  public static void main(String argv[]) throws internal_error, java.io.IOException, java.lang.Exception {
+  public static void main(String[] argv) throws java.lang.Exception {
     boolean did_output = false;
 
     start_time = System.currentTimeMillis();
 
-    /** clean all static members, that contain remaining stuff from earlier calls */
+    /* clean all static members, that contain remaining stuff from earlier calls */
     terminal.clear();
     production.clear();
     action_production.clear();
@@ -316,7 +316,7 @@ public class Main {
    * 
    * @param argv the command line arguments to be parsed.
    */
-  protected static void parse_args(String argv[]) {
+  protected static void parse_args(String[] argv) {
     int len = argv.length;
     int i;
 
@@ -768,8 +768,8 @@ public class Main {
    */
   protected static String timestr(long time_val, long total_time) {
     boolean neg;
-    long ms = 0;
-    long sec = 0;
+    long ms;
+    long sec;
     long percent10;
     String pad;
 
@@ -843,7 +843,7 @@ public class Main {
    * recognition state machine.
    */
   public static void dump_machine() {
-    lalr_state ordered[] = new lalr_state[lalr_state.number()];
+    lalr_state[] ordered = new lalr_state[lalr_state.number()];
 
     /* put the states in sorted order for a nicer display */
     for (var st : lalr_state.all_states()){
