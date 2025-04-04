@@ -90,7 +90,7 @@ public class non_terminal extends symbol {
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
   /** Table of all non terminals indexed by their index number. */
-  protected static Map<Integer, non_terminal> _all_by_index = new HashMap<>();
+  protected static MonotonicIntObjectArrayMap<non_terminal> _all_by_index = new MonotonicIntObjectArrayMap<>();
 
   /** Lookup a non terminal by index. */
   public static non_terminal find(int indx) {

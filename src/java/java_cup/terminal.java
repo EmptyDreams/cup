@@ -110,13 +110,11 @@ public class terminal extends symbol {
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
   /** Table of all terminals indexed by their index number. */
-  protected static Map<Integer,terminal> _all_by_index = new HashMap<>();
+  protected static MonotonicIntObjectArrayMap<terminal> _all_by_index = new MonotonicIntObjectArrayMap<>();
 
   /** Lookup a terminal by index. */
   public static terminal find(int indx) {
-    Integer the_indx = indx;
-
-    return _all_by_index.get(the_indx);
+    return _all_by_index.get(indx);
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */

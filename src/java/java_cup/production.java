@@ -1,9 +1,6 @@
 
 package java_cup;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * This class represents a production in the grammar. It contains a LHS non
  * terminal, and an array of RHS symbols. As various transformations are done on
@@ -206,7 +203,7 @@ public class production {
   /**
    * Table of all productions. Elements are stored using their index as the key.
    */
-  protected static Map<Integer, production> _all = new HashMap<>();
+  protected static MonotonicIntObjectArrayMap<production> _all = new MonotonicIntObjectArrayMap<>();
 
   /** Access to all productions. */
   public static Iterable<production> all() {

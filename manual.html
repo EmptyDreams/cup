@@ -928,7 +928,7 @@ available for customization include:
     by calling the parser method <tt>done_parsing()</tt>, and finally
     throws an exception.  (In general <tt>done_parsing()</tt> should be called 
     at any point that parsing needs to be terminated early).
-</dd><dt><tt>public List<Integer> expected_token_ids()</tt>
+</dd><dt><tt>public IntArrayStack expected_token_ids()</tt>
 </dt><dd>This method informs during parsing and especially when handling
     parsing problems and invalid input about valid continuations for parsing.
     It returns a list of integer constants which correspond to the constants
