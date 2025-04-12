@@ -1,7 +1,13 @@
 package java_cup;
 
 import java_cup.runtime.ArrayStack;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.util.*;
 
 /**
  * This class handles emitting generated code for the resulting parser. The
@@ -437,6 +443,7 @@ public class emit {
 
         /* give them their own block to work in */
         out.println("            {");
+        out.println("              String name = \"" + prod.lhs().the_symbol().name() + "\";");
 
         /*
           TUM 20060608 intermediate result patch
@@ -515,12 +522,12 @@ public class emit {
             loffset = prod.rhs_length() - 1;
             leftstring = emit.pre("stack") + ((loffset == 0) ? (".peek()") : (".elementAt(" + emit.pre("top") + "-" + loffset + ")"));
           }
-          out.println("              " + pre("result") + " = parser.getSymbolFactory().newSymbol(" + "\""
-              + prod.lhs().the_symbol().name() + "\"," + prod.lhs().the_symbol().index() + ", " + leftstring
+          out.println("              " + pre("result") + " = parser.getSymbolFactory().newSymbol(name, "
+                  + prod.lhs().the_symbol().index() + ", " + leftstring
               + ((prod.rhs_length() == 0) ? ("") : (", " + rightstring)) + ", RESULT);");
         } else {
-          out.println("              " + pre("result") + " = parser.getSymbolFactory().newSymbol(" + "\""
-              + prod.lhs().the_symbol().name() + "\"," + prod.lhs().the_symbol().index() + ", RESULT);");
+          out.println("              " + pre("result") + " = parser.getSymbolFactory().newSymbol(name, "
+                  + prod.lhs().the_symbol().index() + ", RESULT);");
         }
 
         /* end of their block */
@@ -1030,6 +1037,76 @@ public class emit {
     out.println("}");
 
     parser_time = System.currentTimeMillis() - start_time;
+  }
+
+  public static void node_classes(File dir, String format) throws internal_error, IOException {
+    try (
+      BufferedWriter writer = Files.newBufferedWriter(new File(dir, "AstNode.java").toPath());
+      PrintWriter out = new PrintWriter(writer)
+    ) {
+      emit_package(out);
+      out.println("public interface AstNode { }");
+    }
+    for (non_terminal nt : non_terminal.all()) {
+      node_class(dir, format, nt);
+    }
+  }
+
+  private static void node_class(File dir, String format, non_terminal nt) throws internal_error, IOException {
+    String className = symbol.getNodeClassName(nt.name(), format);
+    try (
+      BufferedWriter writer = Files.newBufferedWriter(new File(dir, className + ".java").toPath());
+      PrintWriter out = new PrintWriter(writer)
+    ) {
+      emit_package(out);
+      out.println("public class " + className + " implements AstNode {");
+      Map<String, String> map = new LinkedHashMap<>();
+      for (production production : nt.productions()) {
+        int length = production.rhs_length();
+        for (int i = 0; i < length; i++) {
+          production_part part = production.rhs(i);
+          String label = part.label();
+          if (label == null) continue;
+          if (!part.is_action()) {
+            symbol_part sp = (symbol_part) part;
+            symbol sym = sp.the_symbol();
+            String type = sym.stack_type();
+            if ("AstNode".equals(type)) {
+              type = symbol.getNodeClassName(sym.name(), format);
+            }
+            map.put(type, label);
+            out.println("    public " + type + ' ' + label + "() {");
+            out.println("        return " + label + ";");
+            out.println("    }");
+          }
+        }
+      }
+      map.forEach(
+        (type, label) -> out.println("    private final " + type + ' ' + label + ';')
+      );
+      out.println("    public " + className + '(');
+      out.print("        ");
+      var itor = map.entrySet().iterator();
+      boolean isFirst = true;
+      while (itor.hasNext()) {
+        var item = itor.next();
+        var type = item.getKey();
+        var label = item.getValue();
+        if (isFirst) {
+          isFirst = false;
+        } else {
+          out.print(", ");
+        }
+        out.print(type + ' ' + label);
+      }
+      out.println();
+      out.println("    ) {");
+      map.forEach(
+        (type, label) -> out.println("        this." + label + " = " + label + ';')
+      );
+      out.println("    }");
+      out.println('}');
+    }
   }
 
   /**

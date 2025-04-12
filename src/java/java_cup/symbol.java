@@ -122,4 +122,48 @@ public abstract class symbol {
 
   /*-----------------------------------------------------------*/
 
+  public static String getNodeClassName(String name, String format) {
+    StringBuilder sb = new StringBuilder(name.length() + format.length());
+    for (int i = 0; i < format.length(); i++) {
+      char fc = format.charAt(i);
+      if (fc == '%') {
+        char nextChar = format.charAt(++i);
+        if (nextChar == 's') {
+          writeNameS(sb, name);
+        } else if (nextChar == 'p') {
+          writeNameP(sb, name);
+        } else {
+          throw new AssertionError();
+        }
+      } else {
+        sb.append(fc);
+      }
+    }
+    sb.append("Node");
+    return sb.toString();
+  }
+
+  private static void writeNameS(StringBuilder sb, String name) {
+    boolean toUpper = true;
+    for (int i = name.indexOf('_') + 1; i < name.length(); i++) {
+      char c = name.charAt(i);
+      if (c == '_') {
+        toUpper = true;
+      } else if (toUpper) {
+        sb.append(Character.toUpperCase(c));
+        toUpper = false;
+      } else {
+        sb.append(Character.toLowerCase(c));
+      }
+    }
+  }
+
+  private static void writeNameP(StringBuilder sb, String name) {
+    int endIndex = name.indexOf('_');
+    for (int i = 0; i < endIndex; i++) {
+      char c = name.charAt(i);
+      sb.append(i == 0 ? Character.toUpperCase(c) : Character.toLowerCase(c));
+    }
+  }
+
 }

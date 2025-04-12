@@ -111,6 +111,8 @@ public class Main {
   protected static boolean no_summary = false;
   /** User option -- number of conflicts to expect */
   protected static int expect_conflicts = 0;
+  /** The format of the AST class to be generated. */
+  protected static String ast_format = null;
 
   /* frankf added this 6/18/96 */
   /** User option -- should generator generate code for left/right values? */
@@ -282,13 +284,17 @@ public class Main {
     System.err.println();
     System.err.println(version.title_str + "\n" + "Usage: " + version.program_name + " [options] [filename]\n"
         + "  and expects a specification file on standard input if no filename is given.\n"
-        + "  Legal options include:\n" + "    -package name  specify package generated classes go in [default none]\n"
+        + "  Legal options include:\n"
+        + "    -package name  specify package generated classes go in [default none]\n"
         + "    -destdir name  specify the destination directory, to store the generated files in\n"
         + "    -parser name   specify parser class name [default \"parser\"]\n"
         + "    -typearg args  specify type arguments for parser class\n"
         + "    -symbols name  specify name for symbol constant class [default \"sym\"]\n"
         + "    -interface     put symbols in an interface, rather than a class\n"
         + "    -nonterms      put non terminals in symbol constant class\n"
+        + "    -ast <format>  auto generates AST. The format param defines node class naming, " +
+                              "where %s is after the first underscore and %p is before, " +
+                              "defaulting to \"Node%s\"."
         + "    -expect #      number of conflicts expected/allowed [default 0]\n"
         + "    -compact_red   compact tables by defaulting to most frequent reduce\n"
         + "    -nowarn        don't warn about useless productions, etc.\n"
@@ -362,6 +368,30 @@ public class Main {
           expect_conflicts = Integer.parseInt(argv[i]);
         } catch (NumberFormatException e) {
           usage("-expect must be followed by a decimal integer");
+        }
+      } else if (argv[i].equals("-ast")) {
+        int nextIndex = i + 1;
+        if (nextIndex < len && !argv[nextIndex].startsWith("-") && !argv[nextIndex].endsWith(".cup")) {
+          ++i;
+          String format = argv[nextIndex];
+          if (format.indexOf('%') == -1 || !format.matches("^[a-zA-Z_][a-zA-Z0-9_$%]*$")) {
+            usage("-ast must be followed by a valid format name(Value must start with [a-zA-Z_])");
+          }
+          for (int k = 0; k < format.length(); k++) {
+            char c = format.charAt(k);
+            if (c == '%') {
+              if (k + 1 == format.length()) {
+                usage("-ast must be followed by a valid format name(Invalid escape '%' at end of string)");
+              }
+              char next = format.charAt(k + 1);
+              if (next != 's' && next != 'p') {
+                usage("-ast must be followed by a valid format name(Invalid escape '%" + next + "')");
+              }
+            }
+          }
+          ast_format = format;
+        } else {
+          ast_format = "Node%s";
         }
       } else if (argv[i].equals("-compact_red"))
         opt_compact_red = true;
@@ -638,10 +668,13 @@ public class Main {
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
   /** Call the emit routines necessary to write out the generated parser. */
-  protected static void emit_parser() throws internal_error {
+  protected static void emit_parser() throws internal_error, IOException {
     emit.symbols(symbol_class_file, include_non_terms, sym_interface);
     emit.parser(parser_class_file, action_table, reduce_table, start_state.index(), emit.start_production,
         opt_compact_red, suppress_scanner);
+    if (ast_format != null) {
+      emit.node_classes(dest_dir, ast_format);
+    }
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
