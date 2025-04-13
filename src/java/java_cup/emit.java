@@ -1060,58 +1060,72 @@ public class emit {
     ) {
       emit_package(out);
       out.println("public class " + className + " implements AstNode {");
+      out.println();
       Map<String, String> map = new LinkedHashMap<>();
+      Set<String> signatures = new HashSet<>();
+      ArrayList<String> labels = new ArrayList<>();
+      ArrayList<String> types = new ArrayList<>();
       for (production production : nt.productions()) {
         int length = production.rhs_length();
         for (int i = 0; i < length; i++) {
           production_part part = production.rhs(i);
           String label = part.label();
-          if (label == null) continue;
-          if (!part.is_action()) {
-            symbol_part sp = (symbol_part) part;
-            symbol sym = sp.the_symbol();
-            String type = sym.stack_type();
-            if ("AstNode".equals(type)) {
-              type = symbol.getNodeClassName(sym.name(), format);
-            }
-            String oldType = map.put(label, type);
-            if (oldType != null && !oldType.equals(type)) {
-              throw new internal_error(
-                "The same label is only allowed to have one type," +
-                  "but label[" + label + "] in nt[" + nt.name() + "] has two or more types" +
-                  "[" + type + ", " + oldType + "]."
-              );
-            }
-            out.println("    public " + type + ' ' + label + "() {");
-            out.println("        return " + label + ";");
-            out.println("    }");
+          if (label == null || part.is_action()) continue;
+          symbol_part sp = (symbol_part) part;
+          symbol sym = sp.the_symbol();
+          String type = sym.stack_type();
+          if ("AstNode".equals(type)) {
+            type = symbol.getNodeClassName(sym.name(), format);
           }
+          String oldType = map.put(label, type);
+          if (oldType != null && !oldType.equals(type)) {
+            throw new internal_error(
+              "The same label is only allowed to have one type," +
+                     "but label[" + label + "] in nt[" + nt.name() + "] has two or more types" +
+                     "[" + type + ", " + oldType + "]."
+            );
+          }
+          labels.add(label);
+          types.add(type);
         }
+        int labelSize = labels.size();
+        String signature = labels + "|" + types;
+        if (signatures.add(signature)) {
+          out.println("    public " + className + "(");
+          for (int i = 0; i < labelSize; i++) {
+            out.print("        " + types.get(i) + " _" + labels.get(i));
+            if (i < labelSize - 1) {
+              out.print(", ");
+            }
+            out.println();
+          }
+          out.println("    ) {");
+          for (int i = 0; i < labelSize; i++) {
+            out.println("        this._" + labels.get(i) + " = _" + labels.get(i) + ';');
+          }
+          out.println("    }");
+          out.println();
+        }
+        labels.clear();
+        types.clear();
       }
       map.forEach(
-        (label, type) -> out.println("    private final " + type + ' ' + label + ';')
-      );
-      out.println("    public " + className + '(');
-      out.print("        ");
-      var itor = map.entrySet().iterator();
-      boolean isFirst = true;
-      while (itor.hasNext()) {
-        var item = itor.next();
-        var label = item.getKey();
-        var type = item.getValue();
-        if (isFirst) {
-          isFirst = false;
-        } else {
-          out.print(", ");
+        (label, type) -> {
+          out.println("    private " + type + " _" + label + " = null;");
+          if (Character.isLowerCase(label.charAt(0))) {
+            out.print("    public " + type + " get" + Character.toUpperCase(label.charAt(0)));
+            for (int k = 1; k < label.length(); k++) {
+              out.print(label.charAt(k));
+            }
+            out.println("() {");
+          } else {
+            out.println("    public " + type + " get" + label + "() {");
+          }
+          out.println("        return _" + label + ";");
+          out.println("    }");
+          out.println();
         }
-        out.print(type + ' ' + label);
-      }
-      out.println();
-      out.println("    ) {");
-      map.forEach(
-        (label, type) -> out.println("        this." + label + " = " + label + ';')
       );
-      out.println("    }");
       out.println('}');
     }
   }

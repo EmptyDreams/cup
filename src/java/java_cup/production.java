@@ -64,6 +64,10 @@ public class production {
     action_part tail_action;
     String declare_str;
     int rightlen = rhs_l;
+    StringBuilder actionBuilder = new StringBuilder(64);
+    if (action_str != null) {
+      actionBuilder.append(action_str);
+    }
 
     /* remember the length */
     if (rhs_l >= 0)
@@ -95,11 +99,7 @@ public class production {
 
     /* get the generated declaration code for the necessary labels. */
     declare_str = declare_labels(rhs_parts, rightlen, action_str);
-
-    if (action_str == null)
-      action_str = declare_str;
-    else
-      action_str = declare_str + action_str;
+    actionBuilder.insert(0, declare_str);
 
     /* count use of lhs */
     lhs_sym.note_use();
@@ -138,13 +138,30 @@ public class production {
      * now action string is really declaration string, so put it in front! 6/14/96
      * frankf
      */
-    if (action_str == null)
-      action_str = "";
     if (tail_action != null && tail_action.code_string() != null)
-      action_str = action_str + "\t\t" + tail_action.code_string();
+      actionBuilder.append("\t\t").append(tail_action.code_string());
+    if (Main.ast_format != null && tail_action == null && rhs_l != 0) {
+      String className = symbol.getNodeClassName(lhs_sym.name(), Main.ast_format);
+      actionBuilder.append("\t\tRESULT = new ")
+                   .append(className)
+                   .append('(');
+      boolean isFirst = true;
+      for (int k = 0; k < _rhs_length; k++) {
+        var item = _rhs[k];
+        if (item.is_action()) continue;
+        var symbolPart = (symbol_part) item;
+        var label = symbolPart.label();
+        if (label != null) {
+          if (isFirst) isFirst = false;
+          else actionBuilder.append(", ");
+          actionBuilder.append(label);
+        }
+      }
+      actionBuilder.append(");");
+    }
 
     /* stash the action */
-    _action = new action_part(action_str);
+    _action = new action_part(actionBuilder.toString());
 
     /* rewrite production to remove any embedded actions */
     remove_embedded_actions();
