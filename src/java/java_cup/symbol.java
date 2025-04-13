@@ -139,7 +139,6 @@ public abstract class symbol {
         sb.append(fc);
       }
     }
-    sb.append("Node");
     return sb.toString();
   }
 
