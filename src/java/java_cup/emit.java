@@ -1074,7 +1074,14 @@ public class emit {
             if ("AstNode".equals(type)) {
               type = symbol.getNodeClassName(sym.name(), format);
             }
-            map.put(type, label);
+            String oldType = map.put(label, type);
+            if (oldType != null && !oldType.equals(type)) {
+              throw new internal_error(
+                "The same label is only allowed to have one type," +
+                  "but label[" + label + "] in nt[" + nt.name() + "] has two or more types" +
+                  "[" + type + ", " + oldType + "]."
+              );
+            }
             out.println("    public " + type + ' ' + label + "() {");
             out.println("        return " + label + ";");
             out.println("    }");
@@ -1082,7 +1089,7 @@ public class emit {
         }
       }
       map.forEach(
-        (type, label) -> out.println("    private final " + type + ' ' + label + ';')
+        (label, type) -> out.println("    private final " + type + ' ' + label + ';')
       );
       out.println("    public " + className + '(');
       out.print("        ");
@@ -1090,8 +1097,8 @@ public class emit {
       boolean isFirst = true;
       while (itor.hasNext()) {
         var item = itor.next();
-        var type = item.getKey();
-        var label = item.getValue();
+        var label = item.getKey();
+        var type = item.getValue();
         if (isFirst) {
           isFirst = false;
         } else {
@@ -1102,7 +1109,7 @@ public class emit {
       out.println();
       out.println("    ) {");
       map.forEach(
-        (type, label) -> out.println("        this." + label + " = " + label + ';')
+        (label, type) -> out.println("        this." + label + " = " + label + ';')
       );
       out.println("    }");
       out.println('}');
