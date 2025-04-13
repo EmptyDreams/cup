@@ -87,7 +87,7 @@ public class IntArrayStack {
     public void ensureCapacity(int size) {
         int oldLength = data.length;
         if (oldLength < size) {
-            int newSize = Math.max(size - oldLength, oldLength >> 1);
+            int newSize = Math.max(size - oldLength, oldLength >> 1) + oldLength;
             int[] newData = new int[newSize];
             System.arraycopy(data, 0, newData, 0, oldLength);
             data = newData;
