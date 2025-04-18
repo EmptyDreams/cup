@@ -202,6 +202,11 @@ public class Main {
       System.err.println("Opening files...");
     /* use a buffered version of standard input */
     input_file = new BufferedInputStream(System.in);
+    //noinspection ResultOfMethodCallIgnored
+    dest_dir.mkdirs();
+    if (!dest_dir.exists()) {
+      ErrorManager.getManager().emit_error("Could not create directory " + dest_dir.getPath());
+    }
 
     prelim_end = System.currentTimeMillis();
 

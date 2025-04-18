@@ -134,7 +134,7 @@ action code {:
     }
 
   /** string to build up multiple part names */
-  protected String multipart_name = new String();
+  protected String multipart_name = "";
   protected ArrayStack<String> multipart_names = new ArrayStack<>();
   /** append a new name segment to the accumulated multipart name */
 
@@ -310,7 +310,7 @@ package_spec ::=
 	  emit.package_name = multipart_name;
 
 	  /* reset the accumulated multipart name */
-	  multipart_name = new String();
+	  multipart_name = "";
 	:}
 	SEMI
 	|
@@ -336,7 +336,7 @@ import_spec ::=
 	  emit.import_list.push(multipart_name);
 
 	  /* reset the accumulated multipart name */
-	  multipart_name = new String();
+	  multipart_name = "";
 	:}
 	SEMI
 	|
@@ -347,7 +347,7 @@ import_spec ::=
 	  emit.import_list.push(" static " + multipart_name);
 
 	  /* reset the accumulated multipart name */
-	  multipart_name = new String();
+	  multipart_name = "";
 	:}
 	SEMI
 	;
@@ -445,7 +445,7 @@ symbol ::=
 	error 
 	{:
 	  /* reset the accumulated multipart name */
-	  multipart_name = new String();
+	  multipart_name = "";
 	:}
 	SEMI
 	|
@@ -453,7 +453,7 @@ symbol ::=
 	error 
 	{:
 	  /* reset the accumulated multipart name */
-	  multipart_name = new String();
+	  multipart_name = "";
 	:}
 	SEMI
 	;
@@ -464,7 +464,7 @@ declares_term ::=
 	term_name_list
 	{: 
 	  /* reset the accumulated multipart name */
-	  multipart_name = new String();
+	  multipart_name = "";
 	:}
 	SEMI
 	;
@@ -474,7 +474,7 @@ declares_non_term ::=
 	non_term_name_list
 	{: 
 	  /* reset the accumulated multipart name */
-	  multipart_name = new String();
+	  multipart_name = "";
 	:}
 	SEMI
 	;
@@ -778,7 +778,7 @@ typearglist ::=
 
 typearguement ::=
               type_id
-              {: RESULT = multipart_name; multipart_name = new String(); :}
+              {: RESULT = multipart_name; multipart_name = ""; :}
               | wildcard:w
               {: RESULT = w; :}
               ;
@@ -787,11 +787,9 @@ wildcard ::=
          QUESTION
          {: RESULT = " ? "; :}
          | QUESTION EXTENDS type_id
-         {: RESULT = " ? extends "+multipart_name; multipart_name = new
-         String(); :}
+         {: RESULT = " ? extends "+multipart_name; multipart_name = ""; :}
          | QUESTION SUPER type_id
-         {: RESULT = " ? super "+multipart_name; multipart_name = new
-         String(); :}
+         {: RESULT = " ? super "+multipart_name; multipart_name = ""; :}
          ;
 
 /*. . . . . . . . . . .END TUM CHANGES. . . . . . . . . . . . . . */ 
