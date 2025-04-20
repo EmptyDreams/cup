@@ -71,6 +71,14 @@ public abstract class symbol {
     return _stack_type;
   }
 
+  public String astClassName() {
+    String type = stack_type();
+    if ("AstNode".equals(type)) {
+      type = symbol.getNodeClassName(name());
+    }
+    return type;
+  }
+
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
   /** Count of how many times the symbol appears in productions. */
@@ -122,7 +130,8 @@ public abstract class symbol {
 
   /*-----------------------------------------------------------*/
 
-  public static String getNodeClassName(String name, String format) {
+  public static String getNodeClassName(String name) {
+    String format = Main.ast_format;
     StringBuilder sb = new StringBuilder(name.length() + format.length());
     for (int i = 0; i < format.length(); i++) {
       char fc = format.charAt(i);

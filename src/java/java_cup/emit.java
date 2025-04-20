@@ -910,6 +910,8 @@ public class emit {
     }
     if (locations())
       out.println("import java_cup.runtime.ComplexSymbolFactory.Location;");
+    if (Main.ast_list_suffix != null)
+      out.println("import java.util.*;");
     out.println("import java_cup.runtime.XMLElement;");
 
     /* class header */
@@ -1039,7 +1041,7 @@ public class emit {
     parser_time = System.currentTimeMillis() - start_time;
   }
 
-  public static void node_classes(File dir, String format) throws internal_error, IOException {
+  public static void node_classes(File dir) throws internal_error, IOException {
     try (
       BufferedWriter writer = Files.newBufferedWriter(new File(dir, "AstNode.java").toPath());
       PrintWriter out = new PrintWriter(writer)
@@ -1048,17 +1050,20 @@ public class emit {
       out.println("public interface AstNode { }");
     }
     for (non_terminal nt : non_terminal.all()) {
-      node_class(dir, format, nt);
+      node_class(dir, nt);
     }
   }
 
-  private static void node_class(File dir, String format, non_terminal nt) throws internal_error, IOException {
-    String className = symbol.getNodeClassName(nt.name(), format);
+  private static void node_class(File dir, non_terminal nt) throws internal_error, IOException {
+    String className = symbol.getNodeClassName(nt.name());
     try (
       BufferedWriter writer = Files.newBufferedWriter(new File(dir, className + ".java").toPath());
       PrintWriter out = new PrintWriter(writer)
     ) {
       emit_package(out);
+      out.println();
+      out.println("import java.util.*;");
+      out.println();
       out.println("public class " + className + " implements AstNode {");
       out.println();
       Map<String, String> map = new LinkedHashMap<>();
@@ -1073,10 +1078,7 @@ public class emit {
           if (label == null || part.is_action()) continue;
           symbol_part sp = (symbol_part) part;
           symbol sym = sp.the_symbol();
-          String type = sym.stack_type();
-          if ("AstNode".equals(type)) {
-            type = symbol.getNodeClassName(sym.name(), format);
-          }
+          String type = sym.astClassName();
           String oldType = map.put(label, type);
           if (oldType != null && !oldType.equals(type)) {
             throw new internal_error(

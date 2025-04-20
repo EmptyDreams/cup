@@ -111,8 +111,10 @@ public class Main {
   protected static boolean no_summary = false;
   /** User option -- number of conflicts to expect */
   protected static int expect_conflicts = 0;
-  /** The format of the AST class to be generated. */
+  /** User option -- the format of the AST class to be generated */
   protected static String ast_format = null;
+  /** User option -- suffix configuration for AST flatten */
+  protected static String ast_list_suffix = null;
 
   /* frankf added this 6/18/96 */
   /** User option -- should generator generate code for left/right values? */
@@ -380,7 +382,7 @@ public class Main {
           ++i;
           String format = argv[nextIndex];
           if (format.indexOf('%') == -1 || !format.matches("^[a-zA-Z_][a-zA-Z0-9_$%]*$")) {
-            usage("-ast must be followed by a valid format name(Value must start with [a-zA-Z_])");
+            usage("-ast must be followed by a valid format name(Value must start with [a-zA-Z_] and include '%')");
           }
           for (int k = 0; k < format.length(); k++) {
             char c = format.charAt(k);
@@ -398,6 +400,15 @@ public class Main {
         } else {
           ast_format = "Node%s";
         }
+      } else if (argv[i].equals("-ast_flatten")) {
+        if (++i >= len || argv[i].startsWith("-") || argv[i].endsWith(".cup")) {
+          usage("-ast_flatten must have a name argument");
+        }
+        String argument = argv[i];
+        if (!argument.matches("^[_a-zA-Z][_a-zA-Z0-9]+$")) {
+          usage("-ast_flatten must be followed by a valid format name(Match regex \"^[_a-zA-Z][_a-zA-Z0-9]+$\")");
+        }
+        ast_list_suffix = argument;
       } else if (argv[i].equals("-compact_red"))
         opt_compact_red = true;
       else if (argv[i].equals("-nosummary"))
@@ -678,7 +689,7 @@ public class Main {
     emit.parser(parser_class_file, action_table, reduce_table, start_state.index(), emit.start_production,
         opt_compact_red, suppress_scanner);
     if (ast_format != null) {
-      emit.node_classes(dest_dir, ast_format);
+      emit.node_classes(dest_dir);
     }
   }
 

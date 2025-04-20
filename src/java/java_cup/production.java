@@ -140,28 +140,78 @@ public class production {
      */
     if (tail_action != null && tail_action.code_string() != null)
       actionBuilder.append("\t\t").append(tail_action.code_string());
-    if (Main.ast_format != null && tail_action == null && rhs_l != 0) {
-      String className = symbol.getNodeClassName(lhs_sym.name(), Main.ast_format);
-      actionBuilder.append("\t\tRESULT = new ")
-                   .append(className)
-                   .append('(');
-      boolean isFirst = true;
-      for (int k = 0; k < _rhs_length; k++) {
-        var item = _rhs[k];
-        if (item.is_action()) continue;
-        var symbolPart = (symbol_part) item;
-        var label = symbolPart.label();
-        if (label != null) {
-          if (isFirst) isFirst = false;
-          else actionBuilder.append(", ");
-          actionBuilder.append(label);
+    _action = new LazyContainer<>(() -> {
+      if (Main.ast_format != null && tail_action == null) {
+        if (rhs_l == 0) {
+          if (lhs_sym.isListExpr()) {
+            actionBuilder.append("\t\tRESULT = Collections.emptyList();\n");
+          } else {
+            actionBuilder.append("\t\tRESULT = Empty.instance;\n");
+          }
+        } else if (lhs_sym.isListExpr()) {
+          switch (_rhs_length) {
+            case 1: {
+              symbol_part part = (symbol_part) _rhs[0];
+              symbol sym = part.the_symbol();
+              String className = symbol.getNodeClassName(sym.name());
+              actionBuilder.append("\t\tList<")
+                      .append(className)
+                      .append("> flattenList = new ArrayList<>();\n")
+                      .append("\t\tflattenList.add((")
+                      .append(className)
+                      .append(") ")
+                      .append(part.label())
+                      .append(");\n");
+              break;
+            }
+            case 2: {
+              symbol_part itemPart = (symbol_part) _rhs[1];
+              String className = symbol.getNodeClassName(itemPart.the_symbol().name());
+              actionBuilder.append("\t\tList<")
+                      .append(className)
+                      .append("> flattenList = ")
+                      .append(emit.pre("stack"))
+                      .append(".elementAt(")
+                      .append(emit.pre("top"))
+                      .append(" - 1).value();\n")
+                      .append("\t\tflattenList.add((")
+                      .append(className)
+                      .append(") ")
+                      .append(itemPart.label())
+                      .append(");\n");
+              break;
+            }
+            default:
+              throw new AssertionError("Unreachable code");
+          }
+          actionBuilder.append("\t\tRESULT = flattenList;");
+        } else {
+          String className = symbol.getNodeClassName(lhs_sym.name());
+          actionBuilder.append("\t\tRESULT = new ")
+            .append(className)
+            .append('(');
+          boolean isFirst = true;
+          for (int k = 0; k < _rhs_length; k++) {
+            var item = _rhs[k];
+            if (item.is_action()) continue;
+            var symbolPart = (symbol_part) item;
+            var label = symbolPart.label();
+            if (label != null) {
+              if (isFirst) isFirst = false;
+              else actionBuilder.append(", ");
+              var type = symbolPart.the_symbol().astClassName();
+              actionBuilder.append('(')
+                      .append(type)
+                      .append(") ")
+                      .append(label);
+            }
+          }
+          actionBuilder.append(");");
         }
       }
-      actionBuilder.append(");");
-    }
-
-    /* stash the action */
-    _action = new action_part(actionBuilder.toString());
+      /* stash the action */
+      return new action_part(actionBuilder.toString());
+    });
 
     /* rewrite production to remove any embedded actions */
     remove_embedded_actions();
@@ -311,14 +361,14 @@ public class production {
    * An action_part containing code for the action to be performed when we reduce
    * with this production.
    */
-  protected action_part _action;
+  protected LazyContainer<action_part> _action;
 
   /**
    * An action_part containing code for the action to be performed when we reduce
    * with this production.
    */
   public action_part action() {
-    return _action;
+    return _action.get();
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */

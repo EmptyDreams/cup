@@ -252,6 +252,73 @@ public class non_terminal extends symbol {
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
+  private Boolean _isListExpr = null;
+
+  public boolean isListExpr() {
+    if (_isListExpr != null) return _isListExpr;
+    var suffix = Main.ast_list_suffix;
+    int productionsLength = num_productions();
+    if (suffix == null || (productionsLength != 3 && productionsLength != 2)) {
+      _isListExpr = false;
+      return false;
+    }
+    String name = _name;
+    if (name.length() <= suffix.length() || !name.endsWith(suffix)) {
+      _isListExpr = false;
+      return false;
+    }
+    symbol singleSym = null;
+    boolean hasSelfSingle = false;
+    boolean hasEmpty = false;
+    try {
+      for (production prod : productions()) {
+        if (prod.rhs_length() == 0) {
+          hasEmpty = true;
+        } else if (prod.rhs_length() == 1) {
+          var rhs = prod.rhs(0);
+          if (isSelfProduction(rhs) || rhs.label() == null) break;
+          var symPart = (symbol_part) rhs;
+          var sym = symPart.the_symbol();
+          if (singleSym != null) {
+            if (!hasSelfSingle) break;
+            if (!singleSym.equals(sym)) {
+              singleSym = null;
+              break;
+            }
+          }
+          singleSym = sym;
+        } else if (prod.rhs_length() == 2) {
+          var selfRhs = prod.rhs(0);
+          var thatRhs = prod.rhs(1);
+          if (
+            !isSelfProduction(selfRhs) || isSelfProduction(thatRhs) ||
+              selfRhs.label() != null || thatRhs.is_action() || thatRhs.label() == null
+          ) {
+            break;
+          }
+          var thatSymPart = (symbol_part) thatRhs;
+          var thatSym = thatSymPart.the_symbol();
+          if (singleSym != null && !singleSym.equals(thatSym)) break;
+          singleSym = thatSym;
+          hasSelfSingle = true;
+        } else {
+          singleSym = null;
+          break;
+        }
+      }
+    } catch (internal_error ignored) { }
+    boolean result = singleSym != null && hasSelfSingle && ((productionsLength == 2) != hasEmpty);
+    _isListExpr = result;
+    return result;
+  }
+
+  private boolean isSelfProduction(production_part rhs) {
+    if (rhs.is_action()) return false;
+    return this.equals(((symbol_part) rhs).the_symbol());
+  }
+
+  /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+
   /** First set for this non-terminal. */
   protected terminal_set _first_set = new terminal_set();
 
