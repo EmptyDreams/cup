@@ -367,7 +367,7 @@ public class production {
    * An action_part containing code for the action to be performed when we reduce
    * with this production.
    */
-  public action_part action() {
+  public action_part action() throws internal_error {
     return _action.get();
   }
 

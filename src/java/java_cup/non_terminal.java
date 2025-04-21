@@ -254,62 +254,61 @@ public class non_terminal extends symbol {
 
   private Boolean _isListExpr = null;
 
-  public boolean isListExpr() {
+  public boolean isListExpr() throws internal_error {
     if (_isListExpr != null) return _isListExpr;
     var suffix = Main.ast_list_suffix;
-    int productionsLength = num_productions();
-    if (suffix == null || (productionsLength != 3 && productionsLength != 2)) {
+    String name = _name;
+    if (suffix == null || name.length() <= suffix.length() || !name.endsWith(suffix)) {
       _isListExpr = false;
       return false;
     }
-    String name = _name;
-    if (name.length() <= suffix.length() || !name.endsWith(suffix)) {
-      _isListExpr = false;
-      return false;
+    int productionsLength = num_productions();
+    if (productionsLength != 3 && productionsLength != 2) {
+      throw new internal_error("The list expr must have 2 or 3 productions: " + this);
     }
     symbol singleSym = null;
     boolean hasSelfSingle = false;
     boolean hasEmpty = false;
-    try {
-      for (production prod : productions()) {
-        if (prod.rhs_length() == 0) {
-          hasEmpty = true;
-        } else if (prod.rhs_length() == 1) {
-          var rhs = prod.rhs(0);
-          if (isSelfProduction(rhs) || rhs.label() == null) break;
-          var symPart = (symbol_part) rhs;
-          var sym = symPart.the_symbol();
-          if (singleSym != null) {
-            if (!hasSelfSingle) break;
-            if (!singleSym.equals(sym)) {
-              singleSym = null;
-              break;
-            }
-          }
-          singleSym = sym;
-        } else if (prod.rhs_length() == 2) {
-          var selfRhs = prod.rhs(0);
-          var thatRhs = prod.rhs(1);
-          if (
-            !isSelfProduction(selfRhs) || isSelfProduction(thatRhs) ||
-              selfRhs.label() != null || thatRhs.is_action() || thatRhs.label() == null
-          ) {
+    for (production prod : productions()) {
+      if (prod.rhs_length() == 0) {
+        hasEmpty = true;
+      } else if (prod.rhs_length() == 1) {
+        var rhs = prod.rhs(0);
+        if (isSelfProduction(rhs) || rhs.label() == null) break;
+        var symPart = (symbol_part) rhs;
+        var sym = symPart.the_symbol();
+        if (singleSym != null) {
+          if (!hasSelfSingle) break;
+          if (!singleSym.equals(sym)) {
+            singleSym = null;
             break;
           }
-          var thatSymPart = (symbol_part) thatRhs;
-          var thatSym = thatSymPart.the_symbol();
-          if (singleSym != null && !singleSym.equals(thatSym)) break;
-          singleSym = thatSym;
-          hasSelfSingle = true;
-        } else {
-          singleSym = null;
+        }
+        singleSym = sym;
+      } else if (prod.rhs_length() == 2) {
+        var selfRhs = prod.rhs(0);
+        var thatRhs = prod.rhs(1);
+        if (
+                !isSelfProduction(selfRhs) || isSelfProduction(thatRhs) ||
+                        selfRhs.label() != null || thatRhs.is_action() || thatRhs.label() == null
+        ) {
           break;
         }
+        var thatSymPart = (symbol_part) thatRhs;
+        var thatSym = thatSymPart.the_symbol();
+        if (singleSym != null && !singleSym.equals(thatSym)) break;
+        singleSym = thatSym;
+        hasSelfSingle = true;
+      } else {
+        singleSym = null;
+        break;
       }
-    } catch (internal_error ignored) { }
-    boolean result = singleSym != null && hasSelfSingle && ((productionsLength == 2) != hasEmpty);
-    _isListExpr = result;
-    return result;
+    }
+    if (singleSym == null || !hasSelfSingle || ((productionsLength == 3) && !hasEmpty)) {
+      throw new internal_error("Invalid list production: " + this);
+    }
+    _isListExpr = true;
+    return true;
   }
 
   private boolean isSelfProduction(production_part rhs) {

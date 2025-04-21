@@ -1,17 +1,20 @@
 package java_cup;
 
-import java.util.function.Supplier;
-
+/**
+ * A container that lazily evaluates its value.
+ * @param <T> The type of the value.
+ * @author kmar
+ */
 public class LazyContainer<T> {
 
   private T value = null;
-  private Supplier<T> supplier;
+  private CheckedSupplier<T> supplier;
 
-  LazyContainer(Supplier<T> supplier) {
+  LazyContainer(CheckedSupplier<T> supplier) {
     this.supplier = supplier;
   }
 
-  T get() {
+  T get() throws internal_error {
     if (value == null) {
       value = supplier.get();
       if (value == null) {
