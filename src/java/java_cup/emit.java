@@ -1056,7 +1056,6 @@ public class emit {
       PrintWriter out = new PrintWriter(writer)
     ) {
       emit_package(out);
-      out.println();
       out.println("import java.util.*;");
       out.println("import java_cup.runtime.IAstNode;");
       out.println();
