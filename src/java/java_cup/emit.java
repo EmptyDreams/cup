@@ -1079,7 +1079,9 @@ public class emit {
                      "[" + type + ", " + oldType + "]."
             );
           }
-          out.println("  private " + type + " _" + label + " = null;");
+          if (oldType == null) {
+            out.println("  private " + type + " _" + label + " = null;");
+          }
         }
       }
       out.println();
