@@ -71,10 +71,18 @@ public abstract class symbol {
     return _stack_type;
   }
 
-  public String astClassName() {
+  public String astClassName() throws internal_error {
     String type = stack_type();
-    if ("AstNode".equals(type)) {
-      type = symbol.getNodeClassName(name());
+    switch (type) {
+      case "IAstNode":
+        return symbol.getNodeClassName(name());
+      case "List":
+        if (is_non_term()) {
+          var symbol = (non_terminal) this;
+          String itemType = symbol.getListItemType();
+          if (itemType != null) return "List<" + itemType + '>';
+        }
+        break;
     }
     return type;
   }

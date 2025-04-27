@@ -149,64 +149,75 @@ public class production {
             actionBuilder.append("\t\tRESULT = Empty.instance;\n");
           }
         } else if (lhs_sym.isListExpr()) {
-          switch (_rhs_length) {
-            case 1: {
-              symbol_part part = (symbol_part) _rhs[0];
-              symbol sym = part.the_symbol();
-              String className = symbol.getNodeClassName(sym.name());
-              actionBuilder.append("\t\tList<")
-                      .append(className)
-                      .append("> flattenList = new ArrayList<>();\n")
-                      .append("\t\tflattenList.add((")
-                      .append(className)
-                      .append(") ")
-                      .append(part.label())
-                      .append(");\n");
-              break;
+          if (_rhs_length == 1) {
+            symbol_part part = (symbol_part) _rhs[0];
+            symbol sym = part.the_symbol();
+            String className = symbol.getNodeClassName(sym.name());
+            actionBuilder.append("\t\tList<")
+                    .append(className)
+                    .append("> flattenList = new ArrayList<>();\n")
+                    .append("\t\tflattenList.add((")
+                    .append(className)
+                    .append(") ")
+                    .append(part.label())
+                    .append(");\n");
+          } else {
+            symbol_part itemPart = null;
+            int selfIndex = -1;
+            for (int k = 0; k < _rhs_length; k++) {
+              var rhs = _rhs[k];
+              var label = rhs.label();
+              if (label != null) {
+                itemPart = (symbol_part) rhs;
+              } else if (lhs_sym.isSelfProduction(rhs)) {
+                selfIndex = k;
+              }
             }
-            case 2: {
-              symbol_part itemPart = (symbol_part) _rhs[1];
-              String className = symbol.getNodeClassName(itemPart.the_symbol().name());
-              actionBuilder.append("\t\tList<")
-                      .append(className)
-                      .append("> flattenList = ")
-                      .append(emit.pre("stack"))
-                      .append(".elementAt(")
-                      .append(emit.pre("top"))
-                      .append(" - 1).value();\n")
-                      .append("\t\tflattenList.add((")
-                      .append(className)
-                      .append(") ")
-                      .append(itemPart.label())
-                      .append(");\n");
-              break;
-            }
-            default:
-              throw new AssertionError("Unreachable code");
+            assert itemPart != null;  // must not null
+            String className = symbol.getNodeClassName(itemPart.the_symbol().name());
+            actionBuilder.append("\t\tList<")
+                    .append(className)
+                    .append("> flattenList = ")
+                    .append(emit.pre("stack"))
+                    .append(".elementAt(")
+                    .append(emit.pre("top"))
+                    .append(" - ")
+                    .append(_rhs_length - 1 - selfIndex)
+                    .append(").value();\n")
+                    .append("\t\tflattenList.add((")
+                    .append(className)
+                    .append(") ")
+                    .append(itemPart.label())
+                    .append(");\n");
           }
           actionBuilder.append("\t\tRESULT = flattenList;");
         } else {
           String className = symbol.getNodeClassName(lhs_sym.name());
-          actionBuilder.append("\t\tRESULT = new ")
+          String nodeName = emit.pre("treeNode");
+          actionBuilder.append("\t\t")
             .append(className)
-            .append('(');
-          boolean isFirst = true;
+            .append(' ')
+            .append(nodeName)
+            .append(" = new ")
+            .append(className)
+            .append("();\n");
           for (int k = 0; k < _rhs_length; k++) {
             var item = _rhs[k];
             if (item.is_action()) continue;
             var symbolPart = (symbol_part) item;
             var label = symbolPart.label();
             if (label != null) {
-              if (isFirst) isFirst = false;
-              else actionBuilder.append(", ");
-              var type = symbolPart.the_symbol().astClassName();
-              actionBuilder.append('(')
-                      .append(type)
-                      .append(") ")
-                      .append(label);
+              actionBuilder.append("\t\t").append(nodeName).append(".set");
+              if (Character.isLowerCase(label.charAt(0))) {
+                actionBuilder.append(Character.toUpperCase(label.charAt(0)))
+                  .append(label, 1, label.length());
+              } else {
+                actionBuilder.append(label);
+              }
+              actionBuilder.append('(').append(label).append(");\n");
             }
           }
-          actionBuilder.append(");");
+          actionBuilder.append("\t\tRESULT = ").append(nodeName).append(';');
         }
       }
       /* stash the action */

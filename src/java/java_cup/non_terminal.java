@@ -252,66 +252,111 @@ public class non_terminal extends symbol {
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-  private Boolean _isListExpr = null;
+  private String _listItemType = null;
 
+  /**
+   * Get the type of non-terminals or terminals in the list.
+   * @return <code>null</code> if the node is not a valid list expression.
+   * @throws internal_error if the non-terminal ends with the suffix specified by the <code>ast_flatten</code> parameter,
+   *                        but is not a valid list expression
+   */
+  public String getListItemType() throws internal_error {
+    return isListExpr() ? _listItemType : null;
+  }
+
+  /**
+   * Check if a non-terminal is a valid list expression.
+   * @throws internal_error if the non-terminal ends with the suffix specified by the <code>ast_flatten</code> parameter,
+   *                        but is not a valid list expression
+   */
   public boolean isListExpr() throws internal_error {
-    if (_isListExpr != null) return _isListExpr;
+    if (_listItemType != null) return !_listItemType.isEmpty();
     var suffix = Main.ast_list_suffix;
     String name = _name;
     if (suffix == null || name.length() <= suffix.length() || !name.endsWith(suffix)) {
-      _isListExpr = false;
+      _listItemType = "";
       return false;
     }
     int productionsLength = num_productions();
-    if (productionsLength != 3 && productionsLength != 2) {
-      throw new internal_error("The list expr must have 2 or 3 productions: " + this);
+    if (productionsLength < 2) {
+      throw new internal_error("The list expr contains at least two productions: " + this);
     }
+    String singleLabel = null;
     symbol singleSym = null;
     boolean hasSelfSingle = false;
     boolean hasEmpty = false;
     for (production prod : productions()) {
       if (prod.rhs_length() == 0) {
+        if (hasEmpty) {
+          throw new internal_error("The list expr cannot have two empty productions: " + this);
+        }
         hasEmpty = true;
       } else if (prod.rhs_length() == 1) {
         var rhs = prod.rhs(0);
-        if (isSelfProduction(rhs) || rhs.label() == null) break;
+        var label = rhs.label();
+        if (isSelfProduction(rhs) || label == null) {
+          throw new internal_error(
+            "A list expression cannot have a production that contains only itself, " +
+            "and a production that has only one symbol must contain label: " + this
+          );
+        }
         var symPart = (symbol_part) rhs;
         var sym = symPart.the_symbol();
-        if (singleSym != null) {
-          if (!hasSelfSingle) break;
-          if (!singleSym.equals(sym)) {
-            singleSym = null;
-            break;
-          }
+        if (singleSym != null && (!singleSym.equals(sym) || !label.equals(singleLabel))) {
+          throw new internal_error("Only one label is allowed in a list expression: " + this);
         }
         singleSym = sym;
-      } else if (prod.rhs_length() == 2) {
-        var selfRhs = prod.rhs(0);
-        var thatRhs = prod.rhs(1);
-        if (
-                !isSelfProduction(selfRhs) || isSelfProduction(thatRhs) ||
-                        selfRhs.label() != null || thatRhs.is_action() || thatRhs.label() == null
-        ) {
-          break;
-        }
-        var thatSymPart = (symbol_part) thatRhs;
-        var thatSym = thatSymPart.the_symbol();
-        if (singleSym != null && !singleSym.equals(thatSym)) break;
-        singleSym = thatSym;
-        hasSelfSingle = true;
+        singleLabel = label;
       } else {
-        singleSym = null;
-        break;
+        boolean hasSelf = false;
+        boolean hasItem = false;
+        for (int i = 0; i < prod.rhs_length(); i++) {
+          var rhs = prod.rhs(i);
+          var label = rhs.label();
+          if (label != null) {
+            if (hasItem) {
+              throw new internal_error(
+                "A list expression's production containing multiple symbols can include only one element node: " + this
+              );
+            }
+            var sym = ((symbol_part) rhs).the_symbol();
+            if (singleSym != null) {
+              if (!label.equals(singleLabel) || !singleSym.equals(sym)) {
+                throw new internal_error("A list expression may contain only one type of element node: " + this);
+              }
+            } else {
+              singleSym = sym;
+              singleLabel = label;
+            }
+            hasItem = true;
+          } else if (isSelfProduction(rhs)) {
+            if (hasSelf) {
+              throw new internal_error(
+                "A list expression's production containing multiple symbols can include only one self node: " + this
+              );
+            }
+            hasSelf = true;
+          }
+        }
+        if (!hasSelf || !hasItem) {
+          throw new internal_error(
+            "A list expression's production containing multiple symbols must contain both a self node and an element node: " + this
+          );
+        }
+        hasSelfSingle = true;
       }
     }
-    if (singleSym == null || !hasSelfSingle || ((productionsLength == 3) && !hasEmpty)) {
-      throw new internal_error("Invalid list production: " + this);
+    if (singleSym == null) {
+      throw new internal_error("A list expression must include exactly one element node: " + this);
     }
-    _isListExpr = true;
+    if (!hasSelfSingle) {
+      throw new internal_error("A list expression must include exactly self node: " + this);
+    }
+    _listItemType = singleSym.astClassName();
     return true;
   }
 
-  private boolean isSelfProduction(production_part rhs) {
+  protected boolean isSelfProduction(production_part rhs) {
     if (rhs.is_action()) return false;
     return this.equals(((symbol_part) rhs).the_symbol());
   }

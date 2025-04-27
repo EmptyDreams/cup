@@ -443,7 +443,7 @@ public class emit {
 
         /* give them their own block to work in */
         out.println("            {");
-        out.println("              String name = \"" + prod.lhs().the_symbol().name() + "\";");
+        out.println("              String " + pre("name") + " = \"" + prod.lhs().the_symbol().name() + "\";");
 
         /*
           TUM 20060608 intermediate result patch
@@ -522,12 +522,12 @@ public class emit {
             loffset = prod.rhs_length() - 1;
             leftstring = emit.pre("stack") + ((loffset == 0) ? (".peek()") : (".elementAt(" + emit.pre("top") + "-" + loffset + ")"));
           }
-          out.println("              " + pre("result") + " = parser.getSymbolFactory().newSymbol(name, "
-                  + prod.lhs().the_symbol().index() + ", " + leftstring
-              + ((prod.rhs_length() == 0) ? ("") : (", " + rightstring)) + ", RESULT);");
+          out.println("              " + pre("result") + " = parser.getSymbolFactory().newSymbol("
+            + pre("name") + ", " + prod.lhs().the_symbol().index() + ", " + leftstring
+            + ((prod.rhs_length() == 0) ? ("") : (", " + rightstring)) + ", RESULT);");
         } else {
-          out.println("              " + pre("result") + " = parser.getSymbolFactory().newSymbol(name, "
-                  + prod.lhs().the_symbol().index() + ", RESULT);");
+          out.println("              " + pre("result") + " = parser.getSymbolFactory().newSymbol("
+            + pre("name") + ", " + prod.lhs().the_symbol().index() + ", RESULT);");
         }
 
         /* end of their block */
@@ -1042,15 +1042,10 @@ public class emit {
   }
 
   public static void node_classes(File dir) throws internal_error, IOException {
-    try (
-      BufferedWriter writer = Files.newBufferedWriter(new File(dir, "AstNode.java").toPath());
-      PrintWriter out = new PrintWriter(writer)
-    ) {
-      emit_package(out);
-      out.println("public interface AstNode { }");
-    }
     for (non_terminal nt : non_terminal.all()) {
-      node_class(dir, nt);
+      if (!nt.isListExpr()) {
+        node_class(dir, nt);
+      }
     }
   }
 
@@ -1063,13 +1058,11 @@ public class emit {
       emit_package(out);
       out.println();
       out.println("import java.util.*;");
+      out.println("import java_cup.runtime.IAstNode;");
       out.println();
-      out.println("public class " + className + " implements AstNode {");
+      out.println("public class " + className + " implements IAstNode {");
       out.println();
       Map<String, String> map = new LinkedHashMap<>();
-      Set<String> signatures = new HashSet<>();
-      ArrayList<String> labels = new ArrayList<>();
-      ArrayList<String> types = new ArrayList<>();
       for (production production : nt.productions()) {
         int length = production.rhs_length();
         for (int i = 0; i < length; i++) {
@@ -1087,44 +1080,24 @@ public class emit {
                      "[" + type + ", " + oldType + "]."
             );
           }
-          labels.add(label);
-          types.add(type);
+          out.println("  private " + type + " _" + label + " = null;");
         }
-        int labelSize = labels.size();
-        String signature = labels + "|" + types;
-        if (signatures.add(signature)) {
-          out.println("    public " + className + "(");
-          for (int i = 0; i < labelSize; i++) {
-            out.print("        " + types.get(i) + " _" + labels.get(i));
-            if (i < labelSize - 1) {
-              out.print(", ");
-            }
-            out.println();
-          }
-          out.println("    ) {");
-          for (int i = 0; i < labelSize; i++) {
-            out.println("        this._" + labels.get(i) + " = _" + labels.get(i) + ';');
-          }
-          out.println("    }");
-          out.println();
-        }
-        labels.clear();
-        types.clear();
       }
-      map.forEach(
-        (label, type) -> {
-          out.println("    private " + type + " _" + label + " = null;");
+      out.println();
+      map.forEach((label, type) -> {
+          String varName;
           if (Character.isLowerCase(label.charAt(0))) {
-            out.print("    public " + type + " get" + Character.toUpperCase(label.charAt(0)));
-            for (int k = 1; k < label.length(); k++) {
-              out.print(label.charAt(k));
-            }
-            out.println("() {");
+            varName = Character.toUpperCase(label.charAt(0)) + label.substring(1);
           } else {
-            out.println("    public " + type + " get" + label + "() {");
+            varName = label;
           }
-          out.println("        return _" + label + ";");
-          out.println("    }");
+          out.println("  public " + type + " get" + varName + "() {");
+          out.println("    return _" + label + ';');
+          out.println("  }");
+          out.println();
+          out.println("  public void set" + varName + "(" + type + " _" + label + ") {");
+          out.println("    this._" + label + " = _" + label + ';');
+          out.println("  }");
           out.println();
         }
       );
