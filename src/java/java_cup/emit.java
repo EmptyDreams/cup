@@ -1077,6 +1077,7 @@ public class emit {
       out.println("public class " + className + " implements IAstNode {");
       out.println();
       Map<String, String> map = new LinkedHashMap<>();
+      Map<String, symbol> boolFlagMap = new HashMap<>();
       for (production production : nt.productions()) {
         int length = production.rhs_length();
         for (int i = 0; i < length; i++) {
@@ -1085,7 +1086,8 @@ public class emit {
           if (label == null || part.is_action()) continue;
           symbol_part sp = (symbol_part) part;
           symbol sym = sp.the_symbol();
-          String type = isExistenceVar(label) ? "" : sym.astClassName();
+          boolean isExistenceVar = isExistenceVar(label);
+          String type = isExistenceVar ? "" : sym.astClassName();
           String oldType = map.put(label, type);
           if (oldType != null && !oldType.equals(type)) {
             throw new internal_error(
@@ -1093,6 +1095,16 @@ public class emit {
                      "but label[" + label + "] in nt[" + nt.name() + "] has two or more types" +
                      "[" + type + ", " + oldType + "]."
             );
+          }
+          if (isExistenceVar) {
+            symbol oldBoolFlag = boolFlagMap.put(label, sym);
+            if (oldBoolFlag != null && oldBoolFlag != sym) {
+              throw new internal_error(
+                "The same label is only allowed to have one type," +
+                       "but label[" + label + "] in nt[" + nt.name() + "] has two or more types" +
+                       "[" + sym.name() + ", " + oldBoolFlag.name() + "]."
+              );
+            }
           }
           if (oldType == null) {
             if (type.isEmpty()) {
