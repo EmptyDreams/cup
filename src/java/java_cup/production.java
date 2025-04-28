@@ -206,16 +206,21 @@ public class production {
             if (item.is_action()) continue;
             var symbolPart = (symbol_part) item;
             var label = symbolPart.label();
-            if (label != null) {
-              actionBuilder.append("\t\t").append(nodeName).append(".set");
-              if (Character.isLowerCase(label.charAt(0))) {
-                actionBuilder.append(Character.toUpperCase(label.charAt(0)))
-                  .append(label, 1, label.length());
-              } else {
-                actionBuilder.append(label);
-              }
-              actionBuilder.append('(').append(label).append(");\n");
+            if (label == null) continue;
+            actionBuilder.append("\t\t").append(nodeName).append(".set");
+            if (Character.isLowerCase(label.charAt(0))) {
+              actionBuilder.append(Character.toUpperCase(label.charAt(0)))
+                .append(label, 1, label.length());
+            } else {
+              actionBuilder.append(label);
             }
+            actionBuilder.append('(');
+            if (emit.isExistenceVar(label)) {
+              actionBuilder.append("true");
+            } else {
+              actionBuilder.append(label);
+            }
+            actionBuilder.append(");\n");
           }
           actionBuilder.append("\t\tRESULT = ").append(nodeName).append(';');
         }
@@ -528,6 +533,7 @@ public class production {
         String label;
         /* if it has a label, make declaration! */
         if ((label = part.label()) != null || emit._xmlactions) {
+          if (label != null && emit.isExistenceVar(label)) continue;
           if (label == null)
             label = part.the_symbol().name() + pos;
           declaration.append(make_declaration(label, part.the_symbol().stack_type(), rhs_len - pos - 1));

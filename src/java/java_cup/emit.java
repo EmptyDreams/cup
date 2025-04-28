@@ -281,6 +281,21 @@ public class emit {
   }
 
   /**
+   * This function analyzes the label name to determine if it follows common naming patterns
+   * for boolean flags that represent whether a symbol exists (e.g., "isXxx", "is0", "is_xxx").
+   *
+   * @param label The name of the label to check.
+   */
+  protected static boolean isExistenceVar(String label) {
+    if (label.length() < 3 || !label.startsWith("is")) return false;
+    char third = label.charAt(2);
+    if (third == '_') {
+      return label.length() != 3;
+    }
+    return Character.isUpperCase(third) || Character.isDigit(third);
+  }
+
+  /**
    * TUM changes; proposed by Henning Niss 20050628 Build a string with the
    * specified type arguments, if present, otherwise an empty string.
    */
@@ -1070,7 +1085,7 @@ public class emit {
           if (label == null || part.is_action()) continue;
           symbol_part sp = (symbol_part) part;
           symbol sym = sp.the_symbol();
-          String type = sym.astClassName();
+          String type = isExistenceVar(label) ? "" : sym.astClassName();
           String oldType = map.put(label, type);
           if (oldType != null && !oldType.equals(type)) {
             throw new internal_error(
@@ -1080,28 +1095,39 @@ public class emit {
             );
           }
           if (oldType == null) {
-            out.println("  private " + type + " _" + label + " = null;");
+            if (type.isEmpty()) {
+              out.println("  private boolean _" + label + " = false;");
+            } else {
+              out.println("  private " + type + " _" + label + ';');
+            }
           }
         }
       }
       out.println();
       map.forEach((label, type) -> {
-          String varName;
+        String varName = null;
+        if (type.isEmpty()) {
+          out.println("  public boolean " + label + "() {");
+        } else {
           if (Character.isLowerCase(label.charAt(0))) {
             varName = Character.toUpperCase(label.charAt(0)) + label.substring(1);
           } else {
             varName = label;
           }
           out.println("  public " + type + " get" + varName + "() {");
-          out.println("    return _" + label + ';');
-          out.println("  }");
-          out.println();
-          out.println("  public void set" + varName + "(" + type + " _" + label + ") {");
-          out.println("    this._" + label + " = _" + label + ';');
-          out.println("  }");
-          out.println();
         }
-      );
+        out.println("    return _" + label + ';');
+        out.println("  }");
+        out.println();
+        if (type.isEmpty()) {
+          out.println("  public void " + label + "(boolean _" + label + ") {");
+        } else {
+          out.println("  public void set" + varName + "(" + type + " _" + label + ") {");
+        }
+        out.println("    this._" + label + " = _" + label + ';');
+        out.println("  }");
+        out.println();
+      });
       out.println('}');
     }
   }
