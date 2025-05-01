@@ -142,53 +142,56 @@ public class production {
       actionBuilder.append("\t\t").append(tail_action.code_string());
     _action = new LazyContainer<>(() -> {
       if (Main.ast_format != null && tail_action == null) {
-        if (rhs_l == 0) {
+        if (isEmptyProduction()) {
           if (lhs_sym.isListExpr()) {
             actionBuilder.append("\t\tRESULT = Collections.emptyList();\n");
           } else {
             actionBuilder.append("\t\tRESULT = Empty.instance;\n");
           }
         } else if (lhs_sym.isListExpr()) {
-          if (_rhs_length == 1) {
-            symbol_part part = (symbol_part) _rhs[0];
-            symbol sym = part.the_symbol();
+          int selfIndex = -1;
+          for (int k = 0; k < _rhs_length; k++) {
+            var rhs = _rhs[k];
+            if (lhs_sym.isSelfProduction(rhs)) {
+              selfIndex = k;
+            }
+          }
+          var onlyLabelPart = getOnlyLabelPart();
+          if (onlyLabelPart == null) {
+            actionBuilder.append("\t\tList flattenList = ")
+              .append(emit.pre("stack"))
+              .append(".elementAt(")
+              .append(emit.pre("top"))
+              .append(" - ")
+              .append(_rhs_length - 1 - selfIndex)
+              .append(").value();\n");
+          } else if (selfIndex == -1) {
+            symbol sym = onlyLabelPart.the_symbol();
             String className = symbol.getNodeClassName(sym.name());
             actionBuilder.append("\t\tList<")
-                    .append(className)
-                    .append("> flattenList = new ArrayList<>();\n")
-                    .append("\t\tflattenList.add((")
-                    .append(className)
-                    .append(") ")
-                    .append(part.label())
-                    .append(");\n");
+              .append(className)
+              .append("> flattenList = new ArrayList<>();\n")
+              .append("\t\tflattenList.add((")
+              .append(className)
+              .append(") ")
+              .append(onlyLabelPart.label())
+              .append(");\n");
           } else {
-            symbol_part itemPart = null;
-            int selfIndex = -1;
-            for (int k = 0; k < _rhs_length; k++) {
-              var rhs = _rhs[k];
-              var label = rhs.label();
-              if (label != null) {
-                itemPart = (symbol_part) rhs;
-              } else if (lhs_sym.isSelfProduction(rhs)) {
-                selfIndex = k;
-              }
-            }
-            assert itemPart != null;  // must not null
-            String className = symbol.getNodeClassName(itemPart.the_symbol().name());
+            String className = symbol.getNodeClassName(onlyLabelPart.the_symbol().name());
             actionBuilder.append("\t\tList<")
-                    .append(className)
-                    .append("> flattenList = ")
-                    .append(emit.pre("stack"))
-                    .append(".elementAt(")
-                    .append(emit.pre("top"))
-                    .append(" - ")
-                    .append(_rhs_length - 1 - selfIndex)
-                    .append(").value();\n")
-                    .append("\t\tflattenList.add((")
-                    .append(className)
-                    .append(") ")
-                    .append(itemPart.label())
-                    .append(");\n");
+              .append(className)
+              .append("> flattenList = ")
+              .append(emit.pre("stack"))
+              .append(".elementAt(")
+              .append(emit.pre("top"))
+              .append(" - ")
+              .append(_rhs_length - 1 - selfIndex)
+              .append(").value();\n")
+              .append("\t\tflattenList.add((")
+              .append(className)
+              .append(") ")
+              .append(onlyLabelPart.label())
+              .append(");\n");
           }
           actionBuilder.append("\t\tRESULT = flattenList;");
         } else {
@@ -214,7 +217,12 @@ public class production {
             } else {
               actionBuilder.append(label);
             }
-            actionBuilder.append('(');
+            var sym = symbolPart.the_symbol();
+            var symType = sym.stack_type();
+            if ("IAstNode".equals(symType) || "List".equals(symType))
+              actionBuilder.append("((").append(symbolPart.the_symbol().astClassName()).append(") ");
+            else
+              actionBuilder.append('(');
             if (emit.isExistenceVar(label)) {
               actionBuilder.append("true");
             } else {
@@ -240,6 +248,21 @@ public class production {
 
     /* put us in the production list of the lhs non terminal */
     lhs_sym.add_production(this);
+  }
+
+  /**
+   * Get the only label of the production.
+   * @return Return null when the number of labels is not equal to 1.
+   */
+  private symbol_part getOnlyLabelPart() {
+    symbol_part sym = null;
+    for (production_part part : _rhs) {
+      if (part.label() != null && !part.is_action()) {
+        if (sym != null) return null;
+        sym = (symbol_part) part;
+      }
+    }
+    return sym;
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */

@@ -323,11 +323,6 @@ public class non_terminal extends symbol {
             hasSelf = true;
           }
         }
-        if (!hasItem) {
-          throw new internal_error(
-            "A list expression's production containing multiple symbols must contain an element node: " + this
-          );
-        }
       }
     }
     if (singleSym == null) {

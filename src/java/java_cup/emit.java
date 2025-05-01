@@ -1058,7 +1058,7 @@ public class emit {
 
   public static void node_classes(File dir) throws internal_error, IOException {
     for (non_terminal nt : non_terminal.all()) {
-      if (!nt.isListExpr()) {
+      if (!nt.isListExpr() && !nt.isEmptySymbol()) {
         node_class(dir, nt);
       }
     }
