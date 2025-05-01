@@ -1117,22 +1117,22 @@ public class emit {
       }
       out.println();
       map.forEach((label, type) -> {
-        String varName = null;
+        String varName;
+        if (Character.isLowerCase(label.charAt(0))) {
+          varName = Character.toUpperCase(label.charAt(0)) + label.substring(1);
+        } else {
+          varName = label;
+        }
         if (type.isEmpty()) {
           out.println("  public boolean " + label + "() {");
         } else {
-          if (Character.isLowerCase(label.charAt(0))) {
-            varName = Character.toUpperCase(label.charAt(0)) + label.substring(1);
-          } else {
-            varName = label;
-          }
           out.println("  public " + type + " get" + varName + "() {");
         }
         out.println("    return _" + label + ';');
         out.println("  }");
         out.println();
         if (type.isEmpty()) {
-          out.println("  public void " + label + "(boolean _" + label + ") {");
+          out.println("  public void set" + varName + "(boolean _" + label + ") {");
         } else {
           out.println("  public void set" + varName + "(" + type + " _" + label + ") {");
         }
