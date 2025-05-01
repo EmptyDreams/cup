@@ -762,6 +762,25 @@ public class production {
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
+  /**
+   * Check to see if the production is an empty production.
+   */
+  public boolean isEmptyProduction() {
+    int length = rhs_length();
+    if (length == 0) return true;
+    if (length != 1) return false;
+    production_part rhs = null;
+    try {
+      rhs = rhs(0);
+    } catch (internal_error ignored) { }
+    if (rhs == null || rhs.is_action()) return false;
+    var symbolPart = (symbol_part) rhs;
+    var sym = symbolPart.the_symbol();
+    return sym.is_non_term() && ((non_terminal) sym).isEmptySymbol();
+  }
+
+  /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+
   /** Equality comparison. */
   public boolean equals(production other) {
     if (other == null)

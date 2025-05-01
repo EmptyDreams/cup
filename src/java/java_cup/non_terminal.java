@@ -285,7 +285,7 @@ public class non_terminal extends symbol {
     symbol singleSym = null;
     boolean hasEmpty = false;
     for (production prod : productions()) {
-      if (prod.rhs_length() == 0) {
+      if (prod.isEmptyProduction()) {
         if (hasEmpty) {
           throw new internal_error("The list expr cannot have two empty productions: " + this);
         }
@@ -340,6 +340,15 @@ public class non_terminal extends symbol {
   protected boolean isSelfProduction(production_part rhs) {
     if (rhs.is_action()) return false;
     return this.equals(((symbol_part) rhs).the_symbol());
+  }
+
+  /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+
+  /**
+   * Check if a non-terminal is an empty symbol.
+   */
+  public boolean isEmptySymbol() {
+    return num_productions() == 1 && productions().iterator().next()._rhs_length == 0;
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
