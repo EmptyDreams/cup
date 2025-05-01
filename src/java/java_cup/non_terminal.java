@@ -283,7 +283,6 @@ public class non_terminal extends symbol {
     }
     String singleLabel = null;
     symbol singleSym = null;
-    boolean hasSelfSingle = false;
     boolean hasEmpty = false;
     for (production prod : productions()) {
       if (prod.rhs_length() == 0) {
@@ -291,22 +290,6 @@ public class non_terminal extends symbol {
           throw new internal_error("The list expr cannot have two empty productions: " + this);
         }
         hasEmpty = true;
-      } else if (prod.rhs_length() == 1) {
-        var rhs = prod.rhs(0);
-        var label = rhs.label();
-        if (isSelfProduction(rhs) || label == null) {
-          throw new internal_error(
-            "A list expression cannot have a production that contains only itself, " +
-            "and a production that has only one symbol must contain label: " + this
-          );
-        }
-        var symPart = (symbol_part) rhs;
-        var sym = symPart.the_symbol();
-        if (singleSym != null && (!singleSym.equals(sym) || !label.equals(singleLabel))) {
-          throw new internal_error("Only one label is allowed in a list expression: " + this);
-        }
-        singleSym = sym;
-        singleLabel = label;
       } else {
         boolean hasSelf = false;
         boolean hasItem = false;
@@ -316,7 +299,8 @@ public class non_terminal extends symbol {
           if (label != null) {
             if (hasItem) {
               throw new internal_error(
-                "A list expression's production containing multiple symbols can include only one element node: " + this
+                "A list expression's production containing multiple symbols " +
+                "can include only one element node: " + this
               );
             }
             var sym = ((symbol_part) rhs).the_symbol();
@@ -332,25 +316,22 @@ public class non_terminal extends symbol {
           } else if (isSelfProduction(rhs)) {
             if (hasSelf) {
               throw new internal_error(
-                "A list expression's production containing multiple symbols can include only one self node: " + this
+                "A list expression's production containing multiple symbols " +
+                "can include only one self node: " + this
               );
             }
             hasSelf = true;
           }
         }
-        if (!hasSelf || !hasItem) {
+        if (!hasItem) {
           throw new internal_error(
-            "A list expression's production containing multiple symbols must contain both a self node and an element node: " + this
+            "A list expression's production containing multiple symbols must contain an element node: " + this
           );
         }
-        hasSelfSingle = true;
       }
     }
     if (singleSym == null) {
       throw new internal_error("A list expression must include exactly one element node: " + this);
-    }
-    if (!hasSelfSingle) {
-      throw new internal_error("A list expression must include exactly self node: " + this);
     }
     _listItemType = singleSym.astClassName();
     return true;
