@@ -223,9 +223,7 @@ public class production {
               actionBuilder.append("((").append(symbolPart.the_symbol().astClassName()).append(") ");
             else
               actionBuilder.append('(');
-            if (emit.isExistenceVar(label)) {
-              actionBuilder.append("true");
-            } else {
+            if (!emit.isExistenceVar(label)) {
               actionBuilder.append(label);
             }
             actionBuilder.append(");\n");

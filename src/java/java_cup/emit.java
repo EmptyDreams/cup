@@ -1076,10 +1076,14 @@ public class emit {
       out.println();
       out.println("public class " + className + " implements IAstNode {");
       out.println();
-      Map<String, String> map = new LinkedHashMap<>();
+      Map<String, String> map = new HashMap<>();
       Map<String, symbol> boolFlagMap = new HashMap<>();
+      List<List<String>> states = new ArrayList<>(nt.num_productions());
       for (production production : nt.productions()) {
         int length = production.rhs_length();
+        if (length == 0) continue;
+        List<String> state = new ArrayList<>((length + 1) / 2);
+        states.add(state);
         for (int i = 0; i < length; i++) {
           production_part part = production.rhs(i);
           String label = part.label();
@@ -1105,41 +1109,67 @@ public class emit {
                        "[" + sym.name() + ", " + oldBoolFlag.name() + "]."
               );
             }
-          }
-          if (oldType == null) {
-            if (type.isEmpty()) {
-              out.println("  private boolean _" + label + " = false;");
-            } else {
-              out.println("  private " + type + " _" + label + ';');
-            }
+          } else {
+            state.add(label);
           }
         }
       }
+      var bestAssignment = SymbolStateCompression.assignNumbers(states);
+      boolean isOnlyValue = bestAssignment.size() == 1;
+      boolean isOnlyMask = map.size() == 1;
+      if (!bestAssignment.isEmpty()) {
+        if (isOnlyValue) out.println("  private Object value = null;");
+        else out.println("  private final Object[] values = new Object[" + bestAssignment.size() + "];");
+      }
+      if (!map.isEmpty()) {
+        if (isOnlyMask) out.println("  private boolean validMask = false;");
+        else out.println("  private final BitSet validMask = new BitSet(" + map.size() + ");");
+      }
       out.println();
-      map.forEach((label, type) -> {
+      int index = 0;
+      for (Map.Entry<String, String> entry : map.entrySet()) {
+        String label = entry.getKey();
+        String type = entry.getValue();
+        Integer id = bestAssignment.get(label);
         String varName;
         if (Character.isLowerCase(label.charAt(0))) {
           varName = Character.toUpperCase(label.charAt(0)) + label.substring(1);
         } else {
           varName = label;
         }
+        if (!type.isEmpty()) {
+          // Generate getters for variables of non-marked existence types
+          out.println("  public " + type + " get" + varName + "() {");
+          out.println("    if (!has" + varName + "()) return null;");
+          if (isOnlyValue) out.println("    return (" + type + ") value;");
+          else out.println("    return (" + type + ") values[" + id + "];");
+          out.println("  }");
+          out.println();
+        }
+        // Generate setters for all types
+        if (type.isEmpty()) {
+          out.println("  public void set" + varName + "() {");
+        } else {
+          out.println("  public void set" + varName + "(" + type + " _" + label + ") {");
+          if (isOnlyValue) out.println("    value = _" + label + ';');
+          else out.println("    values[" + id + "] = _" + label + ';');
+        }
+        if (isOnlyMask) out.println("    validMask = true;");
+        else out.println("    validMask.set(" + index + ");");
+        out.println("  }");
+        out.println();
+        // Generate methods to check existence for all types
         if (type.isEmpty()) {
           out.println("  public boolean " + label + "() {");
         } else {
-          out.println("  public " + type + " get" + varName + "() {");
+          out.println("  public boolean has" + varName + "() {");
         }
-        out.println("    return _" + label + ';');
+        if (isOnlyMask) out.println("    return validMask;");
+        else out.println("    return validMask.get(" + index + ");");
         out.println("  }");
         out.println();
-        if (type.isEmpty()) {
-          out.println("  public void set" + varName + "(boolean _" + label + ") {");
-        } else {
-          out.println("  public void set" + varName + "(" + type + " _" + label + ") {");
-        }
-        out.println("    this._" + label + " = _" + label + ';');
-        out.println("  }");
-        out.println();
-      });
+        ++index;
+      }
       out.println('}');
     }
   }
