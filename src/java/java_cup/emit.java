@@ -1117,15 +1117,24 @@ public class emit {
       var bestAssignment = SymbolStateCompression.assignNumbers(states);
       boolean isOnlyValue = bestAssignment.size() == 1;
       boolean isOnlyMask = map.size() == 1;
+      boolean noMask = map.size() == bestAssignment.size();
       if (!bestAssignment.isEmpty()) {
         if (isOnlyValue) out.println("  private Object value = null;");
         else out.println("  private final Object[] values = new Object[" + bestAssignment.size() + "];");
       }
-      if (!map.isEmpty()) {
+      if (!map.isEmpty() && !noMask) {
         if (isOnlyMask) out.println("  private boolean validMask = false;");
         else out.println("  private final BitSet validMask = new BitSet(" + map.size() + ");");
       }
       out.println();
+      StringBuilder getterBuilder = new StringBuilder(256);
+      StringBuilder existsBuilder = new StringBuilder(256);
+      getterBuilder.append("  @Override\n")
+              .append("  public Object getByLabel(String label) {\n")
+              .append("    switch (label) {\n");
+      existsBuilder.append("  @Override\n")
+              .append("  public boolean hasLabel(String label) {\n")
+              .append("    switch (label) {\n");
       int index = 0;
       for (Map.Entry<String, String> entry : map.entrySet()) {
         String label = entry.getKey();
@@ -1137,10 +1146,31 @@ public class emit {
         } else {
           varName = label;
         }
+        // Generate getter and checker
+        if (type.isEmpty()) {
+          existsBuilder.append("      case \"")
+                  .append(label)
+                  .append("\": return ")
+                  .append(label)
+                  .append("();\n");
+        } else {
+          getterBuilder.append("      case \"")
+                  .append(label)
+                  .append("\": return get")
+                  .append(varName)
+                  .append("();\n");
+          existsBuilder.append("      case \"")
+                  .append(label)
+                  .append("\": return has")
+                  .append(varName)
+                  .append("();\n");
+        }
         if (!type.isEmpty()) {
           // Generate getters for variables of non-marked existence types
           out.println("  public " + type + " get" + varName + "() {");
-          out.println("    if (!has" + varName + "()) return null;");
+          if (!noMask) {
+            out.println("    if (!has" + varName + "()) return null;");
+          }
           if (isOnlyValue) out.println("    return (" + type + ") value;");
           else out.println("    return (" + type + ") values[" + id + "];");
           out.println("  }");
@@ -1148,28 +1178,43 @@ public class emit {
         }
         // Generate setters for all types
         if (type.isEmpty()) {
-          out.println("  public void set" + varName + "() {");
+          if (!noMask) {
+            out.println("  public void set" + varName + "() {");
+          }
         } else {
           out.println("  public void set" + varName + "(" + type + " _" + label + ") {");
           if (isOnlyValue) out.println("    value = _" + label + ';');
           else out.println("    values[" + id + "] = _" + label + ';');
         }
-        if (isOnlyMask) out.println("    validMask = true;");
-        else out.println("    validMask.set(" + index + ");");
-        out.println("  }");
-        out.println();
+        if (!noMask) {
+          if (isOnlyMask) out.println("    validMask = true;");
+          else out.println("    validMask.set(" + index + ");");
+        }
+        if (!noMask || !type.isEmpty()) {
+          out.println("  }");
+          out.println();
+        }
         // Generate methods to check existence for all types
         if (type.isEmpty()) {
           out.println("  public boolean " + label + "() {");
         } else {
           out.println("  public boolean has" + varName + "() {");
         }
-        if (isOnlyMask) out.println("    return validMask;");
-        else out.println("    return validMask.get(" + index + ");");
+        if (noMask) {
+          if (isOnlyValue) out.println("    return value != null;");
+          else out.println("    return values[" + id + "] != null;");
+        } else {
+          if (isOnlyMask) out.println("    return validMask;");
+          else out.println("    return validMask.get(" + index + ");");
+        }
         out.println("  }");
         out.println();
         ++index;
       }
+      getterBuilder.append("      default: return null;\n    }\n  }\n");
+      existsBuilder.append("      default: return false;\n    }\n  }\n");
+      out.println(getterBuilder);
+      out.println(existsBuilder);
       out.println('}');
     }
   }

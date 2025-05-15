@@ -12,4 +12,14 @@ public class Empty implements IAstNode {
 
     private Empty() { }
 
+    @Override
+    public boolean hasLabel(String label) {
+        return false;
+    }
+
+    @Override
+    public Object getByLabel(String label) {
+        return null;
+    }
+
 }
