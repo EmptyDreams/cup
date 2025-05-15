@@ -1214,7 +1214,7 @@ public class emit {
     for (production production : nt.productions()) {
       var hashName = production.getHashName();
       if (!record.add(hashName)) continue;
-      out.println("  public static " + className + ' ' + hashName + "(");
+      out.println("  static " + className + ' ' + hashName + "(");
       var map = production.getLabel2SymbolPartMap();
       boolean isFirst = true;
       for (var label : map.keySet()) {
@@ -1241,7 +1241,7 @@ public class emit {
           }
         }
       }
-      if (!flag.isEmpty()) {
+      if (!flag.isEmpty() && typeMap.size() != bestAssignment.size()) {
         if (typeMap.size() <= 32) {
           out.println("    result.validMask = " + flag.toLongArray()[0] + ';');
         } else {
