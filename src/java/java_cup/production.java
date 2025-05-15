@@ -1,6 +1,10 @@
 
 package java_cup;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
+
 /**
  * This class represents a production in the grammar. It contains a LHS non
  * terminal, and an array of RHS symbols. As various transformations are done on
@@ -142,11 +146,12 @@ public class production {
       actionBuilder.append("\t\t").append(tail_action.code_string());
     _action = new LazyContainer<>(() -> {
       if (Main.ast_format != null && tail_action == null) {
+        String indentation = "              ";
         if (isEmptyProduction()) {
           if (lhs_sym.isListExpr()) {
-            actionBuilder.append("\t\tRESULT = Collections.emptyList();\n");
+            actionBuilder.append(indentation).append("RESULT = Collections.emptyList();\n");
           } else {
-            actionBuilder.append("\t\tRESULT = Empty.instance;\n");
+            actionBuilder.append(indentation).append("RESULT = Empty.instance;\n");
           }
         } else if (lhs_sym.isListExpr()) {
           int selfIndex = -1;
@@ -158,7 +163,9 @@ public class production {
           }
           var onlyLabelPart = getOnlyLabelPart();
           if (onlyLabelPart == null) {
-            actionBuilder.append("\t\tList flattenList = ")
+            // List<xxx> flattenList = stack.elementAt(top - 1).value();
+            actionBuilder.append(indentation)
+              .append("List flattenList = ")
               .append(emit.pre("stack"))
               .append(".elementAt(")
               .append(emit.pre("top"))
@@ -168,67 +175,55 @@ public class production {
           } else if (selfIndex == -1) {
             symbol sym = onlyLabelPart.the_symbol();
             String className = symbol.getNodeClassName(sym.name());
-            actionBuilder.append("\t\tList<")
+            actionBuilder.append(indentation)
+              // List<xxx> flattenList = stack.elementAt(top - 1).value();
+              .append("List<")
               .append(className)
               .append("> flattenList = new ArrayList<>();\n")
-              .append("\t\tflattenList.add((")
+              // flattenList.add((xxx) label);
+              .append(indentation)
+              .append("flattenList.add((")
               .append(className)
               .append(") ")
               .append(onlyLabelPart.label())
               .append(");\n");
           } else {
             String className = symbol.getNodeClassName(onlyLabelPart.the_symbol().name());
-            actionBuilder.append("\t\tList<")
-              .append(className)
-              .append("> flattenList = ")
-              .append(emit.pre("stack"))
-              .append(".elementAt(")
-              .append(emit.pre("top"))
-              .append(" - ")
-              .append(_rhs_length - 1 - selfIndex)
+            actionBuilder.append(indentation)
+              // List<xxx> flattenList = stack.elementAt(top - 1).value();
+              .append("List<").append(className).append("> flattenList = ")
+              .append(emit.pre("stack")).append(".elementAt(")
+              .append(emit.pre("top")).append(" - ").append(_rhs_length - 1 - selfIndex)
               .append(").value();\n")
-              .append("\t\tflattenList.add((")
+              // flattenList.add((xxx) label);
+              .append(indentation)
+              .append("flattenList.add((")
               .append(className)
               .append(") ")
               .append(onlyLabelPart.label())
               .append(");\n");
           }
-          actionBuilder.append("\t\tRESULT = flattenList;");
+          actionBuilder.append(indentation).append("RESULT = flattenList;");
         } else {
           String className = symbol.getNodeClassName(lhs_sym.name());
           String nodeName = emit.pre("treeNode");
-          actionBuilder.append("\t\t")
-            .append(className)
-            .append(' ')
-            .append(nodeName)
-            .append(" = new ")
-            .append(className)
-            .append("();\n");
-          for (int k = 0; k < _rhs_length; k++) {
-            var item = _rhs[k];
-            if (item.is_action()) continue;
-            var symbolPart = (symbol_part) item;
-            var label = symbolPart.label();
-            if (label == null) continue;
-            actionBuilder.append("\t\t").append(nodeName).append(".set");
-            if (Character.isLowerCase(label.charAt(0))) {
-              actionBuilder.append(Character.toUpperCase(label.charAt(0)))
-                .append(label, 1, label.length());
-            } else {
-              actionBuilder.append(label);
-            }
-            var sym = symbolPart.the_symbol();
-            var symType = sym.stack_type();
-            if ("IAstNode".equals(symType) || "List".equals(symType))
-              actionBuilder.append("((").append(symbolPart.the_symbol().astClassName()).append(") ");
-            else
-              actionBuilder.append('(');
-            if (!emit.isExistenceVar(label)) {
-              actionBuilder.append(label);
-            }
-            actionBuilder.append(");\n");
+          // Xxx xxx = Xxx._xx(
+          actionBuilder.append(indentation)
+            .append(className).append(' ').append(nodeName).append(" = ")
+            .append(className).append('.').append(getHashName()).append("(\n");
+          boolean isFirst = true;
+          for (var entry : getLabel2SymbolPartMap().entrySet()) {
+            var label = entry.getKey();
+            if (emit.isExistenceVar(label)) continue;
+            var sym = entry.getValue().the_symbol();
+            if (isFirst) isFirst = false;
+            else actionBuilder.append(",\n");
+            // (xxx) label
+            actionBuilder.append(indentation).append("  ")
+              .append("(").append(sym.astClassName()).append(") ").append(label);
           }
-          actionBuilder.append("\t\tRESULT = ").append(nodeName).append(';');
+          actionBuilder.append('\n').append(indentation).append(");\n");
+          actionBuilder.append(indentation).append("RESULT = ").append(nodeName).append(';');
         }
       }
       /* stash the action */
@@ -261,6 +256,42 @@ public class production {
       }
     }
     return sym;
+  }
+
+  private String _hashName = null;
+
+  /**
+   * Get the hash name of the production.
+   */
+  public String getHashName() {
+    if (_hashName != null) return _hashName;
+    List<String> input = new LinkedList<>();
+    for (production_part part : _rhs) {
+      var label = part.label();
+      if (label != null) {
+        input.add(label);
+      }
+    }
+    _hashName = buildSignature(input);
+    return _hashName;
+  }
+
+  private static String buildSignature(List<String> input) {
+      try {
+          var digest = MessageDigest.getInstance("MD5");
+          String combined = String.join(",", input);
+          byte[] hashBytes = digest.digest(combined.getBytes());
+          var hexString = new StringBuilder(32 + 2 + 3);
+          hexString.append('_')
+                  .append(input.size() % 1000)
+                  .append('_');
+          for (byte b : hashBytes) {
+            hexString.append(String.format("%02x", b));
+          }
+          return hexString.toString();
+      } catch (NoSuchAlgorithmException e) {
+          throw new RuntimeException(e);
+      }
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -380,6 +411,35 @@ public class production {
       return _rhs[indx];
     else
       throw new internal_error("Index out of range for right hand side of production");
+  }
+
+  private Map<String, symbol_part> _labels;
+
+  /**
+   * Returns an unmodifiable map of labeled symbol parts in the production's right-hand side (RHS).
+   * The map is keyed by label strings and contains only non-action symbol parts.
+   * <p>
+   * The result is cached after first computation (lazy initialization) and subsequent calls
+   * return the cached unmodifiable map. This ensures labels are only processed once.
+   *
+   * @return An unmodifiable map where:
+   *         - Keys are String labels from production parts
+   *         - Values are the corresponding symbol_part objects
+   *         - Only includes parts with non-null labels that aren't actions
+   *         - Preserves insertion order
+   */
+  public Map<String, symbol_part> getLabel2SymbolPartMap() {
+    if (_labels == null) {
+      var labels = new LinkedHashMap<String, symbol_part>();
+      for (int i = 0; i < _rhs_length; i++) {
+        production_part part = _rhs[i];
+        if (part.label() != null && !part.is_action()) {
+          labels.put(part.label(), (symbol_part) part);
+        }
+      }
+      _labels = Collections.unmodifiableMap(labels);
+    }
+    return _labels;
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -508,27 +568,28 @@ public class production {
    */
   protected String make_declaration(String labelname, String stack_type, int offset) {
     String ret;
+    String indent = "              ";
 
     /* Put in the left/right value labels */
     if (emit.lr_values()) {
       if (!emit.locations())
-        ret = "\t\tint " + labelname + "left = (" + emit.pre("stack") +
+        ret = indent + "int " + labelname + "left = (" + emit.pre("stack") +
         // TUM 20050917
             ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ").left;\n"
-            + "\t\tint " + labelname + "right = (" + emit.pre("stack") +
+            + indent + "int " + labelname + "right = (" + emit.pre("stack") +
             ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ").right;\n";
       else
-        ret = "\t\tLocation " + labelname + "xleft = ((java_cup.runtime.ComplexSymbolFactory.ComplexSymbol)"
+        ret = indent + "Location " + labelname + "xleft = ((java_cup.runtime.ComplexSymbolFactory.ComplexSymbol)"
             + emit.pre("stack") +
             ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ").xleft;\n"
-            + "\t\tLocation " + labelname + "xright = ((java_cup.runtime.ComplexSymbolFactory.ComplexSymbol)"
+            + indent + "Location " + labelname + "xright = ((java_cup.runtime.ComplexSymbolFactory.ComplexSymbol)"
             + emit.pre("stack") +
             ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ").xright;\n";
     } else
       ret = "";
 
     /* otherwise, just declare label. */
-    return ret + "\t\t" + stack_type + " " + labelname + " = " + emit.pre("stack") +
+    return ret + indent + stack_type + " " + labelname + " = " + emit.pre("stack") +
         ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ".<"+stack_type+">value();\n";
 
   }

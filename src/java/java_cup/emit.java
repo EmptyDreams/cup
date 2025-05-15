@@ -1076,7 +1076,9 @@ public class emit {
       out.println();
       out.println("public class " + className + " implements IAstNode {");
       out.println();
-      Map<String, String> map = new HashMap<>();
+      int _index = 0;
+      Map<String, String> label2TypeMap = new HashMap<>();
+      Map<String, Integer> labelIndexMap = new HashMap<>();
       Map<String, symbol> boolFlagMap = new HashMap<>();
       List<List<String>> states = new ArrayList<>(nt.num_productions());
       for (production production : nt.productions()) {
@@ -1092,7 +1094,7 @@ public class emit {
           symbol sym = sp.the_symbol();
           boolean isExistenceVar = isExistenceVar(label);
           String type = isExistenceVar ? "" : sym.astClassName();
-          String oldType = map.put(label, type);
+          String oldType = label2TypeMap.put(label, type);
           if (oldType != null && !oldType.equals(type)) {
             throw new internal_error(
               "The same label is only allowed to have one type," +
@@ -1112,19 +1114,20 @@ public class emit {
           } else {
             state.add(label);
           }
+          labelIndexMap.put(label, _index++);
         }
       }
       var bestAssignment = SymbolStateCompression.assignNumbers(states);
       boolean isOnlyValue = bestAssignment.size() == 1;
-      boolean isOnlyMask = map.size() == 1;
-      boolean noMask = map.size() == bestAssignment.size();
+      boolean isIntMask = label2TypeMap.size() <= 32;
+      boolean noMask = label2TypeMap.size() == bestAssignment.size();
       if (!bestAssignment.isEmpty()) {
         if (isOnlyValue) out.println("  private Object value = null;");
         else out.println("  private final Object[] values = new Object[" + bestAssignment.size() + "];");
       }
-      if (!map.isEmpty() && !noMask) {
-        if (isOnlyMask) out.println("  private boolean validMask = false;");
-        else out.println("  private final BitSet validMask = new BitSet(" + map.size() + ");");
+      if (!label2TypeMap.isEmpty() && !noMask) {
+        if (isIntMask) out.println("  private int validMask;");
+        else out.println("  private BitSet validMask;");
       }
       out.println();
       StringBuilder getterBuilder = new StringBuilder(256);
@@ -1135,11 +1138,11 @@ public class emit {
       existsBuilder.append("  @Override\n")
               .append("  public boolean hasLabel(String label) {\n")
               .append("    switch (label) {\n");
-      int index = 0;
-      for (Map.Entry<String, String> entry : map.entrySet()) {
+      for (Map.Entry<String, String> entry : label2TypeMap.entrySet()) {
         String label = entry.getKey();
         String type = entry.getValue();
         Integer id = bestAssignment.get(label);
+        int index = labelIndexMap.get(label);
         String varName;
         if (Character.isLowerCase(label.charAt(0))) {
           varName = Character.toUpperCase(label.charAt(0)) + label.substring(1);
@@ -1176,24 +1179,6 @@ public class emit {
           out.println("  }");
           out.println();
         }
-        // Generate setters for all types
-        if (type.isEmpty()) {
-          if (!noMask) {
-            out.println("  public void set" + varName + "() {");
-          }
-        } else {
-          out.println("  public void set" + varName + "(" + type + " _" + label + ") {");
-          if (isOnlyValue) out.println("    value = _" + label + ';');
-          else out.println("    values[" + id + "] = _" + label + ';');
-        }
-        if (!noMask) {
-          if (isOnlyMask) out.println("    validMask = true;");
-          else out.println("    validMask.set(" + index + ");");
-        }
-        if (!noMask || !type.isEmpty()) {
-          out.println("  }");
-          out.println();
-        }
         // Generate methods to check existence for all types
         if (type.isEmpty()) {
           out.println("  public boolean " + label + "() {");
@@ -1204,18 +1189,74 @@ public class emit {
           if (isOnlyValue) out.println("    return value != null;");
           else out.println("    return values[" + id + "] != null;");
         } else {
-          if (isOnlyMask) out.println("    return validMask;");
+          if (isIntMask) out.println("    return (validMask & 0x" + Integer.toHexString(1 << index) + ") != 0;");
           else out.println("    return validMask.get(" + index + ");");
         }
         out.println("  }");
         out.println();
-        ++index;
       }
       getterBuilder.append("      default: return null;\n    }\n  }\n");
       existsBuilder.append("      default: return false;\n    }\n  }\n");
       out.println(getterBuilder);
       out.println(existsBuilder);
+      static_builders(out, className, nt, label2TypeMap, labelIndexMap, bestAssignment);
       out.println('}');
+    }
+  }
+
+  private static void static_builders(
+    PrintWriter out, String className, non_terminal nt,
+    Map<String, String> typeMap,
+    Map<String, Integer> labelIndexMap,
+    Map<String, Integer> bestAssignment
+  ) {
+    Set<String> record = new TreeSet<>();
+    for (production production : nt.productions()) {
+      var hashName = production.getHashName();
+      if (!record.add(hashName)) continue;
+      out.println("  public static " + className + ' ' + hashName + "(");
+      var map = production.getLabel2SymbolPartMap();
+      boolean isFirst = true;
+      for (var label : map.keySet()) {
+        var type = typeMap.get(label);
+        if (type.isEmpty()) continue;
+        if (isFirst) isFirst = false;
+        else out.println(",");
+        out.print("    " + type + " _" + label);
+      }
+      out.println();
+      out.println("  ) {");
+      out.println("    " + className + " result = new " + className + "();");
+      BitSet flag = new BitSet(map.size());
+      boolean isOnlyValue = bestAssignment.size() == 1;
+      for (String label : map.keySet()) {
+        int index = labelIndexMap.get(label);
+        flag.set(index);
+        var type = typeMap.get(label);
+        if (!type.isEmpty()) {
+          if (isOnlyValue) out.println("    result.value = " + '_' + label + ';');
+          else {
+            Integer id = bestAssignment.get(label);
+            out.println("    result.values[" + id + "] = " + '_' + label + ';');
+          }
+        }
+      }
+      if (!flag.isEmpty()) {
+        if (typeMap.size() <= 32) {
+          out.println("    result.validMask = " + flag.toLongArray()[0] + ';');
+        } else {
+          out.println("    BitSet validMask = new BitSet();");
+          for (int k = 0; k < flag.length(); k++) {
+            if (flag.get(k)) {
+              out.println("    validMask.set(" + k + ");");
+            }
+          }
+          out.println("    result.validMask = validMask;");
+        }
+      }
+      out.println("    return result;");
+      out.println("  }");
+      out.println();
     }
   }
 
