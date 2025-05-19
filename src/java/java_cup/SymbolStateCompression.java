@@ -72,4 +72,5 @@ public class SymbolStateCompression {
             colors[idx] = -1;
         }
     }
+
 }

@@ -2,6 +2,7 @@
 package java_cup;
 
 import java.io.*;
+
 import java_cup.runtime.*;
 
 /**
@@ -114,7 +115,7 @@ public class Main {
   /** User option -- the format of the AST class to be generated */
   protected static String ast_format = null;
   /** User option -- suffix configuration for AST flatten */
-  protected static String ast_list_suffix = null;
+  protected static FlattenConfig ast_flatten = null;
 
   /* frankf added this 6/18/96 */
   /** User option -- should generator generate code for left/right values? */
@@ -302,9 +303,10 @@ public class Main {
         + "    -ast format         auto generates AST. The format param defines node class naming, " +
                                    "where %s is after the first underscore and %p is before, " +
                                    "defaulting to \"Node%s\"."
-        + "    -ast_flatten suffix flatten lists in the generated AST, " +
-                                   "the argument is the suffix (case-sensitive) for list (non-terminal) nodes."
-        + "    -expect #           number of conflicts expected/allowed [default 0]\n"
+        + "    -ast_flatten config flatten lists/boxes in the generated AST, " +
+                                   "the argument is a key=value config list separated by '&'. " +
+                                   "Supported keys: 'list' for non-terminal list suffixes, 'box' for box suffixes. " +
+                                   "Values are comma-separated suffix lists (case-sensitive).\n"
         + "    -compact_red        compact tables by defaulting to most frequent reduce\n"
         + "    -nowarn             don't warn about useless productions, etc.\n"
         + "    -nosummary          don't print the usual summary of parse states, etc.\n"
@@ -407,10 +409,7 @@ public class Main {
           usage("-ast_flatten must have a name argument");
         }
         String argument = argv[i];
-        if (!argument.matches("^[_a-zA-Z][_a-zA-Z0-9]+$")) {
-          usage("-ast_flatten must be followed by a valid format name(Match regex \"^[_a-zA-Z][_a-zA-Z0-9]+$\")");
-        }
-        ast_list_suffix = argument;
+        ast_flatten = new FlattenConfig(argument);
       } else if (argv[i].equals("-compact_red"))
         opt_compact_red = true;
       else if (argv[i].equals("-nosummary"))
@@ -473,6 +472,10 @@ public class Main {
       } else {
         usage("Unrecognized option \"" + argv[i] + "\"");
       }
+    }
+
+    if (ast_flatten == null) {
+      ast_flatten = new FlattenConfig();
     }
   }
 

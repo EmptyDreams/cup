@@ -296,6 +296,28 @@ public class emit {
   }
 
   /**
+   * Format variable names in uppercase camel case
+   */
+  protected static String castToStName(String name) {
+    StringBuilder sb = new StringBuilder(name.length());
+    boolean castToUppercase = true;
+    for (int i = 0; i < name.length(); i++) {
+      char c = name.charAt(i);
+      if (c == '_') {
+        castToUppercase = true;
+        continue;
+      }
+      if (castToUppercase) {
+        sb.append(Character.toUpperCase(c));
+        castToUppercase = false;
+      } else {
+        sb.append(Character.toLowerCase(c));
+      }
+    }
+    return sb.toString();
+  }
+
+  /**
    * TUM changes; proposed by Henning Niss 20050628 Build a string with the
    * specified type arguments, if present, otherwise an empty string.
    */
@@ -919,14 +941,13 @@ public class emit {
     out.println();
     emit_package(out);
 
+    out.println("import java.util.List;");
     /* user supplied imports */
     for (String s : import_list) {
       out.println("import " + s + ";");
     }
     if (locations())
       out.println("import java_cup.runtime.ComplexSymbolFactory.Location;");
-    if (Main.ast_list_suffix != null)
-      out.println("import java.util.*;");
     out.println("import java_cup.runtime.XMLElement;");
 
     /* class header */
@@ -1058,7 +1079,7 @@ public class emit {
 
   public static void node_classes(File dir) throws internal_error, IOException {
     for (non_terminal nt : non_terminal.all()) {
-      if (!nt.isListExpr() && !nt.isEmptySymbol()) {
+      if (!nt.isListExpr() && !nt.isEmptySymbol() && !nt.isInlineExpr() && !nt.isSingleInlineExpr()) {
         node_class(dir, nt);
       }
     }
@@ -1079,39 +1100,19 @@ public class emit {
       int _index = 0;
       Map<String, String> label2TypeMap = new HashMap<>();
       Map<String, Integer> labelIndexMap = new HashMap<>();
-      Map<String, symbol> boolFlagMap = new HashMap<>();
       List<List<String>> states = new ArrayList<>(nt.num_productions());
       for (production production : nt.productions()) {
         int length = production.rhs_length();
         if (length == 0) continue;
         List<String> state = new ArrayList<>((length + 1) / 2);
         states.add(state);
-        for (int i = 0; i < length; i++) {
-          production_part part = production.rhs(i);
-          String label = part.label();
-          if (label == null || part.is_action()) continue;
-          symbol_part sp = (symbol_part) part;
-          symbol sym = sp.the_symbol();
+        for (var entry : production.getLabel2SymbolExpandInlineMap().entrySet()) {
+          var label = entry.getKey();
+          var symbol = entry.getValue();
           boolean isExistenceVar = isExistenceVar(label);
-          String type = isExistenceVar ? "" : sym.astClassName();
-          String oldType = label2TypeMap.put(label, type);
-          if (oldType != null && !oldType.equals(type)) {
-            throw new internal_error(
-              "The same label is only allowed to have one type," +
-                     "but label[" + label + "] in nt[" + nt.name() + "] has two or more types" +
-                     "[" + type + ", " + oldType + "]."
-            );
-          }
-          if (isExistenceVar) {
-            symbol oldBoolFlag = boolFlagMap.put(label, sym);
-            if (oldBoolFlag != null && oldBoolFlag != sym) {
-              throw new internal_error(
-                "The same label is only allowed to have one type," +
-                       "but label[" + label + "] in nt[" + nt.name() + "] has two or more types" +
-                       "[" + sym.name() + ", " + oldBoolFlag.name() + "]."
-              );
-            }
-          } else {
+          String type = isExistenceVar ? "" : symbol.astClassName();
+          label2TypeMap.put(label, type);
+          if (!isExistenceVar) {
             state.add(label);
           }
           labelIndexMap.put(label, _index++);
@@ -1143,12 +1144,7 @@ public class emit {
         String type = entry.getValue();
         Integer id = bestAssignment.get(label);
         int index = labelIndexMap.get(label);
-        String varName;
-        if (Character.isLowerCase(label.charAt(0))) {
-          varName = Character.toUpperCase(label.charAt(0)) + label.substring(1);
-        } else {
-          varName = label;
-        }
+        String varName = castToStName(label);
         // Generate getter and checker
         if (type.isEmpty()) {
           existsBuilder.append("      case \"")
@@ -1209,7 +1205,7 @@ public class emit {
     Map<String, String> typeMap,
     Map<String, Integer> labelIndexMap,
     Map<String, Integer> bestAssignment
-  ) {
+  ) throws internal_error {
     Set<String> record = new TreeSet<>();
     for (production production : nt.productions()) {
       var hashName = production.getHashName();
@@ -1229,15 +1225,32 @@ public class emit {
       out.println("    " + className + " result = new " + className + "();");
       BitSet flag = new BitSet(map.size());
       boolean isOnlyValue = bestAssignment.size() == 1;
-      for (String label : map.keySet()) {
-        int index = labelIndexMap.get(label);
-        flag.set(index);
-        var type = typeMap.get(label);
-        if (!type.isEmpty()) {
-          if (isOnlyValue) out.println("    result.value = " + '_' + label + ';');
-          else {
-            Integer id = bestAssignment.get(label);
-            out.println("    result.values[" + id + "] = " + '_' + label + ';');
+      for (var entry : map.entrySet()) {
+        var label = entry.getKey();
+        var sym = entry.getValue().the_symbol();
+        if (sym.is_non_term() && ((non_terminal) sym).isInlineExpr()) {
+          for (String subLabel : ((non_terminal) sym).getInlineExpr().keySet()) {
+            int index = labelIndexMap.get(subLabel);
+            flag.set(index);
+            var type = typeMap.get(subLabel);
+            if (!type.isEmpty()) {
+              if (isOnlyValue) out.println("    result.value = _" + label + ".get" + castToStName(subLabel) + "();");
+              else {
+                Integer id = bestAssignment.get(subLabel);
+                out.println("    result.values[" + id + "] = " + '_' + label + ".get" + castToStName(subLabel) + "();");
+              }
+            }
+          }
+        } else {
+          int index = labelIndexMap.get(label);
+          flag.set(index);
+          var type = typeMap.get(label);
+          if (!type.isEmpty()) {
+            if (isOnlyValue) out.println("    result.value = " + '_' + label + ';');
+            else {
+              Integer id = bestAssignment.get(label);
+              out.println("    result.values[" + id + "] = " + '_' + label + ';');
+            }
           }
         }
       }

@@ -1,5 +1,6 @@
 package java_cup;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -271,9 +272,9 @@ public class non_terminal extends symbol {
    */
   public boolean isListExpr() throws internal_error {
     if (_listItemType != null) return !_listItemType.isEmpty();
-    var suffix = Main.ast_list_suffix;
+    var config = Main.ast_flatten;
     String name = _name;
-    if (suffix == null || name.length() <= suffix.length() || !name.endsWith(suffix)) {
+    if (!config.isListName(name)) {
       _listItemType = "";
       return false;
     }
@@ -291,36 +292,27 @@ public class non_terminal extends symbol {
         }
         hasEmpty = true;
       } else {
-        boolean hasSelf = false;
-        boolean hasItem = false;
-        for (int i = 0; i < prod.rhs_length(); i++) {
-          var rhs = prod.rhs(i);
-          var label = rhs.label();
-          if (label != null) {
-            if (hasItem) {
+        var map = prod.getLabel2SymbolExpandInlineMap();
+        if (map.size() > 1) {
+          throw new internal_error(
+            "A list expression's production containing multiple symbols " +
+                    "can include only one element node: " + this
+          );
+        }
+        for (var entry : map.entrySet()) {
+          var label = entry.getKey();
+          var sym = entry.getValue();
+          if (equals(sym)) continue;
+          if (singleLabel != null) {
+            if (!label.equals(singleLabel) || !sym.equals(singleSym)) {
               throw new internal_error(
                 "A list expression's production containing multiple symbols " +
-                "can include only one element node: " + this
+                  "must have the same label and symbol: " + this
               );
             }
-            var sym = ((symbol_part) rhs).the_symbol();
-            if (singleSym != null) {
-              if (!label.equals(singleLabel) || !singleSym.equals(sym)) {
-                throw new internal_error("A list expression may contain only one type of element node: " + this);
-              }
-            } else {
-              singleSym = sym;
-              singleLabel = label;
-            }
-            hasItem = true;
-          } else if (isSelfProduction(rhs)) {
-            if (hasSelf) {
-              throw new internal_error(
-                "A list expression's production containing multiple symbols " +
-                "can include only one self node: " + this
-              );
-            }
-            hasSelf = true;
+          } else {
+            singleLabel = label;
+            singleSym = sym;
           }
         }
       }
@@ -332,9 +324,66 @@ public class non_terminal extends symbol {
     return true;
   }
 
-  protected boolean isSelfProduction(production_part rhs) {
-    if (rhs.is_action()) return false;
-    return this.equals(((symbol_part) rhs).the_symbol());
+  /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+
+  private Map<String, symbol> _inlineExpr = null;
+
+  /**
+   * Get the inline expression of a non-terminal.
+   * @return Key is the label, value is the symbol. <code>null</code> if is not an inline expression.
+   * @throws internal_error if the non-terminal ends with the suffix specified by the <code>ast_flatten</code> parameter,
+   *                        but is not a valid inline expression
+   */
+  public Map<String, symbol> getInlineExpr() throws internal_error {
+      return !isInlineExpr() ? null : _inlineExpr;
+  }
+
+  /**
+   * Check if a non-terminal is a valid single inline expression.
+   * @throws internal_error if the non-terminal ends with the suffix specified by the <code>ast_flatten</code> parameter,
+   *                        but is not a valid single inline expression
+   */
+  public boolean isSingleInlineExpr() throws internal_error {
+    return isInlineExpr() && _inlineExpr.size() == 1;
+  }
+
+  /**
+   * Check if a non-terminal is a valid box expression.
+   * @throws internal_error if the non-terminal ends with the suffix specified by the <code>ast_flatten</code> parameter,
+   *                        but is not a valid box expression
+   */
+  public boolean isInlineExpr() throws internal_error {
+    if (_inlineExpr != null) return !_inlineExpr.isEmpty();
+    var config = Main.ast_flatten;
+    var name = _name;
+    if (!config.isInlineName(name)) {
+      _inlineExpr = Collections.emptyMap();
+      return false;
+    }
+    var map = new HashMap<String, symbol>();
+    for (production prod : productions()) {
+      for (var entry : prod.getLabel2SymbolPartMap().entrySet()) {
+        var label = entry.getKey();
+        var sym = entry.getValue().the_symbol();
+        if (sym.is_non_term() && ((non_terminal) sym).isInlineExpr()) {
+          var subMap = ((non_terminal) sym).getInlineExpr();
+          for (var subEntry : subMap.entrySet()) {
+            var subLabel = subEntry.getKey();
+            if (map.containsKey(subLabel)) {
+              throw new internal_error("There is a duplication of label when expanding box expr: " + this);
+            }
+            map.put(subLabel, subEntry.getValue());
+          }
+        } else {
+          if (map.containsKey(label)) {
+            throw new internal_error("There is a duplication of label when expanding box expr: " + this);
+          }
+          map.put(label, sym);
+        }
+      }
+    }
+    _inlineExpr = Collections.unmodifiableMap(map);
+    return true;
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */

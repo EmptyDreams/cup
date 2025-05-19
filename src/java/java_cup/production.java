@@ -153,12 +153,21 @@ public class production {
           } else {
             actionBuilder.append(indentation).append("RESULT = Empty.instance;\n");
           }
+        } else if (lhs_sym.isSingleInlineExpr()) {
+          var part = getOnlyLabelPart();
+          assert part != null;
+          var label = part.label();
+          actionBuilder.append(indentation)
+            .append("RESULT = ").append(label).append(";\n");
         } else if (lhs_sym.isListExpr()) {
           int selfIndex = -1;
           for (int k = 0; k < _rhs_length; k++) {
             var rhs = _rhs[k];
-            if (lhs_sym.isSelfProduction(rhs)) {
+            if (rhs.label() == null || rhs.is_action()) continue;
+            var sym = ((symbol_part) rhs).the_symbol();
+            if (lhs_sym.equals(sym)) {
               selfIndex = k;
+              break;
             }
           }
           var onlyLabelPart = getOnlyLabelPart();
@@ -176,7 +185,7 @@ public class production {
             symbol sym = onlyLabelPart.the_symbol();
             String className = symbol.getNodeClassName(sym.name());
             actionBuilder.append(indentation)
-              // List<xxx> flattenList = stack.elementAt(top - 1).value();
+              // List<xxx> flattenList = new ArrayList<>();
               .append("List<")
               .append(className)
               .append("> flattenList = new ArrayList<>();\n")
@@ -440,6 +449,42 @@ public class production {
       _labels = Collections.unmodifiableMap(labels);
     }
     return _labels;
+  }
+
+  private Map<String, symbol> _label2SymbolExpandInlineMap;
+
+  /**
+   * Gets a map of all labels and symbols in a production (flattens all inlines).
+   * <p>
+   * The result is cached after first computation (lazy initialization) and subsequent calls
+   * return the cached unmodifiable map. This ensures labels are only processed once.
+   */
+  public Map<String, symbol> getLabel2SymbolExpandInlineMap() throws internal_error {
+    if (_label2SymbolExpandInlineMap != null) return _label2SymbolExpandInlineMap;
+    Map<String, symbol> map = new HashMap<>();
+    for (int i = 0; i < rhs_length(); i++) {
+      var rhs = _rhs[i];
+      var label = rhs.label();
+      if (label == null || rhs.is_action()) continue;
+      var sym = ((symbol_part) rhs).the_symbol();
+      if (sym.is_non_term() && ((non_terminal) sym).isInlineExpr()) {
+        var subMap = ((non_terminal) sym).getInlineExpr();
+        for (var subEntry : subMap.entrySet()) {
+          var subLabel = subEntry.getKey();
+          if (map.containsKey(subLabel)) {
+            throw new internal_error("There is a duplication of label when expanding inline expr: " + this);
+          }
+          map.put(subLabel, subEntry.getValue());
+        }
+      } else {
+        var oldSym = map.put(label, sym);
+        if (oldSym != null && !oldSym.equals(sym)) {
+          throw new internal_error("There is a duplication of label when expanding inline expr: " + this);
+        }
+      }
+    }
+    _label2SymbolExpandInlineMap = Collections.unmodifiableMap(map);
+    return _label2SymbolExpandInlineMap;
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
