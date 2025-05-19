@@ -335,37 +335,14 @@ public class non_terminal extends symbol {
    *                        but is not a valid inline expression
    */
   public Map<String, symbol> getInlineExpr() throws internal_error {
-      return !isInlineExpr() ? null : _inlineExpr;
-  }
-
-  /**
-   * Check if a non-terminal is a valid single inline expression.
-   * @throws internal_error if the non-terminal ends with the suffix specified by the <code>ast_flatten</code> parameter,
-   *                        but is not a valid single inline expression
-   */
-  public boolean isSingleInlineExpr() throws internal_error {
-    return isInlineExpr() && _inlineExpr.size() == 1;
-  }
-
-  /**
-   * Check if a non-terminal is a valid box expression.
-   * @throws internal_error if the non-terminal ends with the suffix specified by the <code>ast_flatten</code> parameter,
-   *                        but is not a valid box expression
-   */
-  public boolean isInlineExpr() throws internal_error {
-    if (_inlineExpr != null) return !_inlineExpr.isEmpty();
+    if (_inlineExpr != null) return _inlineExpr;
     var config = Main.ast_flatten;
-    var name = _name;
-    if (!config.isInlineName(name)) {
-      _inlineExpr = Collections.emptyMap();
-      return false;
-    }
     var map = new HashMap<String, symbol>();
     for (production prod : productions()) {
       for (var entry : prod.getLabel2SymbolPartMap().entrySet()) {
         var label = entry.getKey();
         var sym = entry.getValue().the_symbol();
-        if (sym.is_non_term() && ((non_terminal) sym).isInlineExpr()) {
+        if (sym.is_non_term() && config.isInlineName(label)) {
           var subMap = ((non_terminal) sym).getInlineExpr();
           for (var subEntry : subMap.entrySet()) {
             var subLabel = subEntry.getKey();
@@ -383,7 +360,16 @@ public class non_terminal extends symbol {
       }
     }
     _inlineExpr = Collections.unmodifiableMap(map);
-    return true;
+    return _inlineExpr;
+  }
+
+  /**
+   * Check if a non-terminal is a valid single inline expression.
+   * @throws internal_error if the non-terminal ends with the suffix specified by the <code>ast_flatten</code> parameter,
+   *                        but is not a valid single inline expression
+   */
+  public boolean isSingleInlineExpr() throws internal_error {
+    return getInlineExpr().size() == 1;
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */

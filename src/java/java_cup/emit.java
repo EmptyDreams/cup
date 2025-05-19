@@ -1079,7 +1079,7 @@ public class emit {
 
   public static void node_classes(File dir) throws internal_error, IOException {
     for (non_terminal nt : non_terminal.all()) {
-      if (!nt.isListExpr() && !nt.isEmptySymbol() && !nt.isInlineExpr() && !nt.isSingleInlineExpr()) {
+      if (!nt.isListExpr() && !nt.isEmptySymbol() && !nt.isSingleInlineExpr()) {
         node_class(dir, nt);
       }
     }
@@ -1228,7 +1228,7 @@ public class emit {
       for (var entry : map.entrySet()) {
         var label = entry.getKey();
         var sym = entry.getValue().the_symbol();
-        if (sym.is_non_term() && ((non_terminal) sym).isInlineExpr()) {
+        if (sym.is_non_term() && Main.ast_flatten.isInlineName(label)) {
           for (String subLabel : ((non_terminal) sym).getInlineExpr().keySet()) {
             int index = labelIndexMap.get(subLabel);
             flag.set(index);

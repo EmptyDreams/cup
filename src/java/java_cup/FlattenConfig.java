@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 public class FlattenConfig {
 
     private final List<String> listSuffix = new ArrayList<>();
-    private final List<String> inlineSuffix = new ArrayList<>();
+    private final List<String> inlineExpr = new ArrayList<>();
 
     public FlattenConfig(String config) {
         String[] split = config.split("&");
@@ -26,7 +26,9 @@ public class FlattenConfig {
                     listSuffix.addAll(values);
                     break;
                 case "inline":
-                    inlineSuffix.addAll(values);
+                    for (String value : values) {
+                        inlineExpr.add(value.replace("+", ".+"));
+                    }
                     break;
                 default:
                     Main.usage("-ast_flatten has unknown flatten key: " + key);
@@ -41,7 +43,7 @@ public class FlattenConfig {
     }
 
     public boolean isInlineName(String name) {
-        return inlineSuffix.stream().anyMatch(name::endsWith);
+        return inlineExpr.stream().anyMatch(name::matches);
     }
 
 }
