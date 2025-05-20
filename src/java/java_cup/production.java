@@ -280,21 +280,21 @@ public class production {
   }
 
   private static String buildSignature(List<String> input) {
-      try {
-          var digest = MessageDigest.getInstance("MD5");
-          String combined = String.join(",", input);
-          byte[] hashBytes = digest.digest(combined.getBytes());
-          var hexString = new StringBuilder(32 + 2 + 3);
-          hexString.append('_')
-                  .append(input.size() % 1000)
-                  .append('_');
-          for (byte b : hashBytes) {
-            hexString.append(String.format("%02x", b));
-          }
-          return hexString.toString();
-      } catch (NoSuchAlgorithmException e) {
-          throw new RuntimeException(e);
+    try {
+      var digest = MessageDigest.getInstance("MD5");
+      String combined = String.join(",", input);
+      byte[] hashBytes = digest.digest(combined.getBytes());
+      var hexString = new StringBuilder(32 + 2 + 3);
+      hexString.append('_')
+        .append(input.size() % 1000)
+        .append('_');
+      for (byte b : hashBytes) {
+        hexString.append(String.format("%02x", b));
       }
+      return hexString.toString();
+    } catch (NoSuchAlgorithmException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */

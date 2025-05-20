@@ -1298,7 +1298,8 @@ public class emit {
           }
         }
       }
-      if (!flag.isEmpty() && typeMap.size() != bestAssignment.size()) {
+      boolean hasMask = !flag.isEmpty() && typeMap.size() != bestAssignment.size();
+      if (hasMask) {
         if (typeMap.size() <= 32) {
           out.println("    int validMask = " + flag.toLongArray()[0] + ';');
         } else {
@@ -1311,6 +1312,13 @@ public class emit {
         }
       }
       if (!inlineExistence.isEmpty()) {
+        if (!hasMask) {
+          if (typeMap.size() <= 32) {
+            out.println("    int validMask = 0;");
+          } else {
+            out.println("    BitSet validMask = new BitSet();");
+          }
+        }
         if (typeMap.size() <= 32) {
           var expr = inlineExistence.entrySet().stream()
             .map(entry -> {
@@ -1327,7 +1335,9 @@ public class emit {
           }
         }
       }
-      out.println("    result.validMask = validMask;");
+      if (hasMask || !inlineExistence.isEmpty()) {
+        out.println("    result.validMask = validMask;");
+      }
       out.println("    return result;");
       out.println("  }");
       out.println();
