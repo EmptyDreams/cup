@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -296,26 +297,38 @@ public class emit {
     return Character.isUpperCase(third) || Character.isDigit(third);
   }
 
+  private static Pattern _stPattern = Pattern.compile(
+          "[A-Z]{2,}(?=[A-Z][a-z]|\\b)|" +
+                  "[A-Z]?[a-z]+|" +
+                  "[A-Z]+"
+  );
+
   /**
    * Format variable names in uppercase camel case
    */
   protected static String castToStName(String name) {
-    StringBuilder sb = new StringBuilder(name.length());
-    boolean castToUppercase = true;
-    for (int i = 0; i < name.length(); i++) {
-      char c = name.charAt(i);
-      if (c == '_') {
-        castToUppercase = true;
-        continue;
-      }
-      if (castToUppercase) {
-        sb.append(Character.toUpperCase(c));
-        castToUppercase = false;
-      } else {
-        sb.append(Character.toLowerCase(c));
+    if (name == null || name.isEmpty()) return name;
+
+
+    String[] parts = name.split("_");
+    List<String> words = new ArrayList<>();
+    for (String part : parts) {
+      var matcher = _stPattern.matcher(part);
+      while (matcher.find()) {
+        words.add(matcher.group());
       }
     }
-    return sb.toString();
+
+    StringBuilder result = new StringBuilder();
+    for (String word : words) {
+      if (word.isEmpty()) continue;
+      result.append(Character.toUpperCase(word.charAt(0)));
+      if (word.length() > 1) {
+        result.append(word.substring(1).toLowerCase());
+      }
+    }
+    System.out.println(result);
+    return result.toString();
   }
 
   /**
@@ -1272,8 +1285,6 @@ public class emit {
         var sym = entry.getValue().the_symbol();
         if (sym.is_non_term() && Main.ast_flatten.isInlineName(label)) {
           for (String subLabel : ((non_terminal) sym).getInlineExpr().keySet()) {
-            int index = labelIndexMap.get(subLabel);
-            flag.set(index);
             var type = typeMap.get(subLabel);
             if (type.isEmpty()) {
               inlineExistence.put(subLabel, '_' + label + '.' + subLabel + "()");
