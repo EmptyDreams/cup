@@ -346,30 +346,22 @@ public class non_terminal extends symbol {
           var subMap = ((non_terminal) sym).getInlineExpr();
           for (var subEntry : subMap.entrySet()) {
             var subLabel = subEntry.getKey();
-            if (map.containsKey(subLabel)) {
-              throw new internal_error("There is a duplication of label when expanding box expr: " + this);
+            var subSym = subEntry.getValue();
+            var oldSym = map.put(subLabel, subSym);
+            if (oldSym != null && !oldSym.equals(subSym)) {
+              throw new internal_error("There is a duplication of label when expanding inline expr: " + this);
             }
-            map.put(subLabel, subEntry.getValue());
           }
         } else {
-          if (map.containsKey(label)) {
-            throw new internal_error("There is a duplication of label when expanding box expr: " + this);
+          var oldSym = map.put(label, sym);
+          if (oldSym != null && !oldSym.equals(sym)) {
+            throw new internal_error("There is a duplication of label when expanding inline expr: " + this);
           }
-          map.put(label, sym);
         }
       }
     }
     _inlineExpr = Collections.unmodifiableMap(map);
     return _inlineExpr;
-  }
-
-  /**
-   * Check if a non-terminal is a valid single inline expression.
-   * @throws internal_error if the non-terminal ends with the suffix specified by the <code>ast_flatten</code> parameter,
-   *                        but is not a valid single inline expression
-   */
-  public boolean isSingleInlineExpr() throws internal_error {
-    return getInlineExpr().size() == 1;
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */

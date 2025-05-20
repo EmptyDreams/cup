@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This class handles emitting generated code for the resulting parser. The
@@ -430,8 +431,13 @@ public class emit {
     /* class header */
     out.println();
     out.println("/** Cup generated class to encapsulate user supplied action code.*/");
+    out.println(
+      "@SuppressWarnings({\"UnnecessaryLocalVariable\", \"SpellCheckingInspection\", " +
+      "\"UnusedAssignment\", \"RedundantTypeArguments\", " +
+      "\"rawtypes\", \"RedundantCast\", \"unchecked\"})"
+    );
     /* TUM changes; proposed by Henning Niss 20050628: added type arguement */
-    out.println("class " + pre("actions") + typeArgument() + " {");
+    out.println("protected class " + pre("actions") + typeArgument() + " {");
     /* user supplied code */
     if (action_code != null) {
       out.println();
@@ -683,7 +689,7 @@ public class emit {
     /* do the top of the table */
     out.println();
     out.println("  /** Production table. */");
-    out.println("  protected static final short _production_table[][] = ");
+    out.println("  protected static final short[][] _production_table = ");
     out.print("    unpackFromStrings(");
     do_table_as_string(out, prod_table);
     out.println(");");
@@ -941,7 +947,7 @@ public class emit {
     out.println();
     emit_package(out);
 
-    out.println("import java.util.List;");
+    out.println("import java.util.*;");
     /* user supplied imports */
     for (String s : import_list) {
       out.println("import " + s + ";");
@@ -955,7 +961,7 @@ public class emit {
     out.println("/** " + version.title_str + " generated parser.");
     out.println("  */");
     /* TUM changes; proposed by Henning Niss 20050628: added typeArgument */
-    out.println("@SuppressWarnings(\"unused\")");
+    out.println("@SuppressWarnings({\"unused\", \"UnnecessaryUnicodeEscape\"})");
     out.println("public class " + parser_class_name + typeArgument() + " extends java_cup.runtime.lr_parser {");
 
     out.println();
@@ -1079,7 +1085,7 @@ public class emit {
 
   public static void node_classes(File dir) throws internal_error, IOException {
     for (non_terminal nt : non_terminal.all()) {
-      if (!nt.isListExpr() && !nt.isEmptySymbol() && !nt.isSingleInlineExpr()) {
+      if (!nt.isListExpr() && !nt.isEmptySymbol()) {
         node_class(dir, nt);
       }
     }
@@ -1095,6 +1101,12 @@ public class emit {
       out.println("import java.util.*;");
       out.println("import java_cup.runtime.IAstNode;");
       out.println();
+      out.println("@SuppressWarnings({");
+      out.println("  \"UnnecessaryLocalVariable\",");
+      out.println("  \"EnhancedSwitchMigration\",");
+      out.println("  \"SwitchStatementWithTooFewBranches\",");
+      out.println("  \"DataFlowIssue\"");
+      out.println("})");
       out.println("public class " + className + " implements IAstNode {");
       out.println();
       int _index = 0;
@@ -1106,16 +1118,10 @@ public class emit {
         if (length == 0) continue;
         List<String> state = new ArrayList<>((length + 1) / 2);
         states.add(state);
-        for (var entry : production.getLabel2SymbolExpandInlineMap().entrySet()) {
+        for (var entry : production.getLabel2SymbolPartMap().entrySet()) {
           var label = entry.getKey();
-          var symbol = entry.getValue();
-          boolean isExistenceVar = isExistenceVar(label);
-          String type = isExistenceVar ? "" : symbol.astClassName();
-          label2TypeMap.put(label, type);
-          if (!isExistenceVar) {
-            state.add(label);
-          }
-          labelIndexMap.put(label, _index++);
+          var symbol = entry.getValue().the_symbol();
+          _index = handleVar(label2TypeMap, labelIndexMap, state, _index, label, symbol);
         }
       }
       var bestAssignment = SymbolStateCompression.assignNumbers(states);
@@ -1143,6 +1149,7 @@ public class emit {
         String label = entry.getKey();
         String type = entry.getValue();
         Integer id = bestAssignment.get(label);
+        if (!labelIndexMap.containsKey(label)) continue; // skip inline var
         int index = labelIndexMap.get(label);
         String varName = castToStName(label);
         // Generate getter and checker
@@ -1200,6 +1207,35 @@ public class emit {
     }
   }
 
+  private static int handleVar(
+    Map<String, String> label2TypeMap,
+    Map<String, Integer> labelIndexMap,
+    List<String> state,
+    int index,
+    String label,
+    symbol sym
+  ) throws internal_error {
+    boolean isExistenceVar = isExistenceVar(label);
+    boolean isInlineVar = !isExistenceVar && Main.ast_flatten.isInlineName(label);
+    String type = isExistenceVar ? "" : sym.astClassName();
+    label2TypeMap.put(label, type);
+    if (isInlineVar && sym.is_non_term()) {
+      var subMap = ((non_terminal) sym).getInlineExpr();
+      for (var subEntry : subMap.entrySet()) {
+        index = handleVar(
+          label2TypeMap, labelIndexMap, state, index,
+          subEntry.getKey(), subEntry.getValue()
+        );
+      }
+    } else if (!isExistenceVar) {
+      state.add(label);
+      labelIndexMap.put(label, index++);
+    } else {
+      labelIndexMap.put(label, index++);
+    }
+    return index;
+  }
+
   private static void static_builders(
     PrintWriter out, String className, non_terminal nt,
     Map<String, String> typeMap,
@@ -1210,20 +1246,26 @@ public class emit {
     for (production production : nt.productions()) {
       var hashName = production.getHashName();
       if (!record.add(hashName)) continue;
-      out.println("  static " + className + ' ' + hashName + "(");
+      out.print("  static " + className + ' ' + hashName + "(");
       var map = production.getLabel2SymbolPartMap();
       boolean isFirst = true;
       for (var label : map.keySet()) {
         var type = typeMap.get(label);
         if (type.isEmpty()) continue;
-        if (isFirst) isFirst = false;
-        else out.println(",");
+        if (isFirst) {
+          out.println();
+          isFirst = false;
+        } else out.println(",");
         out.print("    " + type + " _" + label);
       }
-      out.println();
-      out.println("  ) {");
+      if (!isFirst) {
+        out.println();
+        out.print("  ");
+      }
+      out.println(") {");
       out.println("    " + className + " result = new " + className + "();");
       BitSet flag = new BitSet(map.size());
+      Map<String, String> inlineExistence = new HashMap<>();
       boolean isOnlyValue = bestAssignment.size() == 1;
       for (var entry : map.entrySet()) {
         var label = entry.getKey();
@@ -1233,7 +1275,9 @@ public class emit {
             int index = labelIndexMap.get(subLabel);
             flag.set(index);
             var type = typeMap.get(subLabel);
-            if (!type.isEmpty()) {
+            if (type.isEmpty()) {
+              inlineExistence.put(subLabel, '_' + label + '.' + subLabel + "()");
+            } else {
               if (isOnlyValue) out.println("    result.value = _" + label + ".get" + castToStName(subLabel) + "();");
               else {
                 Integer id = bestAssignment.get(subLabel);
@@ -1256,7 +1300,7 @@ public class emit {
       }
       if (!flag.isEmpty() && typeMap.size() != bestAssignment.size()) {
         if (typeMap.size() <= 32) {
-          out.println("    result.validMask = " + flag.toLongArray()[0] + ';');
+          out.println("    int validMask = " + flag.toLongArray()[0] + ';');
         } else {
           out.println("    BitSet validMask = new BitSet();");
           for (int k = 0; k < flag.length(); k++) {
@@ -1264,9 +1308,26 @@ public class emit {
               out.println("    validMask.set(" + k + ");");
             }
           }
-          out.println("    result.validMask = validMask;");
         }
       }
+      if (!inlineExistence.isEmpty()) {
+        if (typeMap.size() <= 32) {
+          var expr = inlineExistence.entrySet().stream()
+            .map(entry -> {
+              var label = entry.getKey();
+              int k = labelIndexMap.get(label);
+              return "(" + entry.getValue() + " ? 0x" + Integer.toHexString(1 << k) + " : 0)";
+            }).collect(Collectors.joining("\n      | "));
+          out.println("    validMask |= " + expr + ';');
+        } else {
+          for (var entry : inlineExistence.entrySet()) {
+            var label = entry.getKey();
+            int k = labelIndexMap.get(label);
+            out.println("    validMask.set(" + k + ", " + entry.getValue() + ");");
+          }
+        }
+      }
+      out.println("    result.validMask = validMask;");
       out.println("    return result;");
       out.println("  }");
       out.println();

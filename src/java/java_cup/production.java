@@ -153,12 +153,6 @@ public class production {
           } else {
             actionBuilder.append(indentation).append("RESULT = Empty.instance;\n");
           }
-        } else if (lhs_sym.isSingleInlineExpr()) {
-          var part = getOnlyLabelPart();
-          assert part != null;
-          var label = part.label();
-          actionBuilder.append(indentation)
-            .append("RESULT = ").append(label).append(";\n");
         } else if (lhs_sym.isListExpr()) {
           int selfIndex = -1;
           for (int k = 0; k < _rhs_length; k++) {
