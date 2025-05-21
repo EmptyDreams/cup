@@ -70,6 +70,8 @@ import java_cup.runtime.*;
  * with old runtimes)
  * <dt>-version
  * <dd>print version information for JavaCUP and halt.
+ * <dt>-auto_clear
+ * <dd>automatically empty the target folder before generating output, do not delete subfolders and their contents
  * </dl>
  *
  * @version last updated: 7/3/96
@@ -122,6 +124,8 @@ public class Main {
   protected static String ast_format = null;
   /** User option -- suffix configuration for AST flatten */
   protected static FlattenConfig ast_flatten = null;
+  /** User option -- automatically empty the target folder */
+  private static boolean autoClear = false;
 
   /* frankf added this 6/18/96 */
   /** User option -- should generator generate code for left/right values? */
@@ -215,6 +219,17 @@ public class Main {
     dest_dir.mkdirs();
     if (!dest_dir.exists()) {
       ErrorManager.getManager().emit_error("Could not create directory " + dest_dir.getPath());
+    }
+    if (autoClear && dest_dir != null && dest_dir.exists()) {
+      File[] files = dest_dir.listFiles();
+      if (files != null) {
+        for (File file : files) {
+          if (file.isFile()) {
+            //noinspection ResultOfMethodCallIgnored
+            file.delete();
+          }
+        }
+      }
     }
 
     prelim_end = System.currentTimeMillis();
@@ -325,7 +340,9 @@ public class Main {
         + "    -dump_states        produce a dump of parse state machine\n"
         + "    -dump_tables        produce a dump of the parse tables\n"
         + "    -dump               produce a dump of all of the above\n"
-        + "    -version            print the version information for CUP and exit\n");
+        + "    -version            print the version information for CUP and exit\n"
+        + "    -auto_clear         automatically empty the target folder before generating output, " +
+                                   "do not delete subfolders and their contents");
     System.exit(1);
   }
 
@@ -451,6 +468,8 @@ public class Main {
       /* CSA 23-Jul-1999 */
       else if (argv[i].equals("-noscanner"))
         suppress_scanner = true;
+      else if (argv[i].equals("-auto_clear"))
+        autoClear = true;
       /* CSA 23-Jul-1999 */
       else if (argv[i].equals("-version")) {
         System.out.println(version.title_str);
