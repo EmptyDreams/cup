@@ -329,6 +329,17 @@ public class emit {
     return result.toString();
   }
 
+  protected static String joinName(String prefix, String name) {
+    if (prefix == null || prefix.isEmpty()) return name;
+    StringBuilder sb = new StringBuilder(prefix.length() + name.length());
+    sb.append(prefix);
+    sb.append(Character.toUpperCase(name.charAt(0)));
+    for (int i = 1; i < name.length(); i++) {
+      sb.append(name.charAt(i));
+    }
+    return sb.toString();
+  }
+
   /**
    * TUM changes; proposed by Henning Niss 20050628 Build a string with the
    * specified type arguments, if present, otherwise an empty string.
@@ -1116,6 +1127,7 @@ public class emit {
       out.println("  \"UnnecessaryLocalVariable\",");
       out.println("  \"EnhancedSwitchMigration\",");
       out.println("  \"SwitchStatementWithTooFewBranches\",");
+      out.println("  \"unchecked\",");
       out.println("  \"RedundantSuppression\"");
       out.println("})");
       out.println("public class " + className + " implements IAstNode {");
@@ -1132,16 +1144,16 @@ public class emit {
         for (var entry : production.getLabel2SymbolPartMap().entrySet()) {
           var label = entry.getKey();
           var symbol = entry.getValue().the_symbol();
-          _index = handleVar(label2TypeMap, labelIndexMap, state, _index, label, symbol);
+          _index = handleVar(label2TypeMap, labelIndexMap, state, _index, label, symbol, null);
         }
       }
       var bestAssignment = SymbolStateCompression.assignNumbers(states);
-      boolean isOnlyValue = bestAssignment.size() == 1;
-      boolean isIntMask = label2TypeMap.size() <= 32;
-      boolean noMask = label2TypeMap.size() == bestAssignment.size();
+      boolean isOnlyValue = bestAssignment.idCount == 1;
+      boolean isIntMask = labelIndexMap.size() <= 32;
+      boolean noMask = labelIndexMap.size() == bestAssignment.idCount;
       if (!bestAssignment.isEmpty()) {
         if (isOnlyValue) out.println("  private Object value = null;");
-        else out.println("  private final Object[] values = new Object[" + bestAssignment.size() + "];");
+        else out.println("  private final Object[] values = new Object[" + bestAssignment.idCount + "];");
       }
       if (!label2TypeMap.isEmpty() && !noMask) {
         if (isIntMask) out.println("  private int validMask;");
@@ -1224,18 +1236,20 @@ public class emit {
     List<String> state,
     int index,
     String label,
-    symbol sym
+    symbol sym,
+    String prefix
   ) throws internal_error {
     boolean isExistenceVar = isExistenceVar(label);
-    boolean isInlineVar = !isExistenceVar && Main.ast_flatten.isInlineName(label);
+    String inlineVarName = isExistenceVar ? null : Main.ast_flatten.getInlineName(label);
     String type = isExistenceVar ? "" : sym.astClassName();
+    label = joinName(prefix, label);
     label2TypeMap.put(label, type);
-    if (isInlineVar && sym.is_non_term()) {
+    if (inlineVarName != null && sym.is_non_term()) {
       var subMap = ((non_terminal) sym).getInlineExpr();
       for (var subEntry : subMap.entrySet()) {
         index = handleVar(
           label2TypeMap, labelIndexMap, state, index,
-          subEntry.getKey(), subEntry.getValue()
+          subEntry.getKey(), subEntry.getValue(), inlineVarName
         );
       }
     } else if (!isExistenceVar) {
@@ -1251,7 +1265,7 @@ public class emit {
     PrintWriter out, String className, non_terminal nt,
     Map<String, String> typeMap,
     Map<String, Integer> labelIndexMap,
-    Map<String, Integer> bestAssignment
+    SymbolStateCompression bestAssignment
   ) throws internal_error {
     Set<String> record = new TreeSet<>();
     for (production production : nt.productions()) {
@@ -1277,20 +1291,24 @@ public class emit {
       out.println("    " + className + " result = new " + className + "();");
       BitSet flag = new BitSet(map.size());
       Map<String, String> inlineExistence = new HashMap<>();
-      boolean isOnlyValue = bestAssignment.size() == 1;
+      boolean isOnlyValue = bestAssignment.idCount == 1;
       for (var entry : map.entrySet()) {
         var label = entry.getKey();
         var sym = entry.getValue().the_symbol();
-        if (sym.is_non_term() && Main.ast_flatten.isInlineName(label)) {
+        var inlineName = Main.ast_flatten.getInlineName(label);
+        if (sym.is_non_term() && inlineName != null) {
           for (String subLabel : ((non_terminal) sym).getInlineExpr().keySet()) {
-            var type = typeMap.get(subLabel);
+            var subLabelKey = joinName(inlineName, subLabel);
+            var type = typeMap.get(subLabelKey);
             if (type.isEmpty()) {
-              inlineExistence.put(subLabel, '_' + label + '.' + subLabel + "()");
+              inlineExistence.put(subLabelKey, '_' + label + '.' + subLabel + "()");
             } else {
               if (isOnlyValue) out.println("    result.value = _" + label + ".get" + castToStName(subLabel) + "();");
               else {
-                Integer id = bestAssignment.get(subLabel);
-                out.println("    result.values[" + id + "] = " + '_' + label + ".get" + castToStName(subLabel) + "();");
+                Integer id = bestAssignment.get(subLabelKey);
+                var stName = castToStName(subLabel);
+                out.println("    if (_" + label + ".has" + stName + "())");
+                out.println("      result.values[" + id + "] = " + '_' + label + ".get" + stName + "();");
               }
             }
           }
@@ -1307,10 +1325,10 @@ public class emit {
           }
         }
       }
-      boolean hasMask = !flag.isEmpty() && typeMap.size() != bestAssignment.size();
+      boolean hasMask = !flag.isEmpty() && labelIndexMap.size() != bestAssignment.idCount;
       if (hasMask) {
-        if (typeMap.size() <= 32) {
-          out.println("    int validMask = " + flag.toLongArray()[0] + ';');
+        if (labelIndexMap.size() <= 32) {
+          out.println("    int validMask = 0x" + Integer.toHexString((int) flag.toLongArray()[0]) + ';');
         } else {
           out.println("    BitSet validMask = new BitSet();");
           for (int k = 0; k < flag.length(); k++) {
@@ -1322,13 +1340,13 @@ public class emit {
       }
       if (!inlineExistence.isEmpty()) {
         if (!hasMask) {
-          if (typeMap.size() <= 32) {
-            out.println("    int validMask = 0;");
+          if (labelIndexMap.size() <= 32) {
+            out.println("    int validMask = 0x0;");
           } else {
             out.println("    BitSet validMask = new BitSet();");
           }
         }
-        if (typeMap.size() <= 32) {
+        if (labelIndexMap.size() <= 32) {
           var expr = inlineExistence.entrySet().stream()
             .map(entry -> {
               var label = entry.getKey();

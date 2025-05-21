@@ -4,15 +4,29 @@ import java.util.*;
 
 public class SymbolStateCompression {
 
-    private SymbolStateCompression() {
-        throw new AssertionError();
+    private static final SymbolStateCompression EMPTY = new SymbolStateCompression(Collections.emptyMap(), 0);
+
+    public final Map<String, Integer> map;
+    public final int idCount;
+
+    private SymbolStateCompression(Map<String, Integer> map, int idCount) {
+        this.map = map;
+        this.idCount = idCount;
+    }
+
+    public boolean isEmpty() {
+        return idCount == 0;
+    }
+
+    public Integer get(String key) {
+        return map.get(key);
     }
 
     private static int minMaxColor = Integer.MAX_VALUE;
     private static Map<String, Integer> bestAssignment;
 
-    public static Map<String, Integer> assignNumbers(List<List<String>> states) {
-        if (states.isEmpty()) return Collections.emptyMap();
+    public static SymbolStateCompression assignNumbers(List<List<String>> states) {
+        if (states.isEmpty()) return EMPTY;
 
         minMaxColor = Integer.MAX_VALUE;
         bestAssignment = null;
@@ -22,7 +36,7 @@ public class SymbolStateCompression {
             allStrings.addAll(state);
         }
         List<String> strings = new ArrayList<>(allStrings);
-        if (strings.isEmpty()) return Collections.emptyMap();
+        if (strings.isEmpty()) return EMPTY;
 
         boolean[][] isConflict = new boolean[strings.size()][strings.size()];
         Map<String, Integer> stringToIndex = new HashMap<>();
@@ -44,7 +58,7 @@ public class SymbolStateCompression {
         Arrays.fill(colors, -1);
         backtrack(0, colors, isConflict, strings);
 
-        return bestAssignment;
+        return new SymbolStateCompression(bestAssignment, minMaxColor + 1);
     }
 
     private static void backtrack(int idx, int[] colors, boolean[][] isConflict, List<String> strings) {

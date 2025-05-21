@@ -464,10 +464,11 @@ public class production {
       var label = rhs.label();
       if (label == null || rhs.is_action()) continue;
       var sym = ((symbol_part) rhs).the_symbol();
-      if (sym.is_non_term() && Main.ast_flatten.isInlineName(label)) {
+      var inlineName = Main.ast_flatten.getInlineName(label);
+      if (sym.is_non_term() && inlineName != null) {
         var subMap = ((non_terminal) sym).getInlineExpr();
         for (var subEntry : subMap.entrySet()) {
-          var subLabel = subEntry.getKey();
+          var subLabel = emit.joinName(inlineName, subEntry.getKey());
           if (map.containsKey(subLabel)) {
             throw new internal_error("There is a duplication of label when expanding inline expr: " + this);
           }

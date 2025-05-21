@@ -3,12 +3,15 @@ package java_cup;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class FlattenConfig {
 
     private final List<String> listSuffix = new ArrayList<>();
-    private final List<String> inlineExpr = new ArrayList<>();
+    private final List<Pattern> inlineExpr = new ArrayList<>();
+    private final List<Pattern> namelessInlineExpr = new ArrayList<>();
 
     public FlattenConfig(String config) {
         String[] split = config.split("&");
@@ -27,7 +30,12 @@ public class FlattenConfig {
                     break;
                 case "inline":
                     for (String value : values) {
-                        inlineExpr.add(value.replace("+", ".+"));
+                        inlineExpr.add(Pattern.compile(value.replace("+", "(.+)")));
+                    }
+                    break;
+                case "namelessInline":
+                    for (String value : values) {
+                        namelessInlineExpr.add(Pattern.compile(value.replace("+", "(.+)")));
                     }
                     break;
                 default:
@@ -42,8 +50,24 @@ public class FlattenConfig {
         return listSuffix.stream().anyMatch(name::endsWith);
     }
 
-    public boolean isInlineName(String name) {
-        return inlineExpr.stream().anyMatch(name::matches);
+    public String getInlineName(String name) {
+        var isNameless = namelessInlineExpr.stream()
+                .anyMatch(pattern -> pattern.matcher(name).matches());
+        if (isNameless) return "";
+        return inlineExpr.stream().map(pattern -> {
+            var matcher = pattern.matcher(name);
+            if (!matcher.matches()) return null;
+            StringBuilder result = new StringBuilder(name.length());
+            result.append(matcher.group(1));
+            for (int i = 2; i <= matcher.groupCount(); i++) {
+                var text = matcher.group(i);
+                result.append(Character.toUpperCase(text.charAt(0)));
+                for (int k = 1; k < text.length(); k++) {
+                    result.append(text.charAt(k));
+                }
+            }
+            return result.toString();
+        }).filter(Objects::nonNull).findAny().orElse(null);
     }
 
 }

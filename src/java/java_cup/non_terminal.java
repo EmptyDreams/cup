@@ -342,10 +342,11 @@ public class non_terminal extends symbol {
       for (var entry : prod.getLabel2SymbolPartMap().entrySet()) {
         var label = entry.getKey();
         var sym = entry.getValue().the_symbol();
-        if (sym.is_non_term() && config.isInlineName(label)) {
+        var inlineName = config.getInlineName(label);
+        if (sym.is_non_term() && inlineName != null) {
           var subMap = ((non_terminal) sym).getInlineExpr();
           for (var subEntry : subMap.entrySet()) {
-            var subLabel = subEntry.getKey();
+            var subLabel = emit.joinName(inlineName, subEntry.getKey());
             var subSym = subEntry.getValue();
             var oldSym = map.put(subLabel, subSym);
             if (oldSym != null && !oldSym.equals(subSym)) {

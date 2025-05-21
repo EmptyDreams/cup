@@ -39,8 +39,6 @@ import java_cup.runtime.*;
  * <dt>-ast_flatten
  * <dd>flatten lists/inlines in the generated AST,
  *     the argument is a key=value config list separated by '&'.
- *     Supported keys: 'list' for non-terminal list suffixes, 'inline' for inline pattern.
- *     Values are comma-separated suffix lists (case-sensitive).
  * <dt>-expect #
  * <dd>number of conflicts expected/allowed [default 0]
  * <dt>-compact_red
@@ -310,11 +308,9 @@ public class Main {
         + "    -nonterms           put non terminals in symbol constant class\n"
         + "    -ast format         auto generates AST. The format param defines node class naming, " +
                                    "where %s is after the first underscore and %p is before, " +
-                                   "defaulting to \"Node%s\"."
+                                   "defaulting to \"Node%s\".\n"
         + "    -ast_flatten config flatten lists/inlines in the generated AST, " +
-                                   "the argument is a key=value config list separated by '&'. " +
-                                   "Supported keys: 'list' for non-terminal list suffixes, 'inline' for inline pattern. " +
-                                   "Values are comma-separated suffix lists (case-sensitive).\n"
+                                   "the argument is a key=value config list separated by '&'.\n"
         + "    -compact_red        compact tables by defaulting to most frequent reduce\n"
         + "    -nowarn             don't warn about useless productions, etc.\n"
         + "    -nosummary          don't print the usual summary of parse states, etc.\n"
