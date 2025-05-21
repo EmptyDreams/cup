@@ -326,7 +326,6 @@ public class emit {
         result.append(word.substring(1).toLowerCase());
       }
     }
-    System.out.println(result);
     return result.toString();
   }
 

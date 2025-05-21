@@ -151,7 +151,10 @@ public class production {
           if (lhs_sym.isListExpr()) {
             actionBuilder.append(indentation).append("RESULT = Collections.emptyList();\n");
           } else {
-            actionBuilder.append(indentation).append("RESULT = Empty.instance;\n");
+            actionBuilder.append(indentation)
+              .append("RESULT = new ")
+              .append(lhs_sym.astClassName())
+              .append("();\n");
           }
         } else if (lhs_sym.isListExpr()) {
           int selfIndex = -1;
