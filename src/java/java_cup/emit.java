@@ -297,7 +297,7 @@ public class emit {
     return Character.isUpperCase(third) || Character.isDigit(third);
   }
 
-  private static Pattern _stPattern = Pattern.compile(
+  private static final Pattern _stPattern = Pattern.compile(
           "[A-Z]{2,}(?=[A-Z][a-z]|\\b)|" +
                   "[A-Z]?[a-z]+|" +
                   "[A-Z]+"
@@ -1118,7 +1118,7 @@ public class emit {
       out.println("  \"UnnecessaryLocalVariable\",");
       out.println("  \"EnhancedSwitchMigration\",");
       out.println("  \"SwitchStatementWithTooFewBranches\",");
-      out.println("  \"DataFlowIssue\"");
+      out.println("  \"RedundantSuppression\"");
       out.println("})");
       out.println("public class " + className + " implements IAstNode {");
       out.println();
