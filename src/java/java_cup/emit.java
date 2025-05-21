@@ -2,10 +2,7 @@ package java_cup;
 
 import java_cup.runtime.ArrayStack;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -1128,6 +1125,7 @@ public class emit {
       out.println("  \"EnhancedSwitchMigration\",");
       out.println("  \"SwitchStatementWithTooFewBranches\",");
       out.println("  \"unchecked\",");
+      out.println("  \"RedundantIfStatement\",");
       out.println("  \"RedundantSuppression\"");
       out.println("})");
       out.println("public class " + className + " implements IAstNode {");
@@ -1226,6 +1224,7 @@ public class emit {
       out.println(getterBuilder);
       out.println(existsBuilder);
       static_builders(out, className, nt, label2TypeMap, labelIndexMap, bestAssignment);
+      equals_builder(out, className, labelIndexMap, bestAssignment);
       out.println('}');
     }
   }
@@ -1369,6 +1368,62 @@ public class emit {
       out.println("  }");
       out.println();
     }
+  }
+
+  private static void equals_builder(
+    PrintWriter out, String className,
+    Map<String, Integer> labelIndexMap,
+    SymbolStateCompression bestAssignment
+  ) {
+    out.println("  @Override");
+    out.println("  public int hashCode() {");
+    boolean hasMask = labelIndexMap.size() != bestAssignment.idCount;
+    if (!hasMask) {
+      out.println("    int hashCode = 0;");
+    } else if (labelIndexMap.size() <= 32) {
+      out.println("    int hashCode = validMask;");
+    } else {
+      out.println("    int hashCode = validMask.hashCode();");
+    }
+    if (!bestAssignment.isEmpty()) {
+      if (bestAssignment.idCount == 1) {
+        out.println("    hashCode += 31 * Objects.hashCode(value);");
+      } else {
+        out.println("    hashCode += 31 * Arrays.hashCode(values);");
+      }
+    }
+    out.println("    return hashCode;");
+    out.println("  }");
+    out.println();
+    out.println("  @Override");
+    out.println("  public boolean equals(Object o) {");
+    out.println("    if (o == this) return true;");
+    out.println("    if (o == null || o.getClass() != getClass()) return false;");
+    if (!hasMask && bestAssignment.isEmpty()) {
+      out.println("    return true;");
+      out.println("  }");
+      out.println();
+      return;
+    }
+    out.println("    " + className + " that = (" + className + ") o;");
+    if (hasMask) {
+      if (labelIndexMap.size() <= 32) {
+        out.println("    if (that.validMask != validMask) return false;");
+      } else {
+        out.println("    if (!that.validMask.equals(validMask)) return false;");
+      }
+    }
+    if (bestAssignment.isEmpty()) {
+      out.println("    return true;");
+    } else {
+      if (bestAssignment.idCount == 1) {
+        out.println("    return Objects.equals(that.value, value);");
+      } else {
+        out.println("    return Arrays.equals(that.values, values);");
+      }
+    }
+    out.println("  }");
+    out.println();
   }
 
   /**
