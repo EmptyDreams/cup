@@ -298,9 +298,9 @@ public class emit {
   }
 
   private static final Pattern _stPattern = Pattern.compile(
-          "[A-Z]{2,}(?=[A-Z][a-z]|\\b)|" +
-                  "[A-Z]?[a-z]+|" +
-                  "[A-Z]+"
+    "[A-Z]{2,}(?=[A-Z][a-z]|\\b)|" +
+      "[A-Z]?[a-z]+|" +
+      "[A-Z]+"
   );
 
   /**
@@ -308,7 +308,6 @@ public class emit {
    */
   protected static String castToStName(String name) {
     if (name == null || name.isEmpty()) return name;
-
 
     String[] parts = name.split("_");
     List<String> words = new ArrayList<>();

@@ -32,6 +32,15 @@ import java_cup.runtime.*;
  * <dd>emit symbol constant <i>interface</i>, rather than class
  * <dt>-nonterms
  * <dd>put non terminals in symbol constant class
+ * <dt>-ast
+ * <dd>auto generates AST. The format param defines node class naming,
+ *     where %s is after the first underscore and %p is before,
+ *     defaulting to "Node%s".
+ * <dt>-ast_flatten
+ * <dd>flatten lists/inlines in the generated AST,
+ *     the argument is a key=value config list separated by '&'.
+ *     Supported keys: 'list' for non-terminal list suffixes, 'inline' for inline pattern.
+ *     Values are comma-separated suffix lists (case-sensitive).
  * <dt>-expect #
  * <dd>number of conflicts expected/allowed [default 0]
  * <dt>-compact_red
@@ -68,7 +77,6 @@ import java_cup.runtime.*;
  * @version last updated: 7/3/96
  * @author Frank Flannery
  */
-
 public class Main {
 
   /*-----------------------------------------------------------*/
@@ -303,9 +311,9 @@ public class Main {
         + "    -ast format         auto generates AST. The format param defines node class naming, " +
                                    "where %s is after the first underscore and %p is before, " +
                                    "defaulting to \"Node%s\"."
-        + "    -ast_flatten config flatten lists/boxes in the generated AST, " +
+        + "    -ast_flatten config flatten lists/inlines in the generated AST, " +
                                    "the argument is a key=value config list separated by '&'. " +
-                                   "Supported keys: 'list' for non-terminal list suffixes, 'box' for box suffixes. " +
+                                   "Supported keys: 'list' for non-terminal list suffixes, 'inline' for inline pattern. " +
                                    "Values are comma-separated suffix lists (case-sensitive).\n"
         + "    -compact_red        compact tables by defaulting to most frequent reduce\n"
         + "    -nowarn             don't warn about useless productions, etc.\n"
