@@ -1145,7 +1145,11 @@ public class emit {
           _index = handleVar(label2TypeMap, labelIndexMap, state, _index, label, symbol, null);
         }
       }
+      System.out.println("DEBUG: SymbolStateCompression start for: " + className);
+      long startTime = System.nanoTime();
       var bestAssignment = SymbolStateCompression.assignNumbers(states);
+      long timeVal = System.nanoTime() - startTime;
+      System.out.printf("DEBUG: SymbolStateCompression time[%.6f]: %s%n", timeVal / 1000000.0, className);
       boolean isOnlyValue = bestAssignment.idCount == 1;
       boolean isIntMask = labelIndexMap.size() <= 32;
       boolean noMask = labelIndexMap.size() == bestAssignment.idCount;
