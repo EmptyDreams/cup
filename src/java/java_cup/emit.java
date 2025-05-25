@@ -1111,7 +1111,7 @@ public class emit {
   }
 
   private static void node_class(File dir, non_terminal nt) throws internal_error, IOException {
-    String className = symbol.getNodeClassName(nt.name());
+    String className = symbol.getNtNodeClassName(nt.name());
     try (
       BufferedWriter writer = Files.newBufferedWriter(new File(dir, className + ".java").toPath());
       PrintWriter out = new PrintWriter(writer)
@@ -1165,11 +1165,11 @@ public class emit {
       StringBuilder getterBuilder = new StringBuilder(256);
       StringBuilder existsBuilder = new StringBuilder(256);
       getterBuilder.append("  @Override\n")
-              .append("  public Object getByLabel(String label) {\n")
-              .append("    switch (label) {\n");
+        .append("  public Object getByLabel(String label) {\n")
+        .append("    switch (label) {\n");
       existsBuilder.append("  @Override\n")
-              .append("  public boolean hasLabel(String label) {\n")
-              .append("    switch (label) {\n");
+        .append("  public boolean hasLabel(String label) {\n")
+        .append("    switch (label) {\n");
       for (Map.Entry<String, String> entry : label2TypeMap.entrySet()) {
         String label = entry.getKey();
         String type = entry.getValue();
@@ -1180,21 +1180,21 @@ public class emit {
         // Generate getter and checker
         if (type.isEmpty()) {
           existsBuilder.append("      case \"")
-                  .append(label)
-                  .append("\": return ")
-                  .append(label)
-                  .append("();\n");
+            .append(label)
+            .append("\": return ")
+            .append(label)
+            .append("();\n");
         } else {
           getterBuilder.append("      case \"")
-                  .append(label)
-                  .append("\": return get")
-                  .append(varName)
-                  .append("();\n");
+            .append(label)
+            .append("\": return get")
+            .append(varName)
+            .append("();\n");
           existsBuilder.append("      case \"")
-                  .append(label)
-                  .append("\": return has")
-                  .append(varName)
-                  .append("();\n");
+            .append(label)
+            .append("\": return has")
+            .append(varName)
+            .append("();\n");
         }
         if (!type.isEmpty()) {
           // Generate getters for variables of non-marked existence types

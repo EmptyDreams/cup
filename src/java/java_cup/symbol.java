@@ -75,7 +75,7 @@ public abstract class symbol {
     String type = stack_type();
     switch (type) {
       case "IAstNode":
-        return symbol.getNodeClassName(name());
+        return symbol.getNtNodeClassName(name());
       case "List":
         if (is_non_term()) {
           var symbol = (non_terminal) this;
@@ -138,7 +138,7 @@ public abstract class symbol {
 
   /*-----------------------------------------------------------*/
 
-  public static String getNodeClassName(String name) {
+  public static String getNtNodeClassName(String name) {
     String format = Main.ast_format;
     StringBuilder sb = new StringBuilder(name.length() + format.length());
     for (int i = 0; i < format.length(); i++) {

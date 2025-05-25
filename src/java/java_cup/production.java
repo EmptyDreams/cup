@@ -180,7 +180,7 @@ public class production {
               .append(").value();\n");
           } else if (selfIndex == -1) {
             symbol sym = onlyLabelPart.the_symbol();
-            String className = symbol.getNodeClassName(sym.name());
+            String className = sym.astClassName();
             actionBuilder.append(indentation)
               // List<xxx> flattenList = new ArrayList<>();
               .append("List<")
@@ -194,7 +194,7 @@ public class production {
               .append(onlyLabelPart.label())
               .append(");\n");
           } else {
-            String className = symbol.getNodeClassName(onlyLabelPart.the_symbol().name());
+            String className = onlyLabelPart.the_symbol().astClassName();
             actionBuilder.append(indentation)
               // List<xxx> flattenList = stack.elementAt(top - 1).value();
               .append("List<").append(className).append("> flattenList = ")
@@ -211,7 +211,7 @@ public class production {
           }
           actionBuilder.append(indentation).append("RESULT = flattenList;");
         } else {
-          String className = symbol.getNodeClassName(lhs_sym.name());
+          String className = symbol.getNtNodeClassName(lhs_sym.name());
           String nodeName = emit.pre("treeNode");
           // Xxx xxx = Xxx._xx(
           actionBuilder.append(indentation)

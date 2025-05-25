@@ -62,6 +62,7 @@ public class SymbolStateCompression {
     }
 
     private static void backtrack(int idx, int[] colors, boolean[][] isConflict, List<String> strings) {
+        if (minMaxColor == 1) return;
         if (idx == strings.size()) {
             //noinspection OptionalGetWithoutIsPresent
             int maxColor = Arrays.stream(colors).max().getAsInt();
