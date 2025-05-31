@@ -1294,7 +1294,9 @@ public class emit {
       out.println("    " + className + " result = new " + className + "();");
       BitSet flag = new BitSet(map.size());
       Map<String, String> inlineExistence = new HashMap<>();
+      boolean hasMask = labelIndexMap.size() != bestAssignment.idCount;
       boolean isOnlyValue = bestAssignment.idCount == 1;
+      boolean isMaskInit = false;
       for (var entry : map.entrySet()) {
         var label = entry.getKey();
         var sym = entry.getValue().the_symbol();
@@ -1308,10 +1310,27 @@ public class emit {
             } else {
               if (isOnlyValue) out.println("    result.value = _" + label + ".get" + castToStName(subLabel) + "();");
               else {
+                if (hasMask && !isMaskInit) {
+                  isMaskInit = true;
+                  if (labelIndexMap.size() <= 32) {
+                    out.println("    int validMask = 0;");
+                  } else {
+                    out.println("    BitSet validMask = new BitSet();");
+                  }
+                }
                 Integer id = bestAssignment.get(subLabelKey);
                 var stName = castToStName(subLabel);
-                out.println("    if (_" + label + ".has" + stName + "())");
+                out.println("    if (_" + label + ".has" + stName + "()) {");
                 out.println("      result.values[" + id + "] = " + '_' + label + ".get" + stName + "();");
+                if (hasMask) {
+                  int index = labelIndexMap.get(subLabelKey);
+                  if (labelIndexMap.size() <= 32) {
+                    out.println("      validMask |= 0x" + Integer.toHexString(1 << index) + ';');
+                  } else {
+                    out.println("      validMask.set(0x" + Integer.toHexString(index) + ");");
+                  }
+                }
+                out.println("    }");
               }
             }
           }
@@ -1328,23 +1347,26 @@ public class emit {
           }
         }
       }
-      boolean hasMask = !flag.isEmpty() && labelIndexMap.size() != bestAssignment.idCount;
-      if (hasMask) {
+      if (hasMask && !flag.isEmpty()) {
         if (labelIndexMap.size() <= 32) {
-          out.println("    int validMask = 0x" + Integer.toHexString((int) flag.toLongArray()[0]) + ';');
+          out.print(isMaskInit ? "    validMask |= 0x" : "    int validMask = 0x");
+          out.println(Integer.toHexString((int) flag.toLongArray()[0]) + ';');
         } else {
-          out.println("    BitSet validMask = new BitSet();");
+          if (!isMaskInit)
+            out.println("    BitSet validMask = new BitSet();");
           for (int k = 0; k < flag.length(); k++) {
             if (flag.get(k)) {
               out.println("    validMask.set(" + k + ");");
             }
           }
         }
+        isMaskInit = true;
       }
       if (!inlineExistence.isEmpty()) {
-        if (!hasMask) {
+        if (!isMaskInit) {
+          isMaskInit = true;
           if (labelIndexMap.size() <= 32) {
-            out.println("    int validMask = 0x0;");
+            out.println("    int validMask = 0;");
           } else {
             out.println("    BitSet validMask = new BitSet();");
           }
@@ -1365,7 +1387,7 @@ public class emit {
           }
         }
       }
-      if (hasMask || !inlineExistence.isEmpty()) {
+      if (isMaskInit) {
         out.println("    result.validMask = validMask;");
       }
       out.println("    return result;");
