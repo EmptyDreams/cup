@@ -70,6 +70,7 @@ ident = ([:jletter:] | "_" ) ([:jletterdigit:] | [:jletter:] | "_" )*
   ":"           { return symbol("COLON",COLON);                }
   "::="         { return symbol("COLON_COLON_EQUALS",COLON_COLON_EQUALS);   }
   "%prec"       { return symbol("PERCENT_PREC",PERCENT_PREC);  }
+  "%namer"      { return symbol("PERCENT_NAMER",PERCENT_NAMER);}
   ">"           { return symbol("GT",GT);                      }
   "<"           { return symbol("LT",LT);                      }
   {Comment}     {                                              }

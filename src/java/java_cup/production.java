@@ -213,22 +213,29 @@ public class production {
         } else {
           String className = symbol.getNtNodeClassName(lhs_sym.name());
           String nodeName = emit.pre("treeNode");
-          // Xxx xxx = Xxx._xx(
-          actionBuilder.append(indentation)
-            .append(className).append(' ').append(nodeName).append(" = ")
-            .append(className).append('.').append(getHashName()).append("(\n");
-          boolean isFirst = true;
-          for (var entry : getLabel2SymbolPartMap().entrySet()) {
-            var label = entry.getKey();
-            if (emit.isExistenceVar(label)) continue;
-            var sym = entry.getValue().the_symbol();
-            if (isFirst) isFirst = false;
-            else actionBuilder.append(",\n");
-            // (xxx) label
-            actionBuilder.append(indentation).append("  ")
-              .append("(").append(sym.astClassName()).append(") ").append(label);
+          var partMap = getLabel2SymbolPartMap();
+          if (partMap.isEmpty()) {
+            actionBuilder.append(indentation)
+              .append(className).append(' ').append(nodeName)
+              .append(" = new ").append(className).append("();\n");
+          } else {
+            // Xxx xxx = Xxx._xx(
+            actionBuilder.append(indentation)
+              .append(className).append(' ').append(nodeName).append(" = ")
+              .append(className).append(".build").append(getProdName()).append("(\n");
+            boolean isFirst = true;
+            for (var entry : partMap.entrySet()) {
+              var label = entry.getKey();
+              if (emit.isExistenceVar(label)) continue;
+              var sym = entry.getValue().the_symbol();
+              if (isFirst) isFirst = false;
+              else actionBuilder.append(",\n");
+              // (xxx) label
+              actionBuilder.append(indentation).append("  ")
+                .append("(").append(sym.astClassName()).append(") ").append(label);
+            }
+            actionBuilder.append('\n').append(indentation).append(");\n");
           }
-          actionBuilder.append('\n').append(indentation).append(");\n");
           actionBuilder.append(indentation).append("RESULT = ").append(nodeName).append(';');
         }
       }
@@ -264,40 +271,61 @@ public class production {
     return sym;
   }
 
-  private String _hashName = null;
+  private String prodName = null;
 
-  /**
-   * Get the hash name of the production.
-   */
-  public String getHashName() {
-    if (_hashName != null) return _hashName;
-    List<String> input = new LinkedList<>();
-    for (production_part part : _rhs) {
-      var label = part.label();
-      if (label != null) {
-        input.add(label);
+  public String getProdName() {
+    if (prodName == null) {
+      var nt = (non_terminal) lhs().the_symbol();
+      int count = 0;
+      Collection<String> labels = getLabel2SymbolPartMap().keySet();
+      o:while (true) {
+        var newName = 'S' + signature(labels, ++count);
+        for (production prod : nt.productions()) {
+          if (newName.equals(prod.prodName) && !equalsLabels(prod)) {
+            continue o;
+          }
+        }
+        prodName = newName;
+        break;
       }
     }
-    _hashName = buildSignature(input);
-    return _hashName;
+    return prodName;
   }
 
-  private static String buildSignature(List<String> input) {
+  void setProdName(String name) {
+    prodName = name;
+  }
+
+  private static String signature(Collection<String> labels, int append) {
     try {
-      var digest = MessageDigest.getInstance("MD5");
-      String combined = String.join(",", input);
-      byte[] hashBytes = digest.digest(combined.getBytes());
-      var hexString = new StringBuilder(32 + 2 + 3);
-      hexString.append('_')
-        .append(input.size() % 1000)
-        .append('_');
-      for (byte b : hashBytes) {
-        hexString.append(String.format("%02x", b));
+      StringBuilder sb = new StringBuilder(256);
+      sb.append(append).append(':');
+      for (String label : labels) {
+        sb.append(label).append(';');
       }
-      return hexString.toString();
+      MessageDigest md = MessageDigest.getInstance("MD5");
+      byte[] hash = md.digest(sb.toString().getBytes());
+      return convertToBase62(hash);
     } catch (NoSuchAlgorithmException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static final char[] CHAR_SET =
+          "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".toCharArray();
+
+  private static String convertToBase62(byte[] hash) {
+    long value = 0;
+    for (int i = 0; i < 6; i++) {
+      value = (value << 8) | (hash[i] & 0xFF);
+    }
+
+    char[] result = new char[8];
+    for (int i = 8 - 1; i >= 0; i--) {
+      result[i] = CHAR_SET[(int) (value % 62)];
+      value /= 62;
+    }
+    return new String(result);
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -911,6 +939,44 @@ public class production {
     if (other == null)
       return false;
     return other._index == _index;
+  }
+
+  /**
+   * Compare whether the label is exactly the same between two productions
+   */
+  public boolean equalsLabels(production other) {
+    if (other == null) return false;
+    if (other._index == _index) return true;
+    int thisIndex = 0, thatIndex = 0;
+    int thisLen = rhs_length(), thatLen = other.rhs_length();
+    while (true) {
+      String thisLabel = null, thatLabel = null;
+      symbol thisSym = null, thatSym = null;
+      while (thisIndex != thisLen) {
+        var part = _rhs[thisIndex++];
+        var label = part.label();
+        if (label == null || part.is_action()) continue;
+        thisLabel = label;
+        thisSym = ((symbol_part) part).the_symbol();
+      }
+      while (thatIndex != thatLen) {
+        var part = other._rhs[thatIndex++];
+        var label = part.label();
+        if (label == null || part.is_action()) continue;
+        thatLabel = label;
+        thatSym = ((symbol_part) part).the_symbol();
+      }
+      if (thisLabel == null && thatLabel == null) {
+        break;
+      }
+      if (thisLabel == null || thatLabel == null) {
+        return false;
+      }
+      if (!thisSym.equals(thatSym) && !thisLabel.equals(thatLabel)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */

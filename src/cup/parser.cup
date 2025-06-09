@@ -200,6 +200,73 @@ action code {:
  		return code;
  	return "//@@CUPDBG" + id + "\n" + code;
   }
+
+  private void handle_rhs_expr(boolean is_prec, String term_name, boolean is_namer, String prod_name) throws Exception {
+    java_cup.symbol sym = null;
+    if (lhs_nt != null) {
+      if (is_prec) {
+        /* Find the precedence symbol */
+        if (term_name == null) {
+          System.err.println("No terminal for contextual precedence");
+        } else {
+          sym = ((symbol_part) symbols.get(term_name)).the_symbol();
+        }
+      }
+      /* build the production */
+      production p;
+      if (sym instanceof terminal) {
+        p = new production(
+          lhs_nt, rhs_parts, rhs_pos,
+          ((terminal) sym).precedence_num(),
+          ((terminal) sym).precedence_side()
+        );
+        ((symbol_part) symbols.get(term_name)).the_symbol().note_use();
+      } else {
+        if (is_prec) {
+          System.err.println(
+            "Invalid terminal " + term_name +
+              " for contextual precedence assignment"
+          );
+        }
+        p = new production(lhs_nt, rhs_parts, rhs_pos);
+      }
+      if (is_namer) {
+        if (prod_name == null || prod_name.isEmpty()) {
+          System.err.println("No production name for precedence assignment");
+        } else {
+          p.setProdName(prod_name);
+        }
+      }
+
+      /* if we have no start non-terminal declared and this is
+    		 the first production, make its lhs nt the start_nt
+    		 and build a special start production for it. */
+      if (start_nt == null) {
+        start_nt = lhs_nt;
+
+        /* build a special start production */
+        new_rhs();
+        add_rhs_part(add_lab(new symbol_part(start_nt), "start_val"));
+        add_rhs_part(new symbol_part(terminal.EOF));
+        if (!emit._xmlactions) add_rhs_part(new action_part("RESULT = start_val;"));
+        if (sym instanceof terminal) {
+          emit.start_production = new production(
+            non_terminal.START_nt,
+            rhs_parts,
+            rhs_pos,
+            ((terminal) sym).precedence_num(),
+            ((terminal) sym).precedence_side()
+          );
+        } else {
+          emit.start_production = new production(non_terminal.START_nt, rhs_parts, rhs_pos);
+        }
+        new_rhs();
+      }
+    }
+
+    /* reset the rhs accumulation in any case */
+    new_rhs();
+  }
 :};
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
@@ -247,7 +314,7 @@ scan with {:
 terminal
   PACKAGE, IMPORT, STATIC ,CODE, ACTION, PARSER, TERMINAL, NON, INIT, SCAN, WITH, 
   START, SEMI, COMMA, STAR, DOT, COLON, COLON_COLON_EQUALS, BAR, PRECEDENCE,
-  LEFT, RIGHT, NONASSOC, PERCENT_PREC, LBRACK, RBRACK, NONTERMINAL, GT, LT,
+  LEFT, RIGHT, NONASSOC, PERCENT_PREC, PERCENT_NAMER, LBRACK, RBRACK, NONTERMINAL, GT, LT,
   QUESTION, SUPER, EXTENDS, CLASS;
 
 terminal String  ID, CODE_STRING;
@@ -623,90 +690,18 @@ rhs_list ::= rhs_list BAR rhs | rhs;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
 
-rhs ::= 
-	prod_part_list PERCENT_PREC term_id:term_name 
-	{:
-	  java_cup.symbol sym = null;
-	  if (lhs_nt != null) 
-	    {
-	      /* Find the precedence symbol */
-	      if (term_name == null) {
-		System.err.println("No terminal for contextual precedence");
-		sym = null;
-	      } else {
-		sym = ((symbol_part)symbols.get(term_name)).the_symbol();
-	      }
-	      /* build the production */
-	      production p;
-	      if ((sym!=null) && (sym instanceof terminal)) {
-		p = new production(lhs_nt, rhs_parts, rhs_pos,
-				   ((terminal)sym).precedence_num(),
-				   ((terminal)sym).precedence_side());
-		((symbol_part)symbols.get(term_name)).the_symbol().note_use();
-	      } else {
-		System.err.println("Invalid terminal " + term_name + 
-				   " for contextual precedence assignment");
-		p = new production(lhs_nt, rhs_parts, rhs_pos);
-	      }
-
-	      /* if we have no start non-terminal declared and this is 
-		 the first production, make its lhs nt the start_nt 
-		 and build a special start production for it. */
-              if (start_nt == null)
-		{
-		  start_nt = lhs_nt;
-
-	          /* build a special start production */
-	          new_rhs();
-	          add_rhs_part(add_lab(new symbol_part(start_nt),"start_val"));
-	          add_rhs_part(new symbol_part(terminal.EOF));
-		  if (!emit._xmlactions) add_rhs_part(new action_part("RESULT = start_val;"));
-		  if ((sym!=null) && (sym instanceof terminal)) {
-		    emit.start_production = 
-		      new production(non_terminal.START_nt, rhs_parts, 
-				     rhs_pos, ((terminal)sym).precedence_num(),
-				     ((terminal)sym).precedence_side());
-		  } else {
-		    emit.start_production = 
-		      new production(non_terminal.START_nt, rhs_parts, rhs_pos);
-		  }
-	          new_rhs();
-		}
-	    }
-
-	  /* reset the rhs accumulation in any case */
-	  new_rhs();
-	:}
+rhs ::=
+	prod_part_list PERCENT_PREC term_id:term_name PERCENT_NAMER ID:prod_name
+	{: handle_rhs_expr(true, term_name, false, prod_name); :}
+	|
+	prod_part_list PERCENT_NAMER ID:prod_name
+	{: handle_rhs_expr(false, null, true, prod_name); :}
+	|
+	prod_part_list PERCENT_PREC term_id:term_name
+	{: handle_rhs_expr(true, term_name, false, null); :}
 	|
 	prod_part_list 
-	{: 
-	  if (lhs_nt != null) 
-	    {
-	      /* build the production */
-	      production p = new production(lhs_nt, rhs_parts, rhs_pos);
-
-	      /* if we have no start non-terminal declared and this is 
-		 the first production, make its lhs nt the start_nt 
-		 and build a special start production for it. */
-              if (start_nt == null)
-		{
-		  start_nt = lhs_nt;
-
-	          /* build a special start production */
-	          new_rhs();
-	          add_rhs_part(add_lab(new symbol_part(start_nt),"start_val"));
-	          add_rhs_part(new symbol_part(terminal.EOF));
-		  if (!emit._xmlactions) add_rhs_part(new action_part("RESULT = start_val;"));
-	          emit.start_production = 
-		     new production(non_terminal.START_nt, rhs_parts, rhs_pos);
-
-	          new_rhs();
-		}
-	    }
-	  
-	  /* reset the rhs accumulation in any case */
-	  new_rhs();
-	:} 
+	{: handle_rhs_expr(false, null, false, null); :}
 	;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 

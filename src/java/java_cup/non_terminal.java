@@ -330,9 +330,7 @@ public class non_terminal extends symbol {
 
   /**
    * Get the inline expression of a non-terminal.
-   * @return Key is the label, value is the symbol. <code>null</code> if is not an inline expression.
-   * @throws internal_error if the non-terminal ends with the suffix specified by the <code>ast_flatten</code> parameter,
-   *                        but is not a valid inline expression
+   * @return Key is the label, value is the symbol.
    */
   public Map<String, symbol> getInlineExpr() throws internal_error {
     if (_inlineExpr != null) return _inlineExpr;

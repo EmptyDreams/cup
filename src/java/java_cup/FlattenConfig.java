@@ -1,9 +1,6 @@
 package java_cup;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -17,11 +14,12 @@ public class FlattenConfig {
         String[] split = config.split("&");
         for (String item : split) {
             String[] entry = item.split("=");
-            if (entry.length != 2) {
+            if (entry.length > 2) {
                 Main.usage("-ast_flatten can be only one '=' in a kv pair, but input: " + item);
             }
             String key = entry[0];
-            List<String> values = Arrays.stream(entry[1].split(","))
+            List<String> values = entry.length == 1 ? Collections.emptyList()
+                    : Arrays.stream(entry[1].split(","))
                     .filter(s -> !s.isEmpty())
                     .collect(Collectors.toList());
             switch (key) {

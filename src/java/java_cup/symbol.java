@@ -83,6 +83,14 @@ public abstract class symbol {
           if (itemType != null) return "List<" + itemType + '>';
         }
         break;
+      case "Byte": return "byte";
+      case "Short": return "short";
+      case "Character": return "char";
+      case "Integer": return "int";
+      case "Long": return "long";
+      case "Float": return "float";
+      case "Double": return "double";
+      case "Boolean": return "boolean";
     }
     return type;
   }
