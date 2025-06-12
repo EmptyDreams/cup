@@ -90,6 +90,7 @@
 
 package java_cup;
 import java_cup.runtime.*;
+import java_cup.runtime.symbol.complex.*;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -151,10 +152,10 @@ action code {:
 // TUM CHANGES
 
   /** table of declared symbols -- contains production parts indexed by name */
-  protected Map<String,production_part> symbols = new HashMap();
+  protected Map<String,production_part> symbols = new HashMap<>();
 
   /** table of just non terminals -- contains non_terminals indexed by name */
-  protected Map<String,non_terminal> non_terms = new HashMap();
+  protected Map<String,non_terminal> non_terms = new HashMap<>();
 
   /** declared start non_terminal */
   protected non_terminal start_nt = null;
@@ -300,7 +301,7 @@ parser code {:
 /*---------------------------------------------------------------- */
 
 init with {: 
-    ComplexSymbolFactory f = new ComplexSymbolFactory();
+    ComplexSymbolFactory f = new ComplexSymbolFactory(sym.TERMINAL_NAMES, sym.NON_TERMINAL_NAMES);
     symbolFactory = f;
     lexer = new Lexer(f); 
 :}

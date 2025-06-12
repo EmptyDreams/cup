@@ -19,65 +19,19 @@ package java_cup.runtime;
  * position Object in the original input file
  ******************************************************************/
 
-public class Symbol {
+public abstract class Symbol {
 
-  // TUM 20060327: Added new Constructor to provide more flexible way
-  // for location handling
-  /*******************************
-   *******************************/
-  public Symbol(int id, Symbol left, Symbol right, Object o) {
-    this(id, left.left, right.right, o);
-  }
-
-  public Symbol(int id, Symbol left, Symbol right) {
-    this(id, left.left, right.right);
-  }
-
-  public Symbol(int id, Symbol left, Object o) {
-    this(id, left.right, left.right, o);
-  }
-
-  /*******************************
-   * Constructor for l,r values
-   *******************************/
-
-  public Symbol(int id, int l, int r, Object o) {
-    this(id);
-    left = l;
-    right = r;
-    value = o;
-  }
-
-  /*******************************
-   * Constructor for no l,r values
-   ********************************/
-
-  public Symbol(int id, Object o) {
-    this(id, -1, -1, o);
-  }
-
-  /*****************************
-   * Constructor for no value
-   ***************************/
-
-  public Symbol(int id, int l, int r) {
-    this(id, l, r, null);
-  }
-
-  /***********************************
+  /**
    * Constructor for no value or l,r
-   ***********************************/
-
+   */
   public Symbol(int sym_num) {
     this(sym_num, -1);
-    left = -1;
-    right = -1;
   }
 
-  /***********************************
+  /**
    * Constructor to give a start state
-   ***********************************/
-  Symbol(int sym_num, int state) {
+   */
+  protected Symbol(int sym_num, int state) {
     sym = sym_num;
     parse_state = state;
   }
@@ -101,21 +55,102 @@ public class Symbol {
    */
   boolean used_by_parser = false;
 
-  /*******************************
-   * The data passed to parser
-   *******************************/
+  /* The data passed to parser */
 
-  public int left, right;
-  public Object value;
   /**
    * Equivalent of just retrieving the value directly, but does the typecast here;
    * Removes lots of unchecked cast warnings from the actual parser class by using this one function
    * @param <T> the type of the value to be casted to
    * @return just the value, like the attribute of the same name
    */
-  @SuppressWarnings("unchecked")
-  public <T> T value() {
-    return (T) value;
+  public abstract <T> T value();
+
+  /**
+   * Get the value as a boolean.
+   * <br/>
+   * Hermits and casts between numeric types are not supported, and automatic unboxing is supported.
+   *
+   * @throws ClassCastException if the stored value is not Boolean or boolean
+   */
+  public boolean getAsBoolean() {
+    throw new ClassCastException(getClass().getSimpleName() + " value can not cast to boolean");
+  }
+
+  /**
+   * Get the value as a byte.
+   * <br/>
+   * Hermits and casts between numeric types are not supported, and automatic unboxing is supported.
+   *
+   * @throws ClassCastException if the stored value is not Byte or byte
+   */
+  public byte getAsByte() {
+    throw new ClassCastException(getClass().getSimpleName() + " value can not cast to byte");
+  }
+
+  /**
+   * Get the value as a short.
+   * <br/>
+   * Hermits and casts between numeric types are not supported, and automatic unboxing is supported.
+   *
+   * @throws ClassCastException if the stored value is not Short or short
+   */
+  public short getAsShort() {
+    throw new ClassCastException(getClass().getSimpleName() + " value can not cast to short");
+  }
+
+  /**
+   * Get the value as an int.
+   * <br/>
+   * Hermits and casts between numeric types are not supported, and automatic unboxing is supported.
+   *
+   * @throws ClassCastException if the stored value is not Integer or int
+   */
+  public int getAsInt() {
+    throw new ClassCastException(getClass().getSimpleName() + " value can not cast to int");
+  }
+
+  /**
+   * Get the value as a long.
+   * <br/>
+   * Hermits and casts between numeric types are not supported, and automatic unboxing is supported.
+   *
+   * @throws ClassCastException if the stored value is not Long or long
+   */
+  public long getAsLong() {
+    throw new ClassCastException(getClass().getSimpleName() + " value can not cast to long");
+  }
+
+  /**
+   * Get the value as a float.
+   * <br/>
+   * Hermits and casts between numeric types are not supported, and automatic unboxing is supported.
+   *
+   * @throws ClassCastException if the stored value is not Float or float
+   */
+  public float getAsFloat() {
+    throw new ClassCastException(getClass().getSimpleName() + " value can not cast to float");
+  }
+
+  /**
+   * Get the value as a double.
+   * <br/>
+   * Hermits and casts between numeric types are not supported, and automatic unboxing is supported.
+   *
+   * @throws ClassCastException if the stored value is not Double or double
+   */
+  public double getAsDouble() {
+    throw new ClassCastException(getClass().getSimpleName() + " value can not cast to double");
+  }
+
+  /**
+   * Get the value as a char.
+   * <br/>
+   * Hermits and casts between numeric types are not supported, and automatic unboxing is supported.
+   *
+   * @throws ClassCastException if the stored value is not Character or char
+   */
+  public char getAsChar() {
+    throw new ClassCastException(getClass().getSimpleName() + " value can not cast to char");
   }
 
   /*****************************

@@ -1,12 +1,12 @@
 
 package java_cup.runtime;
 
+import java_cup.runtime.symbol.complex.ComplexSymbol;
+import java_cup.runtime.symbol.def.DefaultSymbol;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-
-import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
 
 /**
  * This class implements a skeleton table driven LR parser. In general, LR
@@ -121,15 +121,6 @@ public abstract class lr_parser {
   /*-----------------------------------------------------------*/
 
   /**
-   * Simple constructor. deprecated; The use of a SymbolFactory, e.g.
-   * Complexsymbolfactory is advised
-   */
-  @Deprecated
-  public lr_parser() {
-    this(new DefaultSymbolFactory());
-  }
-
-  /**
    * Simple constructor.
    */
   public lr_parser(SymbolFactory fac) {
@@ -137,20 +128,10 @@ public abstract class lr_parser {
   }
 
   /**
-   * Constructor that sets the default scanner. [CSA/davidm] deprecated; The use
-   * of a SymbolFactory, e.g. Complexsymbolfactory is advised
-   */
-  @Deprecated
-  public lr_parser(Scanner s) {
-    this(s, new DefaultSymbolFactory()); // TUM 20060327 old cup v10 Symbols as default
-  }
-
-  /**
    * Constructor that sets the default scanner and a SymbolFactory
    */
   public lr_parser(Scanner s, SymbolFactory symfac) {
-    this(); // in case default constructor someday does something
-    symbolFactory = symfac;
+    this(symfac);
     setScanner(s);
   }
 
@@ -376,7 +357,7 @@ public abstract class lr_parser {
    */
   public Symbol scan() throws java.lang.Exception {
     Symbol sym = getScanner().next_token();
-    return (sym != null) ? sym : getSymbolFactory().newSymbol("END_OF_FILE", EOF_sym());
+    return (sym != null) ? sym : getSymbolFactory().newSymbol(EOF_sym());
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -415,18 +396,19 @@ public abstract class lr_parser {
   public void report_error(String message, Object info) {
     if (info instanceof ComplexSymbol) {
       ComplexSymbol cs = (ComplexSymbol) info;
-      System.err.println(message + " for input symbol \"" + cs.getName() + "\" spanning from " + cs.getLeft() + " to "
+      System.err.println(message + " for input symbol \"" + symbolFactory.getTerminalName(cs.sym) + "\" spanning from " + cs.getLeft() + " to "
           + cs.getRight());
       return;
     }
 
     System.err.print(message);
-    System.err.flush();
-    if (info instanceof Symbol)
-      if (((Symbol) info).left != -1)
-        System.err.println(" at character " + ((Symbol) info).left + " of input");
-      else
-        System.err.println();
+    if (info instanceof DefaultSymbol) {
+      var ds = (DefaultSymbol) info;
+      if (ds.getLeft() != -1) {
+        System.err.print(" at character " + ds.getLeft() + " of input");
+      }
+    }
+    System.err.println();
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -676,7 +658,7 @@ public abstract class lr_parser {
 
     /* push dummy Symbol with start state to get us underway */
     stack.removeAllElements();
-    stack.push(getSymbolFactory().startSymbol("START", 0, start_state()));
+    stack.push(getSymbolFactory().startSymbol(0, start_state()));
     tos = 0;
 
     /* continue until we are told to stop */
@@ -854,7 +836,7 @@ public abstract class lr_parser {
 
     /* push dummy Symbol with start state to get us underway */
     stack.removeAllElements();
-    stack.push(getSymbolFactory().startSymbol("START", 0, start_state()));
+    stack.push(getSymbolFactory().startSymbol(0, start_state()));
     tos = 0;
 
     /* continue until we are told to stop */
@@ -1067,7 +1049,7 @@ public abstract class lr_parser {
     }
 
     /* build and shift a special error Symbol */
-    error_token = getSymbolFactory().newSymbol("ERROR", error_sym(), left, right);
+    error_token = getSymbolFactory().newSymbol(error_sym(), left, right);
     error_token.parse_state = act - 1;
     error_token.used_by_parser = true;
     stack.push(error_token);

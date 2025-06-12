@@ -1,17 +1,17 @@
 package java_cup.runtime;
 
+import java_cup.runtime.symbol.complex.ComplexSymbol;
+import java_cup.runtime.symbol.complex.Location;
+
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
-
-import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
-import java_cup.runtime.ComplexSymbolFactory.Location;
-
 public abstract class XMLElement {
+
 	public abstract List<XMLElement> selectById(String s);
 
 	public static void dump(XMLStreamWriter writer, XMLElement elem, String... blacklist) throws XMLStreamException {
@@ -43,18 +43,19 @@ public abstract class XMLElement {
 			for (Symbol s : buffer.getBuffered()) {
 				if (s instanceof ComplexSymbol) {
 					ComplexSymbol cs = (ComplexSymbol) s;
-					if (cs.value != null) {
+					// TODO: Temporarily remove the name attribute.
+					if (cs.value() != null) {
 						writer.writeStartElement("token");
-						writer.writeAttribute("name", cs.getName());
+//						writer.writeAttribute("name", cs.getName());
 						cs.getLeft().toXML(writer, "left");
-						writer.writeCharacters(cs.value + "");
+						writer.writeCharacters(cs.value() + "");
 						cs.getRight().toXML(writer, "right");
 						writer.writeEndElement();
 					} else {
 						writer.writeStartElement("keyword");
 						writer.writeAttribute("left", cs.getLeft() + "");
 						writer.writeAttribute("right", cs.getRight() + "");
-						writer.writeCharacters(cs.getName());
+//						writer.writeCharacters(cs.getName());
 						writer.writeEndElement();
 					}
 				} else if (s != null) {

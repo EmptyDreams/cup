@@ -644,24 +644,24 @@ public class production {
     /* Put in the left/right value labels */
     if (emit.lr_values()) {
       if (!emit.locations())
-        ret = indent + "int " + labelname + "left = (" + emit.pre("stack") +
+        ret = indent + "int " + labelname + "left = ((DefaultSymbol) " + emit.pre("stack") +
         // TUM 20050917
-            ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ").left;\n"
-            + indent + "int " + labelname + "right = (" + emit.pre("stack") +
-            ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ").right;\n";
+            ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ").getLeft();\n"
+            + indent + "int " + labelname + "right = ((DefaultSymbol) " + emit.pre("stack") +
+            ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ").getRight();\n";
       else
-        ret = indent + "Location " + labelname + "xleft = ((java_cup.runtime.ComplexSymbolFactory.ComplexSymbol)"
+        ret = indent + "Location " + labelname + "xleft = ((ComplexSymbol)"
             + emit.pre("stack") +
-            ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ").xleft;\n"
-            + indent + "Location " + labelname + "xright = ((java_cup.runtime.ComplexSymbolFactory.ComplexSymbol)"
+            ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ").getLeft();\n"
+            + indent + "Location " + labelname + "xright = ((ComplexSymbol)"
             + emit.pre("stack") +
-            ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ").xright;\n";
+            ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ").getRight();\n";
     } else
       ret = "";
 
     /* otherwise, just declare label. */
     return ret + indent + stack_type + " " + labelname + " = " + emit.pre("stack") +
-        ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ".<"+stack_type+">value();\n";
+        ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ".value();\n";
 
   }
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */

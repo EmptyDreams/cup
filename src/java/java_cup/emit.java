@@ -2,11 +2,17 @@ package java_cup;
 
 import java_cup.runtime.ArrayStack;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * This class handles emitting generated code for the resulting parser. The
@@ -397,48 +403,72 @@ public class emit {
     /* class header */
     out.println("/** CUP generated " + class_or_interface + " containing symbol constants. */");
     out.println("public " + class_or_interface + " " + symbol_const_class_name + " {");
+    out.println();
 
     out.println("  /* terminals */");
 
+    List<terminal> allTerminal = StreamSupport.stream(terminal.all().spliterator(), false)
+      .sorted(Comparator.comparingInt(terminal::index))
+      .collect(Collectors.toList());
     /* walk over the terminals */ /* later might sort these */
-    for (terminal term : terminal.all()) {
+    for (terminal term : allTerminal) {
+      if (sym_interface) out.print("  ");
+      else out.print("  public static final ");
       /* output a constant decl for the terminal */
-      out.println("  public static final int " + term.name() + " = " + term.index() + ";");
+      out.println("int " + term.name() + " = " + term.index() + ";");
     }
+    out.println();
 
     /* Emit names of terminals */
-    out.println("  public static final String[] terminalNames = new String[] {");
-    for (int i = 0; i < terminal.number(); i++) {
-      out.print("  \"");
-      out.print(terminal.find(i).name());
-      out.print("\"");
-      if (i < terminal.number() - 1) {
-        out.print(",");
-      }
-      out.println();
+    if (sym_interface) out.print("  ");
+    else out.print("  public static final ");
+    out.println("String[] TERMINAL_NAMES = new String[] {");
+    //noinspection DuplicatedCode
+    for (int i = 0; i < allTerminal.size(); i++) {
+      var term = allTerminal.get(i);
+      if (i != 0) out.println(',');
+      out.print("    \"" + term.name() + "\"");
     }
+    out.println();
     out.println("  };");
+    out.println();
 
     /* do the non terminals if they want them (parser doesn't need them) */
     if (emit_non_terms) {
-      out.println();
+      List<non_terminal> allNonTerminal = StreamSupport.stream(non_terminal.all().spliterator(), false)
+        .sorted(Comparator.comparingInt(non_terminal::index))
+        .collect(Collectors.toList());
+
       out.println("  /* non terminals */");
-
       /* walk over the non terminals */ /* later might sort these */
-      for (non_terminal nt : non_terminal.all()) {
-
+      for (non_terminal nt : allNonTerminal) {
         // ****
         // TUM Comment: here we could add a typesafe enumeration
         // ****
 
         /* output a constant decl for the terminal */
-        out.println("  static final int " + nt.name() + " = " + nt.index() + ";");
+        if (sym_interface) out.print("  ");
+        else out.print("  public static final ");
+        out.println("int " + nt.name() + " = " + nt.index() + ";");
       }
+      out.println();
+      out.println("  /* non terminal names */");
+      if (sym_interface) out.print("  ");
+      else out.print("  public static final ");
+      out.println("String[] NON_TERMINAL_NAMES = new String[] {");
+      //noinspection DuplicatedCode
+      for (int i = 0; i < allNonTerminal.size(); i++) {
+        var term = allNonTerminal.get(i);
+        if (i != 0) out.println(',');
+        out.print("    \"" + term.name() + "\"");
+      }
+      out.println();
+      out.println("  };");
+      out.println();
     }
 
     /* end of class */
     out.println("}");
-    out.println();
 
     symbols_time = System.currentTimeMillis() - start_time;
   }
@@ -512,11 +542,7 @@ public class emit {
           production.number()); prod = production.find(++proditeration)) {
         /* case label */
         out.println("          /*. . . . . . . . . . . . . . . . . . . .*/");
-        out.println("          case " + prod.index() + ": // " + prod.to_simple_string());
-
-        /* give them their own block to work in */
-        out.println("            {");
-        out.println("              String " + pre("name") + " = \"" + prod.lhs().the_symbol().name() + "\";");
+        out.println("          case " + prod.index() + ": { // " + prod.to_simple_string());
 
         /*
           TUM 20060608 intermediate result patch
@@ -586,35 +612,33 @@ public class emit {
          * the production is reducing to
          */
         if (emit.lr_values()) {
-          int loffset;
-          String leftstring, rightstring;
-          rightstring = emit.pre("stack") + ".peek()" ;
-          if (prod.rhs_length() == 0)
-            leftstring = rightstring;
-          else {
-            loffset = prod.rhs_length() - 1;
-            leftstring = emit.pre("stack") + ((loffset == 0) ? (".peek()") : (".elementAt(" + emit.pre("top") + "-" + loffset + ")"));
+          String posCode;
+          if (prod.rhs_length() <= 1) {
+            posCode = emit.pre("stack") + ".peek()";
+          } else {
+            posCode = emit.pre("stack") + ".subList("
+                    + emit.pre("top") + '-' + (prod.rhs_length() - 1) + ", "
+                    + emit.pre("top")
+                    + ')';
           }
-          out.println("              " + pre("result") + " = parser.getSymbolFactory().newSymbol("
-            + pre("name") + ", " + prod.lhs().the_symbol().index() + ", " + leftstring
-            + ((prod.rhs_length() == 0) ? ("") : (", " + rightstring)) + ", RESULT);");
+          out.println("              " + pre("result") + " = parser.getSymbolFactory().newSymbol(");
+          out.println("                " + prod.lhs().the_symbol().index() + ',');
+          out.println("                " + posCode + ',');
+          out.println("                RESULT");
+          out.println("              );");
         } else {
           out.println("              " + pre("result") + " = parser.getSymbolFactory().newSymbol("
-            + pre("name") + ", " + prod.lhs().the_symbol().index() + ", RESULT);");
+            + prod.lhs().the_symbol().index() + ", RESULT);");
         }
-
-        /* end of their block */
-        out.println("            }");
 
         /* if this was the start production, do action for accept */
         if (prod == start_prod) {
-          out.println("          /* ACCEPT */");
-          out.println("          " + pre("parser") + ".done_parsing();");
+          out.println("              /* ACCEPT */");
+          out.println("              " + pre("parser") + ".done_parsing();");
         }
-
-        /* code to return lhs symbol */
-        out.println("          return " + pre("result") + ";");
-        out.println();
+        out.println("            break;");
+        /* end of their block */
+        out.println("          }");
       }
 
       // END Switch
@@ -625,6 +649,8 @@ public class emit {
           "               \"Invalid action number \"+" + pre("act_num") + "+\"found in " + "internal parse table\");");
       out.println();
       out.println("        }");
+      /* code to return lhs symbol */
+      out.println("      return " + pre("result") + ';');
       out.println("    } /* end of method */");
     }
 
@@ -983,7 +1009,7 @@ public class emit {
       out.println("import " + s + ";");
     }
     if (locations())
-      out.println("import java_cup.runtime.ComplexSymbolFactory.Location;");
+      out.println("import java_cup.runtime.symbol.complex.Location;");
     out.println("import java_cup.runtime.XMLElement;");
 
     /* class header */
@@ -1002,14 +1028,8 @@ public class emit {
 
     /* constructors [CSA/davidm, 24-jul-99] */
     out.println();
-    out.println("  /** Default constructor. */");
-    out.println("  @Deprecated");
-    out.println("  public " + parser_class_name + "() {super();}");
+    out.println("  public " + parser_class_name + "(java_cup.runtime.SymbolFactory sf) { super(sf); }");
     if (!suppress_scanner) {
-      out.println();
-      out.println("  /** Constructor which sets the default scanner. */");
-      out.println("  @Deprecated");
-      out.println("  public " + parser_class_name + "(java_cup.runtime.Scanner s) {super(s);}");
       // TUM 20060327 added SymbolFactory aware constructor
       out.println();
       out.println("  /** Constructor which sets the default scanner. */");

@@ -1,9 +1,9 @@
 
 package java_cup;
 
-import java.io.*;
+import java_cup.runtime.symbol.complex.ComplexSymbolFactory;
 
-import java_cup.runtime.*;
+import java.io.*;
 
 /**
  * This class serves as the main driver for the JavaCup system. It accepts user
@@ -574,7 +574,7 @@ public class Main {
     parser parser_obj;
 
     /* create a parser and parse with it */
-    ComplexSymbolFactory csf = new ComplexSymbolFactory();
+    ComplexSymbolFactory csf = new ComplexSymbolFactory(sym.TERMINAL_NAMES, sym.NON_TERMINAL_NAMES);
     parser_obj = new parser(new Lexer(csf), csf);
     parser_obj.setDebugSymbols(opt_do_debugsymbols);
     try {
