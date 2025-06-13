@@ -660,9 +660,7 @@ public class production {
       ret = "";
 
     /* otherwise, just declare label. */
-    return ret + indent + stack_type + " " + labelname + " = " + emit.pre("stack") +
-        ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ".value();\n";
-
+    return ret + indent + stack_type + " " + labelname + " = " + emit.buildStackReader(stack_type, offset) + ";\n";
   }
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
