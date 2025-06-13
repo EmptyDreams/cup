@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -544,25 +545,9 @@ public class emit {
         out.println("          /*. . . . . . . . . . . . . . . . . . . .*/");
         out.println("          case " + prod.index() + ": { // " + prod.to_simple_string());
 
-        /*
-          TUM 20060608 intermediate result patch
-         */
-        String result = "null";
-        if (prod instanceof action_production) {
-          int lastResult = ((action_production) prod).getIndexOfIntermediateResult();
-          if (lastResult != -1) {
-            result = emit.pre("stack") +((lastResult == 1) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + (lastResult - 1) + ")"))
-                + ".<"+prod.lhs().the_symbol().stack_type()+">value()";
-          }
-        }
-
-        /* create the result symbol */
-        /*
-         * make the variable RESULT which will point to the new Symbol (see below) and
-         * be changed by action code 6/13/96 frankf
-         */
-        out.println("              " + prod.lhs().the_symbol().stack_type() + " RESULT =" + result + ";");
-
+        var resultType = Main.ast_format == null ?
+          prod.lhs().the_symbol().stack_type() : prod.lhs().the_symbol().astClassName();
+        var propagate = new StringBuilder();
         /*
          * Add code to propagate RESULT assignments that occur in action code embedded
          * in a production (ie, non-rightmost action code). 24-Mar-1998 CSA
@@ -581,7 +566,9 @@ public class emit {
           // OK, it fits. Make a conditional assignment to RESULT.
           int index = prod.rhs_length() - i - 1; // last rhs is on top.
           // set comment to inform about where the intermediate result came from
-          out.println("              " + "// propagate RESULT from " + s.name());
+          propagate.append("              " + "// propagate RESULT from ")
+            .append(s.name())
+            .append('\n');
           // // look out, whether the intermediate result is null or not
           // out.println(" " + "if ( " +
           // "((java_cup.runtime.Symbol) " + emit.pre("stack") +
@@ -592,15 +579,63 @@ public class emit {
           // TUM 20060608: even when its null: who cares?
 
           // store the intermediate result into RESULT
-          out.println("                " + "RESULT = " + emit.pre("stack") +
-              ((index == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + index + ")")) + 
-              ".<"+prod.lhs().the_symbol().stack_type()+">value();");
+          propagate.append("                RESULT = ")
+            .append(buildStackReader(resultType, index))
+            .append(";\n");
           break;
+        }
+        var actionCode = prod.action() == null ? null : prod.action().code_string();
+        boolean hasResult = propagate.length() != 0 || hasReadOrWriteResult(actionCode);
+        if (hasResult) {
+          /*
+            TUM 20060608 intermediate result patch
+          */
+          String result = "null";
+          if (prod instanceof action_production) {
+            int lastResult = ((action_production) prod).getIndexOfIntermediateResult();
+            if (lastResult != -1) {
+              result = buildStackReader(resultType, lastResult - 1);
+            }
+          }
+
+          /* create the result symbol */
+          /*
+           * The RESULT is used to store the value of the new Symbol.
+           * be changed by action code
+           *
+           * + 6/13/1996 frankf
+           * + 6/13/2025 Kmar
+           */
+          switch (resultType) {
+            case "byte": case "short": case "int": case "long":
+            case "float": case "double":
+              out.println(
+                "              " + resultType + " RESULT = "
+                  + ("null".equals(result) ? "0" : result) + ';'
+              );
+              break;
+            case "char":
+              out.println(
+                "              " + resultType + " RESULT = "
+                  + ("null".equals(result) ? "'\\0'" : result) + ';'
+              );
+              break;
+            case "boolean":
+              out.println(
+                "              boolean RESULT = "
+                  + ("null".equals(result) ? "false" : result) + ';'
+              );
+              break;
+            default:
+              out.println("              " + resultType + " RESULT =" + result + ";");
+              break;
+          }
+
+          out.println(propagate);
         }
 
         /* if there is an action string, emit it */
-        if (prod.action() != null && prod.action().code_string() != null)
-          out.println(prod.action().code_string());
+        if (actionCode != null) out.println(actionCode);
 
         /*
          * here we have the left and right values being propagated. must make this a
@@ -623,12 +658,26 @@ public class emit {
           }
           out.println("              " + pre("result") + " = parser.getSymbolFactory().newSymbol(");
           out.println("                " + prod.lhs().the_symbol().index() + ',');
-          out.println("                " + posCode + ',');
-          out.println("                RESULT");
+          if (hasResult) {
+            out.println("                " + posCode + ',');
+            out.println("                RESULT");
+          } else {
+            out.println("                " + posCode);
+          }
           out.println("              );");
         } else {
-          out.println("              " + pre("result") + " = parser.getSymbolFactory().newSymbol("
-            + prod.lhs().the_symbol().index() + ", RESULT);");
+          if (hasResult) {
+            out.println(
+              "              " + pre("result") + " = parser.getSymbolFactory().newSymbol("
+                + prod.lhs().the_symbol().index() + ", RESULT);"
+            );
+          } else {
+            out.println(
+              "              " + pre("result") + " = parser.getSymbolFactory().newSymbol("
+                + prod.lhs().the_symbol().index() + ");"
+            );
+          }
+
         }
 
         /* if this was the start production, do action for accept */
@@ -714,6 +763,59 @@ public class emit {
     out.println();
 
     action_code_time = System.currentTimeMillis() - start_time;
+  }
+
+  /**
+   * Checks if the provided Java function body code reads or writes the variable named RESULT.
+   *
+   * @param code Java function body code (excluding the function definition)
+   * @return Returns true if there are read or write operations on RESULT; otherwise returns false
+   */
+  public static boolean hasReadOrWriteResult(String code) {
+    if (code == null || code.isEmpty()) return false;
+    String processedCode = code.replaceAll("//.*", "");
+    processedCode = processedCode.replaceAll("/\\*[^\\u0000]*?\\*/", "");
+    processedCode = processedCode.replaceAll("\"([^\"\\\\]|\\\\.)*\"", "");
+
+    Pattern pattern = Pattern.compile("\\bRESULT\\b");
+    Matcher matcher = pattern.matcher(processedCode);
+
+    return matcher.find();
+  }
+
+  static String buildStackReader(String type, int offset) {
+    String result = emit.pre("stack")
+            + ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")"));
+    switch (type) {
+      case "byte":
+        result += ".getAsByte()";
+        break;
+      case "short":
+        result += ".getAsShort()";
+        break;
+      case "int":
+        result += ".getAsInt()";
+        break;
+      case "long":
+        result += ".getAsLong()";
+        break;
+      case "float":
+        result += ".getAsFloat()";
+        break;
+      case "double":
+        result += ".getAsDouble()";
+        break;
+      case "char":
+        result += ".getAsChar()";
+        break;
+      case "boolean":
+        result += ".getAsBoolean()";
+        break;
+      default:
+        result += ".value()";
+        break;
+    }
+    return result;
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -851,7 +953,7 @@ public class emit {
     out.println();
     out.println("  /** Access to parse-action table. */");
     out.println("  @Override");
-    out.println("  public short[][] action_table() {return _action_table;}");
+    out.println("  public short[][] action_table() { return _action_table; }");
 
     action_table_time = System.currentTimeMillis() - start_time;
   }
@@ -909,7 +1011,7 @@ public class emit {
     out.println();
     out.println("  /** Access to <code>reduce_goto</code> table. */");
     out.println("  @Override");
-    out.println("  public short[][] reduce_table() {return _reduce_table;}");
+    out.println("  public short[][] reduce_table() { return _reduce_table; }");
     out.println();
 
     goto_table_time = System.currentTimeMillis() - start_time;
@@ -924,7 +1026,7 @@ public class emit {
     nchar = do_newline(out, nchar, nbytes);
     nbytes += do_escaped(out, (char) (sa.length & 0xFFFF));
     nchar = do_newline(out, nchar, nbytes);
-    for (var element:sa) {
+    for (var element : sa) {
       nbytes += do_escaped(out, (char) (element.length >> 16));
       nchar = do_newline(out, nchar, nbytes);
       nbytes += do_escaped(out, (char) (element.length & 0xFFFF));
