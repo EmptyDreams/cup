@@ -1,8 +1,6 @@
 package java_cup;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This class represents a non-terminal symbol in the grammar. Each non terminal
@@ -154,6 +152,53 @@ public class non_terminal extends symbol {
       prefix = "NT$";
     return new non_terminal(prefix + next_nt++, type);
   }
+
+  private static final Map<String, non_terminal> _useRhsCache = new HashMap<>();
+  private final List<ObjectPair<non_terminal, List<String>>> subNts = new ArrayList<>();
+
+  /**
+   * This method is used to create a child nonterminal of the current nonterminal from the production_part sequence,
+   * sharing the same non_terminal object if the passed sequence has already been used globally.
+   *
+   * @return the child non_terminal, if the nt object is newly created, it does not contain any production
+   */
+  non_terminal createSubNt(production_part[] parts, int length) {
+    List<String> labels = new ArrayList<>(length);
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < length; i++) {
+      var part = parts[i];
+      if (part.is_action()) {
+        sb.append(((action_part) part).code_string()).append("|\"s\"|");
+      } else {
+        sb.append(((symbol_part) part).the_symbol().name()).append("|\"s\"|");
+      }
+      labels.add(part.label());
+      part._label = null;
+    }
+    var cacheKey = sb.toString();
+    var subNt = _useRhsCache.computeIfAbsent(
+      cacheKey,
+      k -> non_terminal.create_new(
+        "_EBNF_",
+          Main.ast_format == null ? "Object" : "IAstNode"
+      )
+    );
+    subNts.add(new ObjectPair<>(subNt, labels));
+    return subNt;
+  }
+
+  /**
+   * Iterate over all child nonterminals under the current nonterminal,
+   * where the first value of pair is the object of the child nonterminal and the second value is the label sequence.
+   * <p>
+   * The traversal will be done in the order in which the child nonterminals were created,
+   * and if the returned Iterator needs to be matched with the contents of all productions of the current nonterminal,
+   * it can be done in a post-order traversal.
+   */
+  public Iterator<ObjectPair<non_terminal, List<String>>> iterateSubNts() {
+    return subNts.iterator();
+  }
+
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
   /** Compute nullability of all non-terminals. */

@@ -114,12 +114,43 @@ action code {:
 
   /** array for accumulating right hand side parts */
   protected production_part[] rhs_parts = new production_part[MAX_RHS];
+  private List<production_part[]> rhsPartsCache = new ArrayList<>();
+  private String lastSubNtName = null;
 
   /** where we are currently in building a right hand side */
   protected int rhs_pos = 0;
 
   /** start a new right hand side */
   protected void new_rhs() {rhs_pos = 0; }
+
+  /**
+   * Sometimes we need to temporarily shelve an existing rhs and restore it later.
+   * <br/>
+   * This method is used to store a copy of the current rhs so that it is not affected by subsequent operations.
+   * <br/>
+   * This method should be used in pairs with popRhsCache.
+   */
+  private void cacheRhs() {
+    production_part[] cache = new production_part[rhs_pos];
+    if (rhs_pos != 0) {
+      System.arraycopy(rhs_parts, 0, cache, 0, rhs_pos);
+    }
+    rhsPartsCache.add(cache);
+    new_rhs();
+  }
+
+  /**
+   * Sometimes we need to temporarily shelve an existing rhs and restore it later.
+   * <br/>
+   * This method is used to restore a previously shelved rhs.
+   * <br/>
+   * Make sure you've called cacheRhs before calling this method.
+   */
+  private void popRhsCache() {
+    production_part[] cache = rhsPartsCache.remove(rhsPartsCache.size() - 1);
+    System.arraycopy(cache, 0, rhs_parts, 0, cache.length);
+    rhs_pos = cache.length;
+  }
 
   /** add a new right hand side part */
   protected void add_rhs_part(production_part part) throws java.lang.Exception
@@ -205,6 +236,13 @@ action code {:
   private void handle_rhs_expr(boolean is_prec, String term_name, boolean is_namer, String prod_name) throws Exception {
     java_cup.symbol sym = null;
     if (lhs_nt != null) {
+      non_terminal subNt = null;
+      if (!rhsPartsCache.isEmpty()) {
+        subNt = lhs_nt.createSubNt(rhs_parts, rhs_pos);
+        lastSubNtName = subNt.name();
+        symbols.put(lastSubNtName, new symbol_part(subNt));
+      }
+      non_terminal nt = subNt == null ? lhs_nt : subNt;
       if (is_prec) {
         /* Find the precedence symbol */
         if (term_name == null) {
@@ -217,7 +255,7 @@ action code {:
       production p;
       if (sym instanceof terminal) {
         p = new production(
-          lhs_nt, rhs_parts, rhs_pos,
+          nt, rhs_parts, rhs_pos,
           ((terminal) sym).precedence_num(),
           ((terminal) sym).precedence_side()
         );
@@ -225,11 +263,10 @@ action code {:
       } else {
         if (is_prec) {
           System.err.println(
-            "Invalid terminal " + term_name +
-              " for contextual precedence assignment"
+            "Invalid terminal " + term_name + " for contextual precedence assignment"
           );
         }
-        p = new production(lhs_nt, rhs_parts, rhs_pos);
+        p = new production(nt, rhs_parts, rhs_pos);
       }
       if (is_namer) {
         if (prod_name == null || prod_name.isEmpty()) {
@@ -237,6 +274,9 @@ action code {:
         } else {
           p.setProdName(prod_name);
         }
+      }
+      if (subNt != null && subNt.num_productions() == 0) {
+        subNt.add_production(p);
       }
 
       /* if we have no start non-terminal declared and this is
@@ -315,7 +355,8 @@ scan with {:
 terminal
   PACKAGE, IMPORT, STATIC ,CODE, ACTION, PARSER, TERMINAL, NON, INIT, SCAN, WITH, 
   START, SEMI, COMMA, STAR, DOT, COLON, COLON_COLON_EQUALS, BAR, PRECEDENCE,
-  LEFT, RIGHT, NONASSOC, PERCENT_PREC, PERCENT_NAMER, LBRACK, RBRACK, NONTERMINAL, GT, LT,
+  LEFT, RIGHT, NONASSOC, PERCENT_PREC, PERCENT_NAMER,
+  LPAREN, RPAREN, LBRACK, RBRACK, NONTERMINAL, GT, LT,
   QUESTION, SUPER, EXTENDS, CLASS;
 
 terminal String  ID, CODE_STRING;
@@ -879,6 +920,12 @@ nt_id ::=
 symbol_id ::=
 	ID:the_id
 	{: RESULT = the_id; :}
+	| LPAREN {: cacheRhs(); :} rhs RPAREN
+	{:
+	  popRhsCache();
+	  RESULT = lastSubNtName;
+	  lastSubNtName = null;
+	:}
 	| error
 	{:
 		ErrorManager.getManager().emit_error("Illegal use of reserved word");

@@ -795,9 +795,7 @@ public class production {
    * they should be perfectly valid in this code string, since it was originally a
    * code string in the parent, not on its own. frank 6/20/96
    */
-  protected void remove_embedded_actions(
-
-  ) throws internal_error {
+  protected void remove_embedded_actions() throws internal_error {
     non_terminal new_nt;
     String declare_str;
     int lastLocation = -1;
