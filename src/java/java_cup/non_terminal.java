@@ -165,6 +165,7 @@ public class non_terminal extends symbol {
   non_terminal createSubNt(production_part[] parts, int length) {
     List<String> labels = new ArrayList<>(length);
     StringBuilder sb = new StringBuilder();
+    sb.append("vn").append(length);
     for (int i = 0; i < length; i++) {
       var part = parts[i];
       if (part.is_action()) {
@@ -184,6 +185,31 @@ public class non_terminal extends symbol {
       )
     );
     subNts.add(new ObjectPair<>(subNt, labels));
+    return subNt;
+  }
+
+  /**
+   * This method is used to create a child nonterminal of the current nonterminal from the production_part list.
+   * <p>
+   * Each item in the production_part list is the complete content of a production of that child nonterminal.
+   *
+   * @return the child non_terminal, if the nt object is newly created, it does not contain any production
+   */
+  non_terminal createSubNt(List<production_part> subNtList) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("vl").append(subNtList.size());
+    for (production_part part : subNtList) {
+      sb.append(((symbol_part) part).the_symbol().name()).append("|\"l\"|");
+    }
+    var cacheKey = sb.toString();
+    var subNt = _useRhsCache.computeIfAbsent(
+      cacheKey,
+      k -> non_terminal.create_new(
+        "_EBNF_",
+        Main.ast_format == null ? "Object" : "IAstNode"
+      )
+    );
+    subNts.add(new ObjectPair<>(subNt, Collections.emptyList()));
     return subNt;
   }
 

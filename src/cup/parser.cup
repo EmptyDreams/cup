@@ -114,14 +114,20 @@ action code {:
 
   /** array for accumulating right hand side parts */
   protected production_part[] rhs_parts = new production_part[MAX_RHS];
-  private List<production_part[]> rhsPartsCache = new ArrayList<>();
+  /**
+   * rhsParts cache (for temporarily shelving rhs_parts,
+   * the length of each array stored is the value of rhs_pos at the time of shelving)
+   */
+  private final List<production_part[]> rhsPartsCache = new ArrayList<>();
+  private final List<List<production_part>> subNtRecord = new ArrayList<>();
+  /** The name of the last child non_terminal (used to help symbol_id read the name, which is then set to null) */
   private String lastSubNtName = null;
 
   /** where we are currently in building a right hand side */
   protected int rhs_pos = 0;
 
   /** start a new right hand side */
-  protected void new_rhs() {rhs_pos = 0; }
+  protected void new_rhs() { rhs_pos = 0; }
 
   /**
    * Sometimes we need to temporarily shelve an existing rhs and restore it later.
@@ -150,6 +156,18 @@ action code {:
     production_part[] cache = rhsPartsCache.remove(rhsPartsCache.size() - 1);
     System.arraycopy(cache, 0, rhs_parts, 0, cache.length);
     rhs_pos = cache.length;
+  }
+
+  private void addSubNt(non_terminal nt) throws internal_error {
+    subNtRecord.get(subNtRecord.size() - 1).add(new symbol_part(nt));
+  }
+
+  private void newSubNtList() {
+    subNtRecord.add(new ArrayList<>());
+  }
+
+  private List<production_part> popSubNtList() {
+    return subNtRecord.remove(subNtRecord.size() - 1);
   }
 
   /** add a new right hand side part */
@@ -233,14 +251,20 @@ action code {:
  	return "//@@CUPDBG" + id + "\n" + code;
   }
 
-  private void handle_rhs_expr(boolean is_prec, String term_name, boolean is_namer, String prod_name) throws Exception {
+  private void handle_rhs_expr(
+    boolean is_prec, String term_name, boolean is_namer, String prod_name, boolean isSubList
+  ) throws Exception {
     java_cup.symbol sym = null;
     if (lhs_nt != null) {
       non_terminal subNt = null;
-      if (!rhsPartsCache.isEmpty()) {
+      if (!rhsPartsCache.isEmpty() && isSubList) {
         subNt = lhs_nt.createSubNt(rhs_parts, rhs_pos);
         lastSubNtName = subNt.name();
         symbols.put(lastSubNtName, new symbol_part(subNt));
+        addSubNt(subNt);
+      }
+      if (!isSubList && lastSubNtName != null) {
+        subNt = (non_terminal) ((symbol_part) symbols.get(lastSubNtName)).the_symbol();
       }
       non_terminal nt = subNt == null ? lhs_nt : subNt;
       if (is_prec) {
@@ -734,16 +758,16 @@ rhs_list ::= rhs_list BAR rhs | rhs;
 
 rhs ::=
 	prod_part_list PERCENT_PREC term_id:term_name PERCENT_NAMER ID:prod_name
-	{: handle_rhs_expr(true, term_name, false, prod_name); :}
+	{: handle_rhs_expr(true, term_name, false, prod_name, true); :}
 	|
 	prod_part_list PERCENT_NAMER ID:prod_name
-	{: handle_rhs_expr(false, null, true, prod_name); :}
+	{: handle_rhs_expr(false, null, true, prod_name, true); :}
 	|
 	prod_part_list PERCENT_PREC term_id:term_name
-	{: handle_rhs_expr(true, term_name, false, null); :}
+	{: handle_rhs_expr(true, term_name, false, null, true); :}
 	|
 	prod_part_list 
-	{: handle_rhs_expr(false, null, false, null); :}
+	{: handle_rhs_expr(false, null, false, null, true); :}
 	;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
@@ -920,10 +944,22 @@ nt_id ::=
 symbol_id ::=
 	ID:the_id
 	{: RESULT = the_id; :}
-	| LPAREN {: cacheRhs(); :} rhs RPAREN
+	| LPAREN {: cacheRhs(); newSubNtList(); :} rhs_list RPAREN
 	{:
 	  popRhsCache();
-	  RESULT = lastSubNtName;
+	  var subNtList = popSubNtList();
+	  if (subNtList.size() > 1) {
+	    var subNt = lhs_nt.createSubNt(subNtList);
+        lastSubNtName = RESULT = subNt.name();
+	    symbols.put(RESULT, new symbol_part(subNt));
+	    for (production_part part : subNtList) {
+	      rhs_pos = 1;
+	      rhs_parts[0] = part;
+	      handle_rhs_expr(false, null, false, null, false);
+	    }
+	  } else {
+	    RESULT = lastSubNtName;
+	  }
 	  lastSubNtName = null;
 	:}
 	| error
