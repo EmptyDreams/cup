@@ -155,7 +155,7 @@ public class non_terminal extends symbol {
 
   private static final Map<String, non_terminal> _useRhsCache = new HashMap<>();
   private final List<ObjectPair<non_terminal, List<String>>> subNts = new ArrayList<>();
-  private boolean isInlineNt = false;
+  boolean isInlineNt = false;
 
   /**
    * Checks if the current nonterminal is an inline nonterminal

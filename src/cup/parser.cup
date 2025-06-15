@@ -780,20 +780,38 @@ prod_part ::=
 	symbol_id:symid opt_label:labid
 	{: 
 	  /* try to look up the id */
-	  production_part symb = (production_part)symbols.get(symid);
+	  production_part symb = (production_part) symbols.get(symid);
 
 	  /* if that fails, symbol is undeclared */
-	  if (symb == null)
-	    {
-	      if (ErrorManager.getManager().getErrorCount() == 0)
-	        ErrorManager.getManager().emit_error("java_cup.runtime.Symbol \"" + symid + 
-			       "\" has not been declared");
-	    }
-	  else
-	    {
-	      /* add a labeled production part */
-	      add_rhs_part(add_lab(symb, labid));
-	    }
+	  if (symb == null) {
+	    if (ErrorManager.getManager().getErrorCount() == 0) {
+	      ErrorManager.getManager().emit_error("java_cup.runtime.Symbol \"" + symid + "\" has not been declared");
+        }
+      } else {
+	    /* add a labeled production part */
+	    add_rhs_part(add_lab(symb, labid));
+      }
+	:}
+	|
+	symbol_id:symid QUESTION opt_label:labid
+	{:
+	  /* try to look up the id */
+	  production_part symb = (production_part) symbols.get(symid);
+
+	  /* if that fails, symbol is undeclared */
+	  if (symb == null) {
+	    if (ErrorManager.getManager().getErrorCount() == 0) {
+	      ErrorManager.getManager().emit_error("java_cup.runtime.Symbol \"" + symid + "\" has not been declared");
+        }
+      } else if (symb.is_action()) {
+        if (ErrorManager.getManager().getErrorCount() == 0) {
+	      ErrorManager.getManager().emit_error("Action symbol \"" + symid + "\" cannot be optional");
+        }
+      } else {
+        symb = new symbol_part(((symbol_part) symb).the_symbol().createOptBox());
+	    /* add a labeled production part */
+	    add_rhs_part(add_lab(symb, labid));
+      }
 	:}
 	|
 	CODE_STRING:code_str

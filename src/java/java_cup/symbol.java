@@ -146,6 +146,33 @@ public abstract class symbol {
 
   /*-----------------------------------------------------------*/
 
+  private non_terminal _optBox = null;
+
+  /**
+   * Creates a new non_terminal for the optional box.
+   *
+   * @return non cache
+   */
+  public final non_terminal createOptBox() throws internal_error {
+    if (_optBox != null) return _optBox;
+    var newNt = non_terminal.create_new("_BENF_OPT_", _stack_type);
+    newNt.isInlineNt = true;
+    boolean isAstNode = Main.ast_format != null;
+    var itemProd = new production(
+      newNt,
+      new production_part[]{new symbol_part(this, isAstNode ? "item" : null)},
+      1,
+      isAstNode ? null : "RESULT = " + emit.pre("stack") + ".peek();"
+    );
+    var emptyProd = new production(newNt, new production_part[0], 0);
+    newNt.add_production(itemProd);
+    newNt.add_production(emptyProd);
+    _optBox = newNt;
+    return newNt;
+  }
+
+  /*-----------------------------------------------------------*/
+
   public static String getNtNodeClassName(String name) {
     String format = Main.ast_format;
     StringBuilder sb = new StringBuilder(name.length() + format.length());
