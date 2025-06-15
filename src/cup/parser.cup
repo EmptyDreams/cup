@@ -378,7 +378,7 @@ scan with {:
 
 terminal
   PACKAGE, IMPORT, STATIC ,CODE, ACTION, PARSER, TERMINAL, NON, INIT, SCAN, WITH, 
-  START, SEMI, COMMA, STAR, DOT, COLON, COLON_COLON_EQUALS, BAR, PRECEDENCE,
+  START, SEMI, COMMA, STAR, DOT, PLUS, COLON, COLON_COLON_EQUALS, BAR, PRECEDENCE,
   LEFT, RIGHT, NONASSOC, PERCENT_PREC, PERCENT_NAMER,
   LPAREN, RPAREN, LBRACK, RBRACK, NONTERMINAL, GT, LT,
   QUESTION, SUPER, EXTENDS, CLASS;
@@ -397,6 +397,8 @@ non terminal
 
 non terminal String  nt_id, symbol_id, label_id, opt_label, terminal_id,
                      term_id, robust_id, typearglist, typearguement, wildcard;
+
+non terminal ObjectPair<String, Object> opt_quantifier;
 
 /*----------------------------------------------------------------*/ 
 
@@ -777,23 +779,7 @@ prod_part_list ::= prod_part_list prod_part | empty;
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
 
 prod_part ::=
-	symbol_id:symid opt_label:labid
-	{: 
-	  /* try to look up the id */
-	  production_part symb = (production_part) symbols.get(symid);
-
-	  /* if that fails, symbol is undeclared */
-	  if (symb == null) {
-	    if (ErrorManager.getManager().getErrorCount() == 0) {
-	      ErrorManager.getManager().emit_error("java_cup.runtime.Symbol \"" + symid + "\" has not been declared");
-        }
-      } else {
-	    /* add a labeled production part */
-	    add_rhs_part(add_lab(symb, labid));
-      }
-	:}
-	|
-	symbol_id:symid QUESTION opt_label:labid
+	symbol_id:symid opt_quantifier:quantifier opt_label:labid
 	{:
 	  /* try to look up the id */
 	  production_part symb = (production_part) symbols.get(symid);
@@ -803,12 +789,37 @@ prod_part ::=
 	    if (ErrorManager.getManager().getErrorCount() == 0) {
 	      ErrorManager.getManager().emit_error("java_cup.runtime.Symbol \"" + symid + "\" has not been declared");
         }
-      } else if (symb.is_action()) {
+      } else if (quantifier != null && symb.is_action()) {
         if (ErrorManager.getManager().getErrorCount() == 0) {
-	      ErrorManager.getManager().emit_error("Action symbol \"" + symid + "\" cannot be optional");
+	      ErrorManager.getManager().emit_error("Action symbol \"" + symid + "\" cannot be used with a quantifier.");
         }
       } else {
-        symb = new symbol_part(((symbol_part) symb).the_symbol().createOptBox());
+        if (quantifier != null) {
+          switch (quantifier.getFirst()) {
+            case "?": {
+              non_terminal newNt = ((symbol_part) symb).the_symbol().createOptBox();
+              symb = new symbol_part(newNt);
+              symbols.put(newNt.name(), symb);
+              break;
+            }
+            case "+": {
+              non_terminal newNt = ((symbol_part) symb).the_symbol().createListBox();
+              symb = new symbol_part(newNt);
+              symbols.put(newNt.name(), symb);
+              break;
+            }
+            case "*": {
+              non_terminal listNt = ((symbol_part) symb).the_symbol().createListBox();
+              non_terminal optNt = listNt.createOptBox();
+              symbols.put(listNt.name(), new symbol_part(listNt));
+              symb = new symbol_part(optNt);
+              symbols.put(optNt.name(), symb);
+              break;
+            }
+            default:
+              throw new AssertionError();
+          }
+        }
 	    /* add a labeled production part */
 	    add_rhs_part(add_lab(symb, labid));
       }
@@ -820,6 +831,12 @@ prod_part ::=
 	  add_rhs_part(new action_part(attach_debug_symbol(get_new_debug_id(),code_str)));
 	:}
 	;
+
+opt_quantifier ::=
+    QUESTION {: RESULT = new ObjectPair<>("?", null); :}
+    | STAR {: RESULT = new ObjectPair<>("*", null); :}
+    | PLUS {: RESULT = new ObjectPair<>("+", null); :}
+    | empty;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
 

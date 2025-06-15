@@ -83,14 +83,6 @@ public abstract class symbol {
           if (itemType != null) return "List<" + itemType + '>';
         }
         break;
-      case "Byte": return "byte";
-      case "Short": return "short";
-      case "Character": return "char";
-      case "Integer": return "int";
-      case "Long": return "long";
-      case "Float": return "float";
-      case "Double": return "double";
-      case "Boolean": return "boolean";
     }
     return type;
   }
@@ -169,6 +161,55 @@ public abstract class symbol {
     newNt.add_production(emptyProd);
     _optBox = newNt;
     return newNt;
+  }
+
+  private non_terminal _listBox = null;
+
+  public final non_terminal createListBox() throws internal_error {
+    if (_listBox != null) return _listBox;
+    boolean isAstNode = Main.ast_format != null;
+    var type = isAstNode ? astClassName() : _stack_type;
+    var newNt = non_terminal.create_new("_BENF_LIST_", "List<" + type + '>');
+    newNt.isInlineNt = true;
+    var getterName = getNtValueGetterName();
+    var itemProd = new production(
+      newNt,
+      new production_part[]{new symbol_part(this, isAstNode ? "item" : null)},
+      1,
+      isAstNode ? null : "var list = new ArrayList<" + type + ">();\n"
+                                + "list.add(" + emit.pre("stack") + ".peek()." + getterName +"());\n"
+                                + "RESULT = list;"
+    );
+    var listProd = new production(
+      newNt,
+      new production_part[] {
+        new symbol_part(newNt),
+        new symbol_part(this, isAstNode ? "item" : null)
+      },
+      2,
+      isAstNode ? null : "List<" + type + "> list = " + emit.pre("stack")
+                                    + ".get(" + emit.pre("top") + " - 1).value();\n"
+                                + "list.add(" + emit.pre("stack") + ".peek()." + getterName + "());\n"
+                                + "RESULT = list;"
+    );
+    newNt.add_production(listProd);
+    newNt.add_production(itemProd);
+    _listBox = newNt;
+    return newNt;
+  }
+
+  private String getNtValueGetterName() {
+      switch (_stack_type) {
+        case "byte": return "getAsByte";
+        case "short": return "getAsShort";
+        case "int": return "getAsInt";
+        case "long": return "getAsLong";
+        case "float": return "getAsFloat";
+        case "double": return "getAsDouble";
+        case "char": return "getAsChar";
+        case "boolean": return "getAsBoolean";
+        default: return "value";
+      }
   }
 
   /*-----------------------------------------------------------*/
