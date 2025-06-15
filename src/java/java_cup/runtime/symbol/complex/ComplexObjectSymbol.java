@@ -17,6 +17,11 @@ public class ComplexObjectSymbol extends ComplexSymbol {
     }
 
     @Override
+    public boolean isNull() {
+        return value == null;
+    }
+
+    @Override
     public <T> T value() {
         //noinspection unchecked
         return (T) this.value;

@@ -58,6 +58,13 @@ public abstract class Symbol {
   /* The data passed to parser */
 
   /**
+   * Checks whether the symbol's value is null.
+   * <p>
+   * Unless your design requires it, you should always return true for symbol classes specialized for primitive types.
+   */
+  public abstract boolean isNull();
+
+  /**
    * Equivalent of just retrieving the value directly, but does the typecast here;
    * Removes lots of unchecked cast warnings from the actual parser class by using this one function
    * @param <T> the type of the value to be casted to

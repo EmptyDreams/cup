@@ -14,6 +14,11 @@ public class DefaultDoubleSymbol extends DefaultSymbol {
     }
 
     @Override
+    public boolean isNull() {
+        return false;
+    }
+
+    @Override
     public <T> T value() {
         return null;
     }

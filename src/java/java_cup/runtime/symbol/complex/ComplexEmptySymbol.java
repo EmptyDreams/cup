@@ -15,6 +15,11 @@ public class ComplexEmptySymbol extends ComplexSymbol {
     }
 
     @Override
+    public boolean isNull() {
+        return true;
+    }
+
+    @Override
     public <T> T value() {
         return null;
     }

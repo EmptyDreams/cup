@@ -14,6 +14,11 @@ public class ComplexBoolSymbol extends ComplexSymbol {
     }
 
     @Override
+    public boolean isNull() {
+        return false;
+    }
+
+    @Override
     public <T> T value() {
         //noinspection unchecked
         return (T) Boolean.valueOf(value);

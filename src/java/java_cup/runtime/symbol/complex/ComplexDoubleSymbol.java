@@ -13,6 +13,11 @@ public class ComplexDoubleSymbol extends ComplexSymbol {
     }
 
     @Override
+    public boolean isNull() {
+        return false;
+    }
+
+    @Override
     public <T> T value() {
         return null;
     }

@@ -14,6 +14,11 @@ public class ComplexCharSymbol extends ComplexSymbol {
     }
 
     @Override
+    public boolean isNull() {
+        return false;
+    }
+
+    @Override
     public <T> T value() {
         //noinspection unchecked
         return (T) Character.valueOf(value);

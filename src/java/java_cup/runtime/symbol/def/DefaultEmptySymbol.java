@@ -15,6 +15,11 @@ public class DefaultEmptySymbol extends DefaultSymbol {
     }
 
     @Override
+    public boolean isNull() {
+        return true;
+    }
+
+    @Override
     public <T> T value() {
         return null;
     }

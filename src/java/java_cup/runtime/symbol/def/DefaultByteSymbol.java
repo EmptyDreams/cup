@@ -14,6 +14,11 @@ public class DefaultByteSymbol extends DefaultSymbol {
     }
 
     @Override
+    public boolean isNull() {
+        return false;
+    }
+
+    @Override
     public <T> T value() {
         //noinspection unchecked
         return (T) Byte.valueOf(value);
