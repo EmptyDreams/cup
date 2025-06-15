@@ -155,6 +155,14 @@ public class non_terminal extends symbol {
 
   private static final Map<String, non_terminal> _useRhsCache = new HashMap<>();
   private final List<ObjectPair<non_terminal, List<String>>> subNts = new ArrayList<>();
+  private boolean isInlineNt = false;
+
+  /**
+   * Checks if the current nonterminal is an inline nonterminal
+   */
+  public boolean isInlineNt() {
+    return isInlineNt;
+  }
 
   /**
    * This method is used to create a child nonterminal of the current nonterminal from the production_part sequence,
@@ -184,6 +192,7 @@ public class non_terminal extends symbol {
           Main.ast_format == null ? "Object" : "IAstNode"
       )
     );
+    subNt.isInlineNt = true;
     subNts.add(new ObjectPair<>(subNt, labels));
     return subNt;
   }
@@ -209,6 +218,7 @@ public class non_terminal extends symbol {
         Main.ast_format == null ? "Object" : "IAstNode"
       )
     );
+    subNt.isInlineNt = true;
     subNts.add(new ObjectPair<>(subNt, Collections.emptyList()));
     return subNt;
   }
