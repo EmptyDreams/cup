@@ -826,9 +826,17 @@ prod_part ::=
 	:}
 	|
 	CODE_STRING:code_str
-	{: 
-	  /* add a new production part */
-	  add_rhs_part(new action_part(attach_debug_symbol(get_new_debug_id(),code_str)));
+	{:
+	  if (!rhsPartsCache.isEmpty()) {
+	    if (ErrorManager.getManager().getErrorCount() == 0) {
+          ErrorManager.getManager().emit_error(
+            "Inline productions[" + String.valueOf(lhs_nt) + "] cannot contain actions."
+          );
+        }
+	  } else {
+	    /* add a new production part */
+      	add_rhs_part(new action_part(attach_debug_symbol(get_new_debug_id(),code_str)));
+	  }
 	:}
 	;
 
