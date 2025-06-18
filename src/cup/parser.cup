@@ -285,6 +285,8 @@ action code {:
               ((non_terminal) ((symbol_part) part).the_symbol()).isInlineNt()
           );
         if (exists) {
+          // The logic here is to determine the index of the production,
+          // we need to know the index in advance in order to insert the action for it.
           int count = 1;
           boolean inActionSequence = true;
           for (int i = 0; i < rhs_pos; i++) {
@@ -297,6 +299,7 @@ action code {:
               inActionSequence = false;
             }
           }
+          // insert the action to the first position
           System.arraycopy(rhs_parts, 0, rhs_parts, 1, rhs_pos++);
           rhs_parts[0] = new action_part("_pushInlineProd(" + (production.number() + count) + ");");
         }

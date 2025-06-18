@@ -189,6 +189,8 @@ public class non_terminal extends symbol {
     production_part[] parts, int length, PositionFinder posFinder, int subIndex
   ) throws internal_error {
     boolean hasLabel = false;
+    boolean hasAction = length != 0 && parts[length - 1].is_action();
+    if (hasAction) --length;
     List<String> labels = new ArrayList<>(length);
     StringBuilder sb = new StringBuilder();
     sb.append("vn").append(length);
@@ -196,19 +198,17 @@ public class non_terminal extends symbol {
     for (int i = 0; i < length; i++) {
       var part = parts[i];
       if (part.is_action()) {
-        if (i + 1 == length) {
-          action = ((action_part) part).code_string();
-        } else {
-          throw new internal_error("Inline action can only appear at the end of an inline production");
-        }
-      } else {
-        sb.append(((symbol_part) part).the_symbol().name()).append("|\"s\"|");
+        throw new internal_error("Inline action can only appear at the end of an inline production");
       }
+      sb.append(((symbol_part) part).the_symbol().name()).append("|\"s\"|");
       if (part.label() != null) {
         hasLabel = true;
       }
       labels.add(part.label());
       part._label = null;
+    }
+    if (hasAction) {
+      action = ((action_part) parts[length]).code_string();
     }
     var cacheKey = sb.toString();
     var subNt = _useRhsCache.computeIfAbsent(
