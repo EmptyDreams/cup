@@ -286,6 +286,22 @@ public abstract class lr_parser {
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
+  /** Used to record the number of expressions in the production when parsing an inline expression. */
+  protected final IntArrayStack inlineProdStack = new IntArrayStack(4);
+  /** Keep track of which production is currently being specified to aid in parsing inline expressions. */
+  protected int currentProductionIndex = 0;
+
+  protected void _pushInlineProd(int prodIndex) {
+    currentProductionIndex = prodIndex;
+    inlineProdStack.push(0);
+  }
+
+  protected void _incInlineProd() {
+    inlineProdStack.set(inlineProdStack.size() - 1, inlineProdStack.peek() + 1);
+  }
+
+  /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+
   /**
    * This is the scanner object used by the default implementation of scan() to
    * get Symbols. To avoid name conflicts with existing code, this field is
@@ -657,7 +673,7 @@ public abstract class lr_parser {
     cur_token = scan();
 
     /* push dummy Symbol with start state to get us underway */
-    stack.removeAllElements();
+    stack.clear();
     stack.push(getSymbolFactory().startSymbol(0, start_state()));
     tos = 0;
 
@@ -835,7 +851,7 @@ public abstract class lr_parser {
     debug_message("# Current Symbol is #" + cur_token.sym);
 
     /* push dummy Symbol with start state to get us underway */
-    stack.removeAllElements();
+    stack.clear();
     stack.push(getSymbolFactory().startSymbol(0, start_state()));
     tos = 0;
 

@@ -1047,4 +1047,52 @@ public class production {
 
   /*-----------------------------------------------------------*/
 
+  /**
+   * A production position finder, allows querying the index of a production by non-terminal and its order within it.
+   *
+   * @author kmar
+   */
+  public static final class PositionFinder {
+
+    private final non_terminal nt;
+    private final int prodIndexInNt;
+
+    public PositionFinder(non_terminal nt, int prodIndexInNt) {
+      this.nt = nt;
+      this.prodIndexInNt = prodIndexInNt;
+    }
+
+    public int getProdIndex() {
+      var itor = nt.productions().iterator();
+      for (int i = 0; i < prodIndexInNt; i++) {
+        itor.next();
+      }
+      return itor.next()._index;
+    }
+
+    public int getProdIndexInNt() {
+      return prodIndexInNt;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) return false;
+
+      PositionFinder that = (PositionFinder) o;
+      return prodIndexInNt == that.prodIndexInNt && nt.equals(that.nt);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = nt.hashCode();
+      result = 31 * result + prodIndexInNt;
+      return result;
+    }
+
+    public static PositionFinder newInstance(non_terminal nt) {
+      return new PositionFinder(nt, nt.num_productions());
+    }
+
+  }
+
 }

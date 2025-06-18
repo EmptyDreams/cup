@@ -113,7 +113,7 @@ action code {:
   protected final int MAX_RHS = 200;
 
   /** array for accumulating right hand side parts */
-  protected production_part[] rhs_parts = new production_part[MAX_RHS];
+  protected production_part[] rhs_parts = new production_part[MAX_RHS + 1];
   /**
    * rhsParts cache (for temporarily shelving rhs_parts,
    * the length of each array stored is the value of rhs_pos at the time of shelving)
@@ -258,7 +258,9 @@ action code {:
     if (lhs_nt != null) {
       non_terminal subNt = null;
       if (!rhsPartsCache.isEmpty() && isSubList) {
-        subNt = lhs_nt.createSubNt(rhs_parts, rhs_pos);
+        subNt = lhs_nt.createSubNt(
+          rhs_parts, rhs_pos, production.PositionFinder.newInstance(lhs_nt), rhsPartsCache.size() - 1
+        );
         lastSubNtName = subNt.name();
         symbols.put(lastSubNtName, new symbol_part(subNt));
         addSubNt(subNt);
@@ -273,6 +275,30 @@ action code {:
           System.err.println("No terminal for contextual precedence");
         } else {
           sym = ((symbol_part) symbols.get(term_name)).the_symbol();
+        }
+      }
+      if (subNt == null) {
+        boolean exists = java.util.Arrays.stream(rhs_parts, 0, rhs_pos)
+          .anyMatch(
+            part -> !part.is_action() &&
+              ((symbol_part) part).the_symbol().is_non_term() &&
+              ((non_terminal) ((symbol_part) part).the_symbol()).isInlineNt()
+          );
+        if (exists) {
+          int count = 1;
+          boolean inActionSequence = true;
+          for (int i = 0; i < rhs_pos; i++) {
+            if (rhs_parts[i].is_action()) {
+              if (!inActionSequence) {
+                count++;
+                inActionSequence = true;
+              }
+            } else {
+              inActionSequence = false;
+            }
+          }
+          System.arraycopy(rhs_parts, 0, rhs_parts, 1, rhs_pos++);
+          rhs_parts[0] = new action_part("_pushInlineProd(" + (production.number() + count) + ");");
         }
       }
       /* build the production */
@@ -298,9 +324,6 @@ action code {:
         } else {
           p.setProdName(prod_name);
         }
-      }
-      if (subNt != null && subNt.num_productions() == 0) {
-        subNt.add_production(p);
       }
 
       /* if we have no start non-terminal declared and this is
@@ -827,16 +850,8 @@ prod_part ::=
 	|
 	CODE_STRING:code_str
 	{:
-	  if (!rhsPartsCache.isEmpty()) {
-	    if (ErrorManager.getManager().getErrorCount() == 0) {
-          ErrorManager.getManager().emit_error(
-            "Inline productions[" + String.valueOf(lhs_nt) + "] cannot contain actions."
-          );
-        }
-	  } else {
-	    /* add a new production part */
-      	add_rhs_part(new action_part(attach_debug_symbol(get_new_debug_id(),code_str)));
-	  }
+	  /* add a new production part */
+      add_rhs_part(new action_part(attach_debug_symbol(get_new_debug_id(),code_str)));
 	:}
 	;
 
@@ -992,7 +1007,7 @@ symbol_id ::=
 	  popRhsCache();
 	  var subNtList = popSubNtList();
 	  if (subNtList.size() > 1) {
-	    var subNt = lhs_nt.createSubNt(subNtList);
+	    var subNt = lhs_nt.createSubNts(subNtList);
         lastSubNtName = RESULT = subNt.name();
 	    symbols.put(RESULT, new symbol_part(subNt));
 	    for (production_part part : subNtList) {

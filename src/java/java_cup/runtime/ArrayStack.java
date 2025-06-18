@@ -55,7 +55,7 @@ public class ArrayStack<E> extends ArrayList<E> {
     }
 
     public Enumeration<E> elements() {
-        return new Enumeration<E>() {
+        return new Enumeration<>() {
             int count = 0;
 
             public boolean hasMoreElements() {
@@ -93,10 +93,6 @@ public class ArrayStack<E> extends ArrayList<E> {
 
     public void removeElement(E item) {
         remove(item);
-    }
-
-    public void removeAllElements() {
-        clear();
     }
 
 }

@@ -1,5 +1,7 @@
 package java_cup;
 
+import java_cup.production.PositionFinder;
+
 import java.util.*;
 
 /**
@@ -154,32 +156,56 @@ public class non_terminal extends symbol {
   }
 
   private static final Map<String, non_terminal> _useRhsCache = new HashMap<>();
-  private final List<ObjectPair<non_terminal, List<String>>> subNts = new ArrayList<>();
-  boolean isInlineNt = false;
+  /**
+   * Stores labels of inline expressions in the current non-terminal production.
+   *
+   * <p>The key is the value of production#index, and the value is a list of inline expressions
+   * corresponding to that production.
+   *
+   * <p>The list is ordered according to the appearance sequence of inline expressions within
+   * the production (pre-order traversal). Each pair in the list contains:
+   * <ul>
+   * <li>- first: a list of labels</li>
+   * <li>- second: the action associated with the inline expression (may be null)</li>
+   * </ul>
+   */
+  private static final Map<PositionFinder, List<ObjectPair<List<String>, String>>> _inlineLabels = new HashMap<>();
+  boolean _isInline = false;
 
   /**
    * Checks if the current nonterminal is an inline nonterminal
    */
   public boolean isInlineNt() {
-    return isInlineNt;
+    return _isInline;
   }
 
   /**
-   * This method is used to create a child nonterminal of the current nonterminal from the production_part sequence,
+   * This method is used to create a child non_terminal of the current non_terminal from the production_part sequence,
    * sharing the same non_terminal object if the passed sequence has already been used globally.
    *
    * @return the child non_terminal, if the nt object is newly created, it does not contain any production
    */
-  non_terminal createSubNt(production_part[] parts, int length) {
+  non_terminal createSubNt(
+    production_part[] parts, int length, PositionFinder posFinder, int subIndex
+  ) throws internal_error {
+    boolean hasLabel = false;
     List<String> labels = new ArrayList<>(length);
     StringBuilder sb = new StringBuilder();
     sb.append("vn").append(length);
+    String action = null;
     for (int i = 0; i < length; i++) {
       var part = parts[i];
       if (part.is_action()) {
-        sb.append(((action_part) part).code_string()).append("|\"s\"|");
+        if (i + 1 == length) {
+          action = ((action_part) part).code_string();
+        } else {
+          throw new internal_error("Inline action can only appear at the end of an inline production");
+        }
       } else {
         sb.append(((symbol_part) part).the_symbol().name()).append("|\"s\"|");
+      }
+      if (part.label() != null) {
+        hasLabel = true;
       }
       labels.add(part.label());
       part._label = null;
@@ -192,8 +218,14 @@ public class non_terminal extends symbol {
           Main.ast_format == null ? "Object" : "IAstNode"
       )
     );
-    subNt.isInlineNt = true;
-    subNts.add(new ObjectPair<>(subNt, labels));
+    subNt._isInline = true;
+    var pairList = _inlineLabels.computeIfAbsent(posFinder, k -> new ArrayList<>());
+    ObjectPair<List<String>, String> value = new ObjectPair<>(hasLabel ? labels : Collections.emptyList(), action);
+    while (pairList.size() <= subIndex) {
+      pairList.add(null);
+    }
+    assert pairList.get(subIndex) == null;
+    pairList.set(subIndex, value);
     return subNt;
   }
 
@@ -204,7 +236,7 @@ public class non_terminal extends symbol {
    *
    * @return the child non_terminal, if the nt object is newly created, it does not contain any production
    */
-  non_terminal createSubNt(List<production_part> subNtList) {
+  non_terminal createSubNts(List<production_part> subNtList) {
     StringBuilder sb = new StringBuilder();
     sb.append("vl").append(subNtList.size());
     for (production_part part : subNtList) {
@@ -218,21 +250,8 @@ public class non_terminal extends symbol {
         Main.ast_format == null ? "Object" : "IAstNode"
       )
     );
-    subNt.isInlineNt = true;
-    subNts.add(new ObjectPair<>(subNt, Collections.emptyList()));
+    subNt._isInline = true;
     return subNt;
-  }
-
-  /**
-   * Iterate over all child nonterminals under the current nonterminal,
-   * where the first value of pair is the object of the child nonterminal and the second value is the label sequence.
-   * <p>
-   * The traversal will be done in the order in which the child nonterminals were created,
-   * and if the returned Iterator needs to be matched with the contents of all productions of the current nonterminal,
-   * it can be done in a post-order traversal.
-   */
-  public Iterator<ObjectPair<non_terminal, List<String>>> iterateSubNts() {
-    return subNts.iterator();
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -296,11 +315,15 @@ public class non_terminal extends symbol {
   /*-----------------------------------------------------------*/
 
   /** Table of all productions with this non terminal on the LHS. */
-  protected Map<production, production> _productions = new HashMap<>(11);
+  protected Set<production> _productions = new LinkedHashSet<>(11);
 
-  /** Access to productions with this non terminal on the LHS. */
+  /**
+   * Access to productions with this non terminal on the LHS.
+   * 
+   * <p>Traverses in the order of addition.
+   */
   public Iterable<production> productions() {
-    return _productions.values();
+    return _productions;
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -319,7 +342,7 @@ public class non_terminal extends symbol {
       throw new internal_error("Attempt to add invalid production to non terminal production table");
 
     /* add it to the table, keyed with itself */
-    _productions.put(prod, prod);
+    _productions.add(prod);
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */

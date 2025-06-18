@@ -148,7 +148,7 @@ public abstract class symbol {
   public final non_terminal createOptBox() throws internal_error {
     if (_optBox != null) return _optBox;
     var newNt = non_terminal.create_new("_BENF_OPT_", _stack_type);
-    newNt.isInlineNt = true;
+    newNt._isInline= true;
     boolean isAstNode = Main.ast_format != null;
     var itemProd = new production(
       newNt,
@@ -170,7 +170,7 @@ public abstract class symbol {
     boolean isAstNode = Main.ast_format != null;
     var type = isAstNode ? astClassName() : _stack_type;
     var newNt = non_terminal.create_new("_BENF_LIST_", "List<" + type + '>');
-    newNt.isInlineNt = true;
+    newNt._isInline = true;
     var getterName = getNtValueGetterName();
     var itemProd = new production(
       newNt,
