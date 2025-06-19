@@ -285,6 +285,12 @@ action code {:
               ((non_terminal) ((symbol_part) part).the_symbol()).isInlineNt()
           );
         if (exists) {
+          // action is inserted at the end of the production to unstack the inline expression
+          int endIndex = rhs_pos - 1;
+          while (endIndex >= 0 && rhs_parts[endIndex].is_action()) --endIndex;
+          System.arraycopy(rhs_parts, endIndex + 1, rhs_parts, endIndex + 2, rhs_pos - endIndex - 1);
+          rhs_parts[endIndex + 1] = new action_part("inlineProdStack.pop();");
+          ++rhs_pos;
           // The logic here is to determine the index of the production,
           // we need to know the index in advance in order to insert the action for it.
           int count = 1;
@@ -301,8 +307,11 @@ action code {:
           }
           // insert the action to the first position
           System.arraycopy(rhs_parts, 0, rhs_parts, 1, rhs_pos++);
-          rhs_parts[0] = new action_part("_pushInlineProd(" + (production.number() + count) + ");");
+          rhs_parts[0] = new action_part("_pushInlineProd(" + (production.number() + count) + ");", true);
         }
+      } else if (subNt.num_productions() != 0) {
+        new_rhs();
+        return;
       }
       /* build the production */
       production p;

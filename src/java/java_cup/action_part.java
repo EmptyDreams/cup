@@ -21,11 +21,27 @@ public class action_part extends production_part {
   /** Simple constructor. 
    * @param code_str string containing the actual user code.
    */
-  public action_part(String code_str)
-    {
+  public action_part(String code_str) {
+      this(code_str, false);
+  }
+
+  /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+  /**
+   * An action is marked as vitrual when it is implicitly inserted by CUP.
+   * virtual actions should have no effect on user code.
+   */
+  private final boolean isVirtual;
+
+  public action_part(String code_str, boolean isVirtual) {
       super(/* never have a label on code */null);
       _code_string = code_str;
-    }
+      this.isVirtual = isVirtual;
+  }
+
+  public boolean isVirtual() {
+    return isVirtual;
+  }
 
   /*-----------------------------------------------------------*/
   /*--- (Access to) Instance Variables ------------------------*/

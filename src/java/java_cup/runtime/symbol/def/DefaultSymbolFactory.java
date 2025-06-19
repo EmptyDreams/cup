@@ -154,6 +154,12 @@ public class DefaultSymbolFactory implements SymbolFactory {
     }
 
     @Override
+    public Symbol newSymbol(int id, Symbol left) {
+        var def = (DefaultSymbol) left;
+        return new DefaultEmptySymbol(id, def.getLeft(), def.getRight());
+    }
+
+    @Override
     public Symbol newSymbol(int id, Object value) {
         return new DefaultObjectSymbol(id, value);
     }

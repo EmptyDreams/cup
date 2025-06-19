@@ -162,6 +162,12 @@ public class ComplexSymbolFactory implements SymbolFactory {
     }
 
     @Override
+    public Symbol newSymbol(int id, Symbol left) {
+        var def = (ComplexSymbol) left;
+        return new ComplexEmptySymbol(id, def.getLeft(), def.getRight());
+    }
+
+    @Override
     public Symbol newSymbol(int id, Object value) {
         return new ComplexObjectSymbol(id, value);
     }

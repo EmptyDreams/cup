@@ -169,14 +169,23 @@ public class non_terminal extends symbol {
    * <li>- second: the action associated with the inline expression (may be null)</li>
    * </ul>
    */
-  private static final Map<PositionFinder, List<ObjectPair<List<String>, String>>> _inlineLabels = new HashMap<>();
+  final Map<PositionFinder, List<ObjectPair<List<String>, String>>> _inlineLabels = new HashMap<>();
+
   boolean _isInline = false;
+  private boolean _isLaInline = false;
 
   /**
    * Checks if the current nonterminal is an inline nonterminal
    */
   public boolean isInlineNt() {
     return _isInline;
+  }
+
+  /**
+   * Check if the nonterminal is an inline expression containing a label or action.
+   */
+  public boolean isLaInline() {
+    return _isLaInline;
   }
 
   /**
@@ -219,13 +228,16 @@ public class non_terminal extends symbol {
       )
     );
     subNt._isInline = true;
-    var pairList = _inlineLabels.computeIfAbsent(posFinder, k -> new ArrayList<>());
-    ObjectPair<List<String>, String> value = new ObjectPair<>(hasLabel ? labels : Collections.emptyList(), action);
-    while (pairList.size() <= subIndex) {
-      pairList.add(null);
+    subNt._isLaInline |= hasAction || hasLabel;
+    if (hasAction || hasLabel) {
+      var pairList = subNt._inlineLabels.computeIfAbsent(posFinder, k -> new ArrayList<>());
+      ObjectPair<List<String>, String> value = new ObjectPair<>(labels, action);
+      while (pairList.size() <= subIndex) {
+        pairList.add(null);
+      }
+      assert pairList.get(subIndex) == null;
+      pairList.set(subIndex, value);
     }
-    assert pairList.get(subIndex) == null;
-    pairList.set(subIndex, value);
     return subNt;
   }
 

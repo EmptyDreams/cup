@@ -637,7 +637,7 @@ public class production {
    * @param stack_type the stack type of label?
    * @author frankf
    */
-  protected String make_declaration(String labelname, String stack_type, int offset) {
+  protected static String make_declaration(String labelname, String stack_type, int offset) {
     String ret;
     String indent = "              ";
 
@@ -671,7 +671,7 @@ public class production {
    * @param rhs_len      how much of rhs to consider valid.
    * @param final_action the final action string of the production.
    */
-  protected String declare_labels(production_part[] rhs, int rhs_len, String final_action) {
+  protected static String declare_labels(production_part[] rhs, int rhs_len, String final_action) {
     StringBuilder declaration = new StringBuilder();
 
     symbol_part part;
@@ -800,23 +800,25 @@ public class production {
     String declare_str;
     int lastLocation = -1;
     /* walk over the production and process each action */
-    for (int act_loc = 0; act_loc < rhs_length(); act_loc++)
-      if (rhs(act_loc).is_action()) {
-
+    for (int act_loc = 0; act_loc < rhs_length(); act_loc++) {
+      var part = rhs(act_loc);
+      if (part.is_action()) {
+        var actionPart = (action_part) part;
         declare_str = declare_labels(_rhs, act_loc, "");
         /* create a new non terminal for the action production */
         new_nt = non_terminal.create_new(null, lhs().the_symbol().stack_type()); // TUM 20060608 embedded actions patch
-        new_nt.is_embedded_action = true; /* 24-Mar-1998, CSA */
+        new_nt.is_embedded_action = !actionPart.isVirtual(); /* 24-Mar-1998, CSA */
 
         /* create a new production with just the action */
         new action_production(this, new_nt, null, 0,
-            declare_str + ((action_part) rhs(act_loc)).code_string(),
-            lastLocation == -1 ? -1 : act_loc - lastLocation);
+                declare_str + actionPart.code_string(),
+                lastLocation == -1 ? -1 : act_loc - lastLocation);
 
         /* replace the action with the generated non terminal */
         _rhs[act_loc] = new symbol_part(new_nt);
         lastLocation = act_loc;
       }
+    }
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */

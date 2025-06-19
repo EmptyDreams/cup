@@ -333,11 +333,10 @@ public abstract class lr_parser {
    * generation time.
    *
    * @param act_num the internal index of the action to be performed.
-   * @param parser  the parser object we are acting for.
    * @param stack   the parse stack of that object.
    * @param top     the index of the top element of the parse stack.
    */
-  public abstract Symbol do_action(int act_num, lr_parser parser, ArrayStack<Symbol> stack, int top)
+  public abstract Symbol do_action(int act_num, ArrayStack<Symbol> stack, int top)
       throws java.lang.Exception;
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -702,7 +701,7 @@ public abstract class lr_parser {
       /* if its less than zero, then it encodes a reduce action */
       else if (act < 0) {
         /* perform the action for the reduce */
-        lhs_sym = do_action((-act) - 1, this, stack, tos);
+        lhs_sym = do_action((-act) - 1, stack, tos);
 
         /* look up information about the production */
         lhs_sym_num = production_tab[(-act) - 1][0];
@@ -883,7 +882,7 @@ public abstract class lr_parser {
       /* if its less than zero, then it encodes a reduce action */
       else if (act < 0) {
         /* perform the action for the reduce */
-        lhs_sym = do_action((-act) - 1, this, stack, tos);
+        lhs_sym = do_action((-act) - 1, stack, tos);
 
         /* look up information about the production */
         lhs_sym_num = production_tab[(-act) - 1][0];
@@ -1282,7 +1281,7 @@ public abstract class lr_parser {
       /* if its less than zero, then it encodes a reduce action */
       else if (act < 0) {
         /* perform the action for the reduce */
-        lhs_sym = do_action((-act) - 1, this, stack, tos);
+        lhs_sym = do_action((-act) - 1, stack, tos);
 
         /* look up information about the production */
         lhs_sym_num = production_tab[(-act) - 1][0];
