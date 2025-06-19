@@ -228,8 +228,9 @@ public class non_terminal extends symbol {
       )
     );
     subNt._isInline = true;
-    subNt._isLaInline |= hasAction || hasLabel;
     if (hasAction || hasLabel) {
+      subNt._isLaInline = true;
+      emit.hasInlineCode = true;
       var pairList = subNt._inlineLabels.computeIfAbsent(posFinder, k -> new ArrayList<>());
       ObjectPair<List<String>, String> value = new ObjectPair<>(labels, action);
       while (pairList.size() <= subIndex) {

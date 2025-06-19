@@ -286,22 +286,6 @@ public abstract class lr_parser {
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-  /** Used to record the number of expressions in the production when parsing an inline expression. */
-  protected final IntArrayStack inlineProdStack = new IntArrayStack(4);
-  /** Keep track of which production is currently being specified to aid in parsing inline expressions. */
-  protected int currentProductionIndex = 0;
-
-  protected void _pushInlineProd(int prodIndex) {
-    currentProductionIndex = prodIndex;
-    inlineProdStack.push(0);
-  }
-
-  protected void _incInlineProd() {
-    inlineProdStack.set(inlineProdStack.size() - 1, inlineProdStack.peek() + 1);
-  }
-
-  /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
-
   /**
    * This is the scanner object used by the default implementation of scan() to
    * get Symbols. To avoid name conflicts with existing code, this field is

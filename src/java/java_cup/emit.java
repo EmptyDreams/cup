@@ -223,6 +223,8 @@ public class emit {
   protected static boolean _xmlactions;
   protected static boolean _genericlabels;
 
+  static boolean hasInlineCode = false;
+
   /** whether or not to emit code for left and right values */
   public static boolean lr_values() {
     return _lr_values;
@@ -540,7 +542,7 @@ public class emit {
             var pairList = entry.getValue();
             var fromProdIndex = posFinder.getProdIndex();
             out.println("              case " + fromProdIndex + ":");
-            out.println("                switch (inlineProdStack.peek()) {");
+            out.println("                switch (_incInlineProd()) {");
             for (int i = 0; i < pairList.size(); i++) {
               out.println("                  case " + i + ':');
               var methodName = "_inlineProd_" + fromProdIndex + '_' + nt.index() + '_' + i;
@@ -551,11 +553,22 @@ public class emit {
               out.println("                    );");
               out.println("                    break;");
             }
+            out.println("                  default:");
+            out.print("                    " + pre("result") + " = getSymbolFactory().newSymbol(" + nt.index() + ", ");
+            if (prod.rhs_length() < 2) {
+              out.print(pre("stack") + ".peek()");
+            } else {
+              out.print(
+                pre("stack") + ".subList(" +
+                  pre("top") + " - " + (prod.rhs_length() - 1) + ", " + pre("top") + ')'
+              );
+            }
+            out.println(");");
+            out.println("                    break;");
             out.println("                }");
             out.println("                break;");
           }
           out.println("            }");
-          out.println("            _incInlineProd();");
           out.println("            break;");
           out.println("          }");
           continue;
@@ -817,14 +830,13 @@ public class emit {
           writer.println("    return getSymbolFactory().newSymbol(");
           writer.println("      " + nt.index() + ',');
           switch (labels.size()) {
-            case 0: break;
-            case 1:
+            case 0: case 1:
               writer.print("      " + pre("stack") + ".peek()");
               break;
             default:
               writer.print(
                 "      " + pre("stack") + ".subList(" +
-                  pre("top") + " - " + labels.size() + ", " + pre("top") + ")"
+                  pre("top") + " - " + (labels.size() - 1) + ", " + pre("top") + ")"
               );
               break;
           }
@@ -1199,6 +1211,25 @@ public class emit {
     out.println("@SuppressWarnings({\"unused\", \"UnnecessaryUnicodeEscape\"})");
     out.println("public class " + parser_class_name + typeArgument() + " extends java_cup.runtime.lr_parser {");
 
+    if (hasInlineCode) {
+      out.println();
+      out.println("  /** Used to record the number of expressions in the production when parsing an inline expression. */");
+      out.println("  private final IntArrayStack inlineProdStack = new IntArrayStack(4);");
+      out.println("  /** Keep track of which production is currently being specified to aid in parsing inline expressions. */");
+      out.println("  private int currentProductionIndex = 0;");
+      out.println();
+      out.println("  protected void _pushInlineProd(int prodIndex) {");
+      out.println("    currentProductionIndex = prodIndex;");
+      out.println("    inlineProdStack.push(0);");
+      out.println("  }");
+      out.println();
+      out.println("  protected int _incInlineProd() {");
+      out.println("    int top = inlineProdStack.peek();");
+      out.println("    inlineProdStack.set(inlineProdStack.size() - 1, top + 1);");
+      out.println("    return top;");
+      out.println("  }");
+    }
+
     out.println();
     out.println(" @Override");
     out.println(" public final Class<?> getSymbolContainer() {");
@@ -1305,7 +1336,8 @@ public class emit {
     else
       emit_xmlaction_code(out, start_prod);
 
-    emit_inline_action_code(out);
+    if (hasInlineCode)
+      emit_inline_action_code(out);
 
     /* end of class */
     out.println("}");
