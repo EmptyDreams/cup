@@ -4,7 +4,6 @@ package java_cup.runtime;
 import java_cup.runtime.symbol.complex.ComplexSymbol;
 import java_cup.runtime.symbol.def.DefaultSymbol;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -424,39 +423,11 @@ public abstract class lr_parser {
     report_expected_token_ids();
   }
 
-  /**
-   * We need this Method in order to resolve names for symbol IDs
-   * 
-   * @return the class that keeps all the symbols
-   */
-  public Class<?> getSymbolContainer() {
-    return null;
-  }
-
   protected void report_expected_token_ids() {
     IntArrayStack ids = expected_token_ids();
     List<String> list = new ArrayList<>(ids.size());
-    ids.forEachInt(i -> list.add(symbl_name_from_id(i)));
+    ids.forEachInt(i -> list.add(getSymbolFactory().getTerminalName(i)));
     System.out.println("instead expected token classes are " + list);
-  }
-
-  /**
-   * Translates numerical symbol ids to the (non)terminal names from the spec
-   * 
-   * @param id id for (non)terminal
-   * @return (non)terminal name as string
-   */
-  public String symbl_name_from_id(int id) {
-    Field[] fields = getSymbolContainer().getFields();
-    for (Field f : fields) {
-      try {
-        if (f.getInt(null) == id)
-          return f.getName();
-      } catch (IllegalArgumentException | IllegalAccessException e) {
-        // e.printStackTrace();
-      }
-    }
-    return "invalid symbol id";
   }
 
   /**

@@ -1225,12 +1225,6 @@ public class emit {
       out.println("  }");
     }
 
-    out.println();
-    out.println(" @Override");
-    out.println(" public final Class<?> getSymbolContainer() {");
-    out.println("    return " + symbol_const_class_name + ".class;");
-    out.println("}");
-
     /* constructors [CSA/davidm, 24-jul-99] */
     out.println();
     out.println("  public " + parser_class_name + "(java_cup.runtime.SymbolFactory sf) { super(sf); }");
