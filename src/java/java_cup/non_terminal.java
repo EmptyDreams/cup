@@ -169,7 +169,7 @@ public class non_terminal extends symbol {
    * <li>- second: the action associated with the inline expression (may be null)</li>
    * </ul>
    */
-  final Map<PositionFinder, List<ObjectPair<List<String>, String>>> _inlineLabels = new HashMap<>();
+  final Map<PositionFinder, Map<Integer, ObjectPair<List<String>, String>>> _inlineLabels = new HashMap<>();
 
   boolean _isInline = false;
   private boolean _isLaInline = false;
@@ -207,7 +207,9 @@ public class non_terminal extends symbol {
     for (int i = 0; i < length; i++) {
       var part = parts[i];
       if (part.is_action()) {
-        throw new internal_error("Inline action can only appear at the end of an inline production");
+        if (i != length - 1 && !parts[i + 1].is_action())
+          throw new internal_error("Inline action can only appear at the end of an inline production");
+        continue;
       }
       sb.append(((symbol_part) part).the_symbol().name()).append("|\"s\"|");
       if (part.label() != null) {
@@ -228,16 +230,15 @@ public class non_terminal extends symbol {
       )
     );
     subNt._isInline = true;
-    if (hasAction || hasLabel) {
-      subNt._isLaInline = true;
-      emit.hasInlineCode = true;
-      var pairList = subNt._inlineLabels.computeIfAbsent(posFinder, k -> new ArrayList<>());
+    subNt._isLaInline = true;
+    emit.hasInlineCode = true;
+    if (hasLabel || hasAction) {
+      var pairMap = subNt._inlineLabels.computeIfAbsent(posFinder, k -> new HashMap<>());
       ObjectPair<List<String>, String> value = new ObjectPair<>(labels, action);
-      while (pairList.size() <= subIndex) {
-        pairList.add(null);
+      if (pairMap.containsKey(subIndex)) {
+        throw new AssertionError();
       }
-      assert pairList.get(subIndex) == null;
-      pairList.set(subIndex, value);
+      pairMap.put(subIndex, value);
     }
     return subNt;
   }

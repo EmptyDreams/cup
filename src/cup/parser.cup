@@ -129,6 +129,32 @@ action code {:
   /** start a new right hand side */
   protected void new_rhs() { rhs_pos = 0; }
 
+  private int countInline() {
+    int result = 0;
+    for (var array : rhsPartsCache) {
+      result += countInline(array, array.length);
+    }
+    result += countInline(rhs_parts, rhs_pos);
+    return result;
+  }
+
+  private int countInline(production_part[] array, int length) {
+    int result = 0;
+    for (int i = 0; i < length; i++) {
+      var item = array[i];
+      if (item.is_action()) continue;
+      var sym = ((symbol_part) item).the_symbol();
+      if (!sym.is_non_term()) continue;
+      var nt = (non_terminal) sym;
+      if (!nt.isInlineNt()) continue;
+      ++result;
+      for (var subProd : nt.productions()) {
+        result += countInline(subProd._rhs, subProd.rhs_length());
+      }
+    }
+    return result;
+  }
+
   /**
    * Sometimes we need to temporarily shelve an existing rhs and restore it later.
    * <br/>
@@ -178,7 +204,7 @@ action code {:
 			     MAX_RHS + " symbols and actions"); 
 	  for (int i=0;i<rhs_pos;i++)
 	  	if (part.label()!=null && part.label().equals(rhs_parts[i].label()))
-		  this.parser.report_error("Label '"+part.label()+"' for symbol #"+rhs_pos+" already used for symbol #"+i+"; compilation will fail",part);
+		  report_error("Label '"+part.label()+"' for symbol #"+rhs_pos+" already used for symbol #"+i+"; compilation will fail",part);
       rhs_parts[rhs_pos] = part;
       rhs_pos++;
     }
@@ -246,7 +272,7 @@ action code {:
   }
    
   public String attach_debug_symbol(int id, String code) {
- 	if (!parser.debugSymbols)
+ 	if (!debugSymbols)
  		return code;
  	return "//@@CUPDBG" + id + "\n" + code;
   }
@@ -259,7 +285,7 @@ action code {:
       non_terminal subNt = null;
       if (!rhsPartsCache.isEmpty() && isSubList) {
         subNt = lhs_nt.createSubNt(
-          rhs_parts, rhs_pos, production.PositionFinder.newInstance(lhs_nt), rhsPartsCache.size() - 1
+          rhs_parts, rhs_pos, production.PositionFinder.newInstance(lhs_nt), countInline()
         );
         lastSubNtName = subNt.name();
         symbols.put(lastSubNtName, new symbol_part(subNt));
@@ -285,12 +311,6 @@ action code {:
               ((non_terminal) ((symbol_part) part).the_symbol()).isInlineNt()
           );
         if (exists) {
-          // action is inserted at the end of the production to unstack the inline expression
-          int endIndex = rhs_pos - 1;
-          while (endIndex >= 0 && rhs_parts[endIndex].is_action()) --endIndex;
-          System.arraycopy(rhs_parts, endIndex + 1, rhs_parts, endIndex + 2, rhs_pos - endIndex - 1);
-          rhs_parts[endIndex + 1] = new action_part("inlineProdStack.pop();");
-          ++rhs_pos;
           // The logic here is to determine the index of the production,
           // we need to know the index in advance in order to insert the action for it.
           int count = 1;

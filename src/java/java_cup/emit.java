@@ -539,11 +539,11 @@ public class emit {
           var nt = (non_terminal) prod.lhs().the_symbol();
           for (var entry : nt._inlineLabels.entrySet()) {
             var posFinder = entry.getKey();
-            var pairList = entry.getValue();
+            var pairMap = entry.getValue();
             var fromProdIndex = posFinder.getProdIndex();
             out.println("              case " + fromProdIndex + ":");
-            out.println("                switch (_incInlineProd()) {");
-            for (int i = 0; i < pairList.size(); i++) {
+            out.println("                switch (inlineProdIndex++) {");
+            for (Integer i : pairMap.keySet()) {
               out.println("                  case " + i + ':');
               var methodName = "_inlineProd_" + fromProdIndex + '_' + nt.index() + '_' + i;
               out.println("                    " + pre("result") + " = " + methodName + '(');
@@ -797,9 +797,10 @@ public class emit {
       var nt = (non_terminal) prod.lhs().the_symbol();
       for (var entry : nt._inlineLabels.entrySet()) {
         var posFinder = entry.getKey();
-        var pairList = entry.getValue();
+        var pairMap = entry.getValue();
         var fromProdIndex = posFinder.getProdIndex();
-        for (int i = 0; i < pairList.size(); i++) {
+        for (var pairEntry : pairMap.entrySet()) {
+          var i = pairEntry.getKey();
           var methodName = "_inlineProd_" + fromProdIndex + '_' + nt.index() + '_' + i;
           writer.println("  private java_cup.runtime.Symbol " + methodName + "(");
           writer.println("    int " + pre("act_num") + ',');
@@ -807,7 +808,7 @@ public class emit {
           writer.println("    int " + pre("top"));
           writer.println("  ) {");
           writer.println("    java_cup.runtime.Symbol " + pre("result") + ';');
-          var pairItem = pairList.get(i);
+          var pairItem = pairEntry.getValue();
           var labels = pairItem.getFirst();
           var actionCode = pairItem.getSecond();
           for (int k = 0; k < labels.size(); k++) {
@@ -1214,19 +1215,13 @@ public class emit {
     if (hasInlineCode) {
       out.println();
       out.println("  /** Used to record the number of expressions in the production when parsing an inline expression. */");
-      out.println("  private final IntArrayStack inlineProdStack = new IntArrayStack(4);");
+      out.println("  private int inlineProdIndex = 0;");
       out.println("  /** Keep track of which production is currently being specified to aid in parsing inline expressions. */");
       out.println("  private int currentProductionIndex = 0;");
       out.println();
       out.println("  protected void _pushInlineProd(int prodIndex) {");
       out.println("    currentProductionIndex = prodIndex;");
-      out.println("    inlineProdStack.push(0);");
-      out.println("  }");
-      out.println();
-      out.println("  protected int _incInlineProd() {");
-      out.println("    int top = inlineProdStack.peek();");
-      out.println("    inlineProdStack.set(inlineProdStack.size() - 1, top + 1);");
-      out.println("    return top;");
+      out.println("    inlineProdIndex = 0;");
       out.println("  }");
     }
 
