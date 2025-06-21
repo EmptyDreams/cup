@@ -687,7 +687,9 @@ public class production {
           if (label != null && emit.isExistenceVar(label)) continue;
           if (label == null)
             label = part.the_symbol().name() + pos;
-          declaration.append(make_declaration(label, part.the_symbol().stack_type(), rhs_len - pos - 1));
+          var type = part.getType();
+          if (type == null) type = part.the_symbol().stack_type();
+          declaration.append(make_declaration(label, type, rhs_len - pos - 1));
         }
       }
     }

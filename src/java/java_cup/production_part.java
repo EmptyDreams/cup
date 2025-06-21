@@ -19,8 +19,9 @@ public abstract class production_part {
   /*-----------------------------------------------------------*/
 
   /** Simple constructor. */
-  public production_part(String lab) {
+  public production_part(String lab, String type) {
     _label = lab;
+    this.type = type;
   }
 
   /*-----------------------------------------------------------*/
@@ -39,6 +40,15 @@ public abstract class production_part {
    */
   public String label() {
     return _label;
+  }
+
+  /**
+   * The return type of the expression
+   */
+  private final String type;
+
+  public String getType() {
+      return type;
   }
 
   /*-----------------------------------------------------------*/

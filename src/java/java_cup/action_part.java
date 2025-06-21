@@ -22,7 +22,7 @@ public class action_part extends production_part {
    * @param code_str string containing the actual user code.
    */
   public action_part(String code_str) {
-      this(code_str, false);
+    this(code_str, false);
   }
 
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -34,9 +34,9 @@ public class action_part extends production_part {
   private final boolean isVirtual;
 
   public action_part(String code_str, boolean isVirtual) {
-      super(/* never have a label on code */null);
-      _code_string = code_str;
-      this.isVirtual = isVirtual;
+    super(/* never have a label on code */null, null);
+    _code_string = code_str;
+    this.isVirtual = isVirtual;
   }
 
   public boolean isVirtual() {

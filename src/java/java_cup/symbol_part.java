@@ -21,7 +21,11 @@ public class symbol_part extends production_part {
    * @param lab an optional label string for the part.
    */
   public symbol_part(symbol sym, String lab) throws internal_error {
-    super(lab);
+    this(sym, lab, null);
+  }
+
+  public symbol_part(symbol sym, String lab, String type) throws internal_error {
+    super(lab, type);
 
     if (sym == null)
       throw new internal_error("Attempt to construct a symbol_part with a null symbol");

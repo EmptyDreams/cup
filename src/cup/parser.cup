@@ -104,9 +104,10 @@ action code {:
     {
       /* if there is no label, or this is an action, just return the original */
       if (lab == null || part.is_action()) return part;
+      var symPart = (symbol_part) part;
 
       /* otherwise build a new one with the given label attached */
-      return new symbol_part(((symbol_part)part).the_symbol(),lab);
+      return new symbol_part(symPart.the_symbol(), lab, symPart.getType());
     }
 
   /** max size of right hand side we will support */
@@ -433,7 +434,7 @@ scan with {:
 
 terminal
   PACKAGE, IMPORT, STATIC ,CODE, ACTION, PARSER, TERMINAL, NON, INIT, SCAN, WITH, 
-  START, SEMI, COMMA, STAR, DOT, PLUS, COLON, COLON_COLON_EQUALS, BAR, PRECEDENCE,
+  START, SEMI, COMMA, STAR, DOT, PLUS, COLON, COLON_COLON, COLON_COLON_EQUALS, BAR, PRECEDENCE,
   LEFT, RIGHT, NONASSOC, PERCENT_PREC, PERCENT_NAMER,
   LPAREN, RPAREN, LBRACK, RBRACK, NONTERMINAL, GT, LT,
   QUESTION, SUPER, EXTENDS, CLASS;
@@ -450,10 +451,12 @@ non terminal
   precedence_list, preced, terminal_list, precedence_l, declares_term, 
   declares_non_term, class_name;
 
-non terminal String  nt_id, symbol_id, label_id, opt_label, terminal_id,
+non terminal String  nt_id, label_id, opt_label, terminal_id,
                      term_id, robust_id, typearglist, typearguement, wildcard;
+non terminal ObjectPair<String, String> symbol_id;
 
 non terminal ObjectPair<String, Object> opt_quantifier;
+non terminal String opt_return_type;
 
 /*----------------------------------------------------------------*/ 
 
@@ -733,13 +736,13 @@ terminal_id ::= term_id:sym
 term_id ::= symbol_id:sym
         {:
 	  /* check that the symbol_id is a terminal */
-	  if (symbols.get(sym) == null)
+	  if (symbols.get(sym.getFirst()) == null)
 	    {
 	      /* issue a message */
 	      ErrorManager.getManager().emit_error("Terminal \"" + sym + 
 			   "\" has not been declared");
 	    }
-          RESULT = sym;
+          RESULT = sym.getFirst();
          :};
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
@@ -837,43 +840,45 @@ prod_part ::=
 	symbol_id:symid opt_quantifier:quantifier opt_label:labid
 	{:
 	  /* try to look up the id */
-	  production_part symb = (production_part) symbols.get(symid);
+	  production_part symb = (production_part) symbols.get(symid.getFirst());
 
 	  /* if that fails, symbol is undeclared */
 	  if (symb == null) {
 	    if (ErrorManager.getManager().getErrorCount() == 0) {
-	      ErrorManager.getManager().emit_error("java_cup.runtime.Symbol \"" + symid + "\" has not been declared");
+	      ErrorManager.getManager().emit_error("java_cup.runtime.Symbol \"" + symid.getFirst() + "\" has not been declared");
         }
       } else if (quantifier != null && symb.is_action()) {
         if (ErrorManager.getManager().getErrorCount() == 0) {
-	      ErrorManager.getManager().emit_error("Action symbol \"" + symid + "\" cannot be used with a quantifier.");
+	      ErrorManager.getManager().emit_error("Action symbol \"" + symid.getFirst() + "\" cannot be used with a quantifier.");
         }
       } else {
         if (quantifier != null) {
           switch (quantifier.getFirst()) {
             case "?": {
               non_terminal newNt = ((symbol_part) symb).the_symbol().createOptBox();
-              symb = new symbol_part(newNt);
-              symbols.put(newNt.name(), symb);
+              symb = new symbol_part(newNt, null, symid.getSecond());
+              symbols.put(newNt.name(), new symbol_part(newNt));
               break;
             }
             case "+": {
               non_terminal newNt = ((symbol_part) symb).the_symbol().createListBox();
-              symb = new symbol_part(newNt);
-              symbols.put(newNt.name(), symb);
+              symb = new symbol_part(newNt, null, symid.getSecond() == null ? null : "List<" + symid.getSecond() + ">");
+              symbols.put(newNt.name(), new symbol_part(newNt));
               break;
             }
             case "*": {
               non_terminal listNt = ((symbol_part) symb).the_symbol().createListBox();
               non_terminal optNt = listNt.createOptBox();
               symbols.put(listNt.name(), new symbol_part(listNt));
-              symb = new symbol_part(optNt);
-              symbols.put(optNt.name(), symb);
+              symb = new symbol_part(optNt, null, symid.getSecond() == null ? null : "List<" + symid.getSecond() + ">");
+              symbols.put(optNt.name(), new symbol_part(optNt));
               break;
             }
             default:
               throw new AssertionError();
           }
+        } else if (symid.getSecond() != null) {
+          symb = new symbol_part(((symbol_part) symb).the_symbol(), null, symid.getSecond());
         }
 	    /* add a labeled production part */
 	    add_rhs_part(add_lab(symb, labid));
@@ -891,6 +896,10 @@ opt_quantifier ::=
     QUESTION {: RESULT = new ObjectPair<>("?", null); :}
     | STAR {: RESULT = new ObjectPair<>("*", null); :}
     | PLUS {: RESULT = new ObjectPair<>("+", null); :}
+    | empty;
+
+opt_return_type ::=
+    COLON_COLON ID:type {: RESULT = type; :}
     | empty;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
@@ -1033,29 +1042,28 @@ nt_id ::=
 
 symbol_id ::=
 	ID:the_id
-	{: RESULT = the_id; :}
-	| LPAREN {: cacheRhs(); newSubNtList(); :} rhs_list RPAREN
+	{: RESULT = new ObjectPair<>(the_id, null); :}
+	| LPAREN {: cacheRhs(); newSubNtList(); :} opt_return_type:type rhs_list RPAREN
 	{:
-	  popRhsCache();
 	  var subNtList = popSubNtList();
 	  if (subNtList.size() > 1) {
 	    var subNt = lhs_nt.createSubNts(subNtList);
-        lastSubNtName = RESULT = subNt.name();
-	    symbols.put(RESULT, new symbol_part(subNt));
+        lastSubNtName = subNt.name();
+	    symbols.put(lastSubNtName, new symbol_part(subNt));
 	    for (production_part part : subNtList) {
 	      rhs_pos = 1;
 	      rhs_parts[0] = part;
 	      handle_rhs_expr(false, null, false, null, false);
 	    }
-	  } else {
-	    RESULT = lastSubNtName;
 	  }
+	  RESULT = new ObjectPair<>(lastSubNtName, type);
 	  lastSubNtName = null;
+	  popRhsCache();
 	:}
 	| error
 	{:
 		ErrorManager.getManager().emit_error("Illegal use of reserved word");
-		RESULT="ILLEGAL";
+		RESULT = new ObjectPair<>("ILLEGAL", null);
 	:}
 	;
 
