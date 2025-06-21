@@ -172,12 +172,8 @@ public class production {
             // List<xxx> flattenList = stack.elementAt(top - 1).value();
             actionBuilder.append(indentation)
               .append("List flattenList = ")
-              .append(emit.pre("stack"))
-              .append(".elementAt(")
-              .append(emit.pre("top"))
-              .append(" - ")
-              .append(_rhs_length - 1 - selfIndex)
-              .append(").value();\n");
+                .append(emit.buildStackValueReader("List", _rhs_length - 1 - selfIndex))
+                .append(";\n");
           } else if (selfIndex == -1) {
             symbol sym = onlyLabelPart.the_symbol();
             String className = sym.astClassName();
@@ -198,9 +194,8 @@ public class production {
             actionBuilder.append(indentation)
               // List<xxx> flattenList = stack.elementAt(top - 1).value();
               .append("List<").append(className).append("> flattenList = ")
-              .append(emit.pre("stack")).append(".elementAt(")
-              .append(emit.pre("top")).append(" - ").append(_rhs_length - 1 - selfIndex)
-              .append(").value();\n")
+              .append(emit.buildStackValueReader("List", _rhs_length - 1 - selfIndex))
+              .append(";\n")
               // flattenList.add((xxx) label);
               .append(indentation)
               .append("flattenList.add((")
@@ -633,34 +628,51 @@ public class production {
   /**
    * Return label declaration code
    * 
-   * @param labelname  the label name
+   * @param labelName  the label name
    * @param stack_type the stack type of label?
    * @author frankf
    */
-  protected static String make_declaration(String labelname, String stack_type, int offset) {
-    String ret;
+  protected static String make_declaration(String labelName, String stack_type, int offset) {
+    StringBuilder ret = new StringBuilder(256);
     String indent = "              ";
+    ret.append(indent)
+      .append("var ")
+      .append(labelName)
+      .append("Sym = ")
+      .append("(java_cup.runtime.symbol.def.DefaultSymbol)")
+      .append(emit.buildStackSymReader(offset))
+      .append(";\n");
 
     /* Put in the left/right value labels */
     if (emit.lr_values()) {
-      if (!emit.locations())
-        ret = indent + "int " + labelname + "left = ((DefaultSymbol) " + emit.pre("stack") +
-        // TUM 20050917
-            ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ").getLeft();\n"
-            + indent + "int " + labelname + "right = ((DefaultSymbol) " + emit.pre("stack") +
-            ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ").getRight();\n";
-      else
-        ret = indent + "Location " + labelname + "xleft = ((ComplexSymbol)"
-            + emit.pre("stack") +
-            ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ").getLeft();\n"
-            + indent + "Location " + labelname + "xright = ((ComplexSymbol)"
-            + emit.pre("stack") +
-            ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")")) + ").getRight();\n";
-    } else
-      ret = "";
+      // var xxxLeft = xxxSym.getLeft();
+      ret.append(indent)
+        .append("var ")
+        .append(labelName)
+        .append("Left = ")
+        .append(labelName)
+        .append("Sym.getLeft();\n")
+        // var xxxRight = xxxSym.getRight();
+        .append(indent)
+        .append("var ")
+        .append(labelName)
+        .append("Right = ")
+        .append(labelName)
+        .append(".getRight();\n");
+    }
 
-    /* otherwise, just declare label. */
-    return ret + indent + stack_type + " " + labelname + " = " + emit.buildStackReader(stack_type, offset) + ";\n";
+    // xxx = xxxSym.value();
+    ret.append(indent)
+      .append(stack_type)
+      .append(' ')
+      .append(labelName)
+      .append(" = ")
+      .append(labelName)
+      .append("Sym.")
+      .append(emit.buildSymGetter(stack_type))
+      .append(";\n");
+
+    return ret.toString();
   }
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 

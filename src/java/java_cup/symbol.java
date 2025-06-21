@@ -147,14 +147,14 @@ public abstract class symbol {
    */
   public final non_terminal createOptBox() throws internal_error {
     if (_optBox != null) return _optBox;
-    var newNt = non_terminal.create_new("_BENF_OPT_", _stack_type);
+    var newNt = non_terminal.create_new("_EBNF_OPT_", _stack_type);
     newNt._isInline= true;
     boolean isAstNode = Main.ast_format != null;
     var itemProd = new production(
       newNt,
       new production_part[]{new symbol_part(this, isAstNode ? "item" : null)},
       1,
-      isAstNode ? null : "RESULT = " + emit.pre("stack") + ".peek();"
+      isAstNode ? null : "RESULT = " + emit.buildStackSymReader(0) + ';'
     );
     var emptyProd = new production(newNt, new production_part[0], 0);
     newNt.add_production(itemProd);
@@ -169,15 +169,14 @@ public abstract class symbol {
     if (_listBox != null) return _listBox;
     boolean isAstNode = Main.ast_format != null;
     var type = isAstNode ? astClassName() : _stack_type;
-    var newNt = non_terminal.create_new("_BENF_LIST_", "List<" + type + '>');
+    var newNt = non_terminal.create_new("_EBNF_LIST_", "List<" + type + '>');
     newNt._isInline = true;
-    var getterName = getNtValueGetterName();
     var itemProd = new production(
       newNt,
       new production_part[]{new symbol_part(this, isAstNode ? "item" : null)},
       1,
       isAstNode ? null : "var list = new ArrayList<" + type + ">();\n"
-                                + "list.add(" + emit.pre("stack") + ".peek()." + getterName +"());\n"
+                                + "list.add(" + emit.buildStackValueReader(stack_type(), 0) +");\n"
                                 + "RESULT = list;"
     );
     var listProd = new production(
@@ -187,29 +186,14 @@ public abstract class symbol {
         new symbol_part(this, isAstNode ? "item" : null)
       },
       2,
-      isAstNode ? null : "List<" + type + "> list = " + emit.pre("stack")
-                                    + ".get(" + emit.pre("top") + " - 1).value();\n"
-                                + "list.add(" + emit.pre("stack") + ".peek()." + getterName + "());\n"
+      isAstNode ? null : "List<" + type + "> list = " + emit.buildStackValueReader("List", 1) + ";\n"
+                                + "list.add(" + emit.buildStackValueReader(stack_type(), 0) + ");\n"
                                 + "RESULT = list;"
     );
     newNt.add_production(listProd);
     newNt.add_production(itemProd);
     _listBox = newNt;
     return newNt;
-  }
-
-  private String getNtValueGetterName() {
-      switch (_stack_type) {
-        case "byte": return "getAsByte";
-        case "short": return "getAsShort";
-        case "int": return "getAsInt";
-        case "long": return "getAsLong";
-        case "float": return "getAsFloat";
-        case "double": return "getAsDouble";
-        case "char": return "getAsChar";
-        case "boolean": return "getAsBoolean";
-        default: return "value";
-      }
   }
 
   /*-----------------------------------------------------------*/

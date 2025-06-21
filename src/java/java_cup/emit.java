@@ -556,11 +556,11 @@ public class emit {
             out.println("                  default:");
             out.print("                    " + pre("result") + " = getSymbolFactory().newSymbol(" + nt.index() + ", ");
             if (prod.rhs_length() < 2) {
-              out.print(pre("stack") + ".peek()");
+              out.print(buildStackSymReader(0));
             } else {
               out.print(
                 pre("stack") + ".subList(" +
-                  pre("top") + " - " + (prod.rhs_length() - 1) + ", " + pre("top") + ')'
+                  pre("top") + " - " + (prod.rhs_length() - 1) + ", " + pre("top") + " + 1)"
               );
             }
             out.println(");");
@@ -609,7 +609,7 @@ public class emit {
 
           // store the intermediate result into RESULT
           propagate.append("                RESULT = ")
-            .append(buildStackReader(resultType, index))
+            .append(buildStackValueReader(resultType, index))
             .append(";\n");
           break;
         }
@@ -623,7 +623,7 @@ public class emit {
           if (prod instanceof action_production) {
             int lastResult = ((action_production) prod).getIndexOfIntermediateResult();
             if (lastResult != -1) {
-              result = buildStackReader(resultType, lastResult - 1);
+              result = buildStackValueReader(resultType, lastResult - 1);
             }
           }
 
@@ -678,12 +678,11 @@ public class emit {
         if (emit.lr_values()) {
           String posCode;
           if (prod.rhs_length() <= 1) {
-            posCode = emit.pre("stack") + ".peek()";
+            posCode = buildStackSymReader(0);
           } else {
             posCode = emit.pre("stack") + ".subList("
                     + emit.pre("top") + '-' + (prod.rhs_length() - 1) + ", "
-                    + emit.pre("top")
-                    + ')';
+                    + emit.pre("top") + " + 1)";
           }
           out.println("              " + pre("result") + " = getSymbolFactory().newSymbol(");
           out.println("                " + prod.lhs().the_symbol().index() + ',');
@@ -830,16 +829,13 @@ public class emit {
           }
           writer.println("    return getSymbolFactory().newSymbol(");
           writer.println("      " + nt.index() + ',');
-          switch (labels.size()) {
-            case 0: case 1:
-              writer.print("      " + pre("stack") + ".peek()");
-              break;
-            default:
-              writer.print(
-                "      " + pre("stack") + ".subList(" +
-                  pre("top") + " - " + (labels.size() - 1) + ", " + pre("top") + ")"
-              );
-              break;
+          if (labels.size() > 1) {
+            writer.print(
+              "      " + pre("stack") + ".subList(" +
+                pre("top") + " - " + (labels.size() - 1) + ", " + pre("top") + " + 1)"
+            );
+          } else {
+            writer.print("      " + buildStackSymReader(0));
           }
           if (hasResult) {
             writer.println(',');
@@ -873,39 +869,27 @@ public class emit {
     return matcher.find();
   }
 
-  static String buildStackReader(String type, int offset) {
-    String result = emit.pre("stack")
-            + ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")"));
-    switch (type) {
-      case "byte":
-        result += ".getAsByte()";
-        break;
-      case "short":
-        result += ".getAsShort()";
-        break;
-      case "int":
-        result += ".getAsInt()";
-        break;
-      case "long":
-        result += ".getAsLong()";
-        break;
-      case "float":
-        result += ".getAsFloat()";
-        break;
-      case "double":
-        result += ".getAsDouble()";
-        break;
-      case "char":
-        result += ".getAsChar()";
-        break;
-      case "boolean":
-        result += ".getAsBoolean()";
-        break;
-      default:
-        result += ".value()";
-        break;
-    }
-    return result;
+  static String buildStackSymReader(int offset) {
+    return emit.pre("stack")
+      + ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")"));
+  }
+
+  static String buildSymGetter(String type) {
+      switch (type) {
+          case "byte":      return "getAsByte()";
+          case "short":     return "getAsShort()";
+          case "int":       return "getAsInt()";
+          case "long":      return "getAsLong()";
+          case "float":     return "getAsFloat()";
+          case "double":    return "getAsDouble()";
+          case "char":      return "getAsChar()";
+          case "boolean":   return "getAsBoolean()";
+          default:          return "value()";
+      }
+  }
+
+  static String buildStackValueReader(String type, int offset) {
+      return buildStackSymReader(offset) + '.' + buildSymGetter(type);
   }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -1455,13 +1439,12 @@ public class emit {
         if (emit.lr_values()) {
           int loffset;
           String leftstring, rightstring;
-          rightstring = emit.pre("stack") + ".peek()";
+          rightstring = buildStackSymReader(0);
           if (prod.rhs_length() == 0)
             leftstring = rightstring;
           else {
             loffset = prod.rhs_length() - 1;
-            leftstring = emit.pre("stack")
-                + ((loffset == 0) ? (".peek()") : (".elementAt(" + emit.pre("top") + "-" + loffset + ")"));
+            leftstring = buildStackSymReader(loffset);
           }
           out.println("              " + pre("result") + " = getSymbolFactory().newSymbol(" + "\""
               + prod.lhs().the_symbol().name() + "\"," + prod.lhs().the_symbol().index() + ", " + leftstring + ", "
