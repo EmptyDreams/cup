@@ -4,11 +4,11 @@ import java.util.*;
 import java.util.function.*;
 
 /**
- * <p>An int-to-Object Map implementation that avoids boxing/unboxing overhead.</p>
- *
- * <p>This class stores keys in ascending order using an internal array structure.
- * Binary search is employed for efficient lookups during read operations.</p>
- *
+ * An int-to-Object Map implementation that avoids boxing/unboxing overhead.
+ * <p>
+ * This class stores keys in ascending order using an internal array structure.
+ * Binary search is employed for efficient lookups during read operations.
+ * <p>
  * Usage constraints:
  * <ol>
  *   <li>New keys can only be inserted if they are greater than all existing keys</li>

@@ -4,56 +4,64 @@ import java.util.HashMap;
 import java.util.List;
 
 public class SyntaxTreeDFS {
-	public interface ElementHandler {
-		void handle(XMLElement parent, List<XMLElement> children);
-	}
 
-	public static abstract class AbstractVisitor implements Visitor {
-		private final HashMap<String, ElementHandler> preMap = new HashMap<>();
-		private final HashMap<String, ElementHandler> postMap = new HashMap<>();
+    public interface ElementHandler {
 
-		public abstract void defaultPre(XMLElement element, List<XMLElement> children);
+        void handle(XMLElement parent, List<XMLElement> children);
 
-		public abstract void defaultPost(XMLElement element, List<XMLElement> children);
+    }
 
-		@Override
-		public void preVisit(XMLElement element) {
-			ElementHandler handler = preMap.get(element.tagname);
-			if (handler == null) {
-				defaultPre(element, element.getChildren());
-			} else
-				handler.handle(element, element.getChildren());
-		}
+    public static abstract class AbstractVisitor implements Visitor {
 
-		@Override
-		public void postVisit(XMLElement element) {
-			ElementHandler handler = postMap.get(element.tagname);
-			if (handler == null) {
-				defaultPost(element, element.getChildren());
-			} else
-				handler.handle(element, element.getChildren());
-		}
+        private final HashMap<String, ElementHandler> preMap = new HashMap<>();
+        private final HashMap<String, ElementHandler> postMap = new HashMap<>();
 
-		public void registerPreVisit(String s, ElementHandler h) {
-			preMap.put(s, h);
-		}
+        public abstract void defaultPre(XMLElement element, List<XMLElement> children);
 
-		public void registerPostVisit(String s, ElementHandler h) {
-			postMap.put(s, h);
-		}
-	}
+        public abstract void defaultPost(XMLElement element, List<XMLElement> children);
 
-	public interface Visitor {
-		void preVisit(XMLElement element);
+        @Override
+        public void preVisit(XMLElement element) {
+            ElementHandler handler = preMap.get(element.tagName);
+            if (handler == null) {
+                defaultPre(element, element.getChildren());
+            } else
+                handler.handle(element, element.getChildren());
+        }
 
-		void postVisit(XMLElement element);
-	}
+        @Override
+        public void postVisit(XMLElement element) {
+            ElementHandler handler = postMap.get(element.tagName);
+            if (handler == null) {
+                defaultPost(element, element.getChildren());
+            } else
+                handler.handle(element, element.getChildren());
+        }
 
-	public static void dfs(XMLElement element, Visitor visitor) {
-		visitor.preVisit(element);
-		for (XMLElement el : element.getChildren()) {
-			dfs(el, visitor);
-		}
-		visitor.postVisit(element);
-	}
+        public void registerPreVisit(String s, ElementHandler h) {
+            preMap.put(s, h);
+        }
+
+        public void registerPostVisit(String s, ElementHandler h) {
+            postMap.put(s, h);
+        }
+
+    }
+
+    public interface Visitor {
+
+        void preVisit(XMLElement element);
+
+        void postVisit(XMLElement element);
+
+    }
+
+    public static void dfs(XMLElement element, Visitor visitor) {
+        visitor.preVisit(element);
+        for (XMLElement el : element.getChildren()) {
+            dfs(el, visitor);
+        }
+        visitor.postVisit(element);
+    }
+
 }

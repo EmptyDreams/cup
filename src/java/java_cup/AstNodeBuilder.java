@@ -25,7 +25,7 @@ public class AstNodeBuilder {
                     var old = label2Type.put(label, "");
                     if (old != null && !old.isEmpty()) {
                         throw new internal_error(
-                                "Label " + label + " from " + nt.name() + " is used for more than one type"
+                            "Label " + label + " from " + nt.name() + " is used for more than one type"
                         );
                     }
                     continue;
@@ -35,7 +35,7 @@ public class AstNodeBuilder {
                 var old = label2Type.put(label, type);
                 if (old != null && !old.equals(type)) {
                     throw new internal_error(
-                            "Label " + label + " from " + nt.name() + " is used for more than one type"
+                        "Label " + label + " from " + nt.name() + " is used for more than one type"
                     );
                 }
                 var prefix = Main.ast_flatten.getInlineName(label);
@@ -50,7 +50,7 @@ public class AstNodeBuilder {
                         old = label2Type.put(subName, subType);
                         if (old != null && !old.equals(subType)) {
                             throw new internal_error(
-                                    "Label " + subName + " from " + nt.name() + " is used for more than one type"
+                                "Label " + subName + " from " + nt.name() + " is used for more than one type"
                             );
                         }
                         list.add(new InlineLabel(subLabel, subName));
@@ -106,10 +106,10 @@ public class AstNodeBuilder {
             }
         });
         var label2TypeExcludeInline = info.label2Type
-                .entrySet()
-                .stream()
-                .filter(entry -> !info.inlineLabels.containsKey(entry.getKey()))
-                .collect(Collectors.toList());
+            .entrySet()
+            .stream()
+            .filter(entry -> !info.inlineLabels.containsKey(entry.getKey()))
+            .collect(Collectors.toList());
         writer.println("  @Override");
         writer.println("  public final boolean hasLabel(String label) {");
         if (label2TypeExcludeInline.isEmpty()) {
@@ -144,9 +144,9 @@ public class AstNodeBuilder {
         writer.println("  }");
         writer.println();
         var label2TypeExcludeInlineExist = label2TypeExcludeInline
-                .stream()
-                .filter(entry -> !entry.getValue().isEmpty())
-                .collect(Collectors.toList());
+            .stream()
+            .filter(entry -> !entry.getValue().isEmpty())
+            .collect(Collectors.toList());
         writer.println("  @Override");
         writer.println("  public final Object getByLabel(String label) {");
         if (label2TypeExcludeInlineExist.isEmpty()) {
@@ -282,10 +282,10 @@ public class AstNodeBuilder {
         public final List<VirtualProduction> prods;
 
         public NonTermInfo(
-                String className,
-                Map<String, String> label2Type,
-                List<VirtualProduction> prods,
-                Map<String, List<InlineLabel>> inlineLabels
+            String className,
+            Map<String, String> label2Type,
+            List<VirtualProduction> prods,
+            Map<String, List<InlineLabel>> inlineLabels
         ) {
             this.className = className;
             this.label2Type = Collections.unmodifiableMap(label2Type);

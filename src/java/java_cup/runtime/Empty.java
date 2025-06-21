@@ -10,7 +10,7 @@ public class Empty implements IAstNode {
 
     public static final Empty instance = new Empty();
 
-    private Empty() { }
+    private Empty() {}
 
     @Override
     public boolean hasLabel(String label) {

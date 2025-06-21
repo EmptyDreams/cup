@@ -6,6 +6,7 @@ import java.util.NoSuchElementException;
 
 /**
  * An array-based stack implementation.
+ *
  * @param <E> the type of elements held in this collection
  * @author kmar
  */

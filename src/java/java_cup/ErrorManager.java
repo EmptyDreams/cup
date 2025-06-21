@@ -7,6 +7,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
 public class ErrorManager {
+
     private static ErrorManager errorManager;
     private int errors = 0;
     private int warnings = 0;

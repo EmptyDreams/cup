@@ -19,9 +19,9 @@ public class FlattenConfig {
             }
             String key = entry[0];
             List<String> values = entry.length == 1 ? Collections.emptyList()
-                    : Arrays.stream(entry[1].split(","))
-                    .filter(s -> !s.isEmpty())
-                    .collect(Collectors.toList());
+                : Arrays.stream(entry[1].split(","))
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
             switch (key) {
                 case "list":
                     listSuffix.addAll(values);
@@ -42,7 +42,7 @@ public class FlattenConfig {
         }
     }
 
-    public FlattenConfig() { }
+    public FlattenConfig() {}
 
     public boolean isListName(String name) {
         return listSuffix.stream().anyMatch(name::endsWith);
@@ -50,7 +50,7 @@ public class FlattenConfig {
 
     public String getInlineName(String name) {
         var isNameless = namelessInlineExpr.stream()
-                .anyMatch(pattern -> pattern.matcher(name).matches());
+            .anyMatch(pattern -> pattern.matcher(name).matches());
         if (isNameless) return "";
         return inlineExpr.stream().map(pattern -> {
             var matcher = pattern.matcher(name);

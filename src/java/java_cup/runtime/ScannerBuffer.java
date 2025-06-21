@@ -5,33 +5,34 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class ScannerBuffer implements Scanner {
-	private final Scanner inner;
-	private final List<Symbol> buffer = new LinkedList<>();
 
-	/**
-	 * Wraps around a custom scanner and stores all so far produced tokens in a
-	 * buffer
-	 * 
-	 * @param inner the scanner to buffer
-	 */
-	public ScannerBuffer(Scanner inner) {
-		this.inner = inner;
-	}
+    private final Scanner inner;
+    private final List<Symbol> buffer = new LinkedList<>();
 
-	/**
-	 * Read-Only access to the buffered Symbols
-	 * 
-	 * @return an unmodifiable Version of the buffer
-	 */
-	public List<Symbol> getBuffered() {
-		return Collections.unmodifiableList(buffer);
-	}
+    /**
+     * Wraps around a custom scanner and stores all so far produced tokens in a
+     * buffer
+     *
+     * @param inner the scanner to buffer
+     */
+    public ScannerBuffer(Scanner inner) {
+        this.inner = inner;
+    }
 
-	@Override
-	public Symbol next_token() throws Exception {
-		Symbol buffered = inner.next_token();
-		buffer.add(buffered);
-		return buffered;
-	}
+    /**
+     * Read-Only access to the buffered Symbols
+     *
+     * @return an unmodifiable Version of the buffer
+     */
+    public List<Symbol> getBuffered() {
+        return Collections.unmodifiableList(buffer);
+    }
+
+    @Override
+    public Symbol next_token() throws Exception {
+        Symbol buffered = inner.next_token();
+        buffer.add(buffered);
+        return buffered;
+    }
 
 }

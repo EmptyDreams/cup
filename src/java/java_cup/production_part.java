@@ -5,106 +5,99 @@ package java_cup;
  * production. In this base class it contains only an optional label string that
  * the user can use to refer to the part within actions.
  * <p>
- *
  * This is an abstract class.
  *
- * @see java_cup.production
- * @version last updated: 11/25/95
  * @author Scott Hudson
+ * @version last updated: 11/25/95
+ * @see java_cup.production
  */
 public abstract class production_part {
 
-  /*-----------------------------------------------------------*/
-  /*--- Constructor(s) ----------------------------------------*/
-  /*-----------------------------------------------------------*/
+    /*-----------------------------------------------------------*/
+    /*--- Constructor(s) ----------------------------------------*/
+    /*-----------------------------------------------------------*/
 
-  /** Simple constructor. */
-  public production_part(String lab, String type) {
-    _label = lab;
-    this.type = type;
-  }
+    /** Simple constructor. */
+    public production_part(String lab, String type) {
+        _label = lab;
+        this.type = type;
+    }
 
-  /*-----------------------------------------------------------*/
-  /*--- (Access to) Instance Variables ------------------------*/
-  /*-----------------------------------------------------------*/
+    /*-----------------------------------------------------------*/
+    /*--- (Access to) Instance Variables ------------------------*/
+    /*-----------------------------------------------------------*/
 
-  /**
-   * Optional label for referring to the part within an action (null for no
-   * label).
-   */
-  protected String _label;
+    /**
+     * Optional label for referring to the part within an action (null for no
+     * label).
+     */
+    protected String _label;
 
-  /**
-   * Optional label for referring to the part within an action (null for no
-   * label).
-   */
-  public String label() {
-    return _label;
-  }
+    /**
+     * Optional label for referring to the part within an action (null for no
+     * label).
+     */
+    public String label() {
+        return _label;
+    }
 
-  /**
-   * The return type of the expression
-   */
-  private final String type;
+    /**
+     * The return type of the expression
+     */
+    private final String type;
 
-  public String getType() {
-      return type;
-  }
+    public String getType() {
+        return type;
+    }
 
-  /*-----------------------------------------------------------*/
-  /*--- General Methods ---------------------------------------*/
-  /*-----------------------------------------------------------*/
+    /*-----------------------------------------------------------*/
+    /*--- General Methods ---------------------------------------*/
+    /*-----------------------------------------------------------*/
 
-  /**
-   * Indicate if this is an action (rather than a symbol). Here in the base class,
-   * we don't this know yet, so its an abstract method.
-   */
-  public abstract boolean is_action();
+    /**
+     * Indicate if this is an action (rather than a symbol). Here in the base class,
+     * we don't this know yet, so its an abstract method.
+     */
+    public abstract boolean is_action();
 
-  /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-  /** Equality comparison. */
-  public boolean equals(production_part other) {
-    if (other == null)
-      return false;
+    /** Equality comparison. */
+    public boolean equals(production_part other) {
+        if (other == null)
+            return false;
 
-    /* compare the labels */
-    if (label() != null)
-      return label().equals(other.label());
-    else
-      return other.label() == null;
-  }
+        /* compare the labels */
+        return label() != null ? label().equals(other.label()) : other.label() == null;
+    }
 
-  /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-  /** Generic equality comparison. */
-  @Override
-  public boolean equals(Object other) {
-    if (!(other instanceof production_part))
-      return false;
-    else
-      return equals((production_part) other);
-  }
+    /** Generic equality comparison. */
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof production_part && equals((production_part) other);
+    }
 
-  /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-  /** Produce a hash code. */
-  @Override
-  public int hashCode() {
-    return label() == null ? 0 : label().hashCode();
-  }
+    /** Produce a hash code. */
+    @Override
+    public int hashCode() {
+        return label() == null ? 0 : label().hashCode();
+    }
 
-  /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-  /** Convert to a string. */
-  @Override
-  public String toString() {
-    if (label() != null)
-      return label() + ":";
-    else
-      return " ";
-  }
+    /** Convert to a string. */
+    @Override
+    public String toString() {
+        if (label() != null)
+            return label() + ":";
+        else
+            return " ";
+    }
 
-  /*-----------------------------------------------------------*/
+    /*-----------------------------------------------------------*/
 
 }

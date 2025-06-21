@@ -2,6 +2,7 @@ package java_cup;
 
 /**
  * A functional interface that can throw an exception.
+ *
  * @param <R> The return type of the function.
  * @author kmar
  */

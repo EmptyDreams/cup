@@ -6,89 +6,88 @@ package java_cup;
  * entries will either be SHIFT(state_num), REDUCE(production), NONASSOC, or
  * ERROR. Objects of this base class will default to ERROR, while the other
  * three types will be represented by subclasses.
- * 
+ *
+ * @author Frank Flannery
+ * @version last updated: 7/2/96
  * @see java_cup.reduce_action
  * @see java_cup.shift_action
- * @version last updated: 7/2/96
- * @author Frank Flannery
  */
-
 public class parse_action {
 
-  /*-----------------------------------------------------------*/
-  /*--- Constructor(s) ----------------------------------------*/
-  /*-----------------------------------------------------------*/
+    /*-----------------------------------------------------------*/
+    /*--- Constructor(s) ----------------------------------------*/
+    /*-----------------------------------------------------------*/
 
-  /** Simple constructor. */
-  public parse_action() {
-    /* nothing to do in the base class */
-  }
+    /** Simple constructor. */
+    public parse_action() {
+        /* nothing to do in the base class */
+    }
 
-  /*-----------------------------------------------------------*/
-  /*--- (Access to) Static (Class) Variables ------------------*/
-  /*-----------------------------------------------------------*/
+    /*-----------------------------------------------------------*/
+    /*--- (Access to) Static (Class) Variables ------------------*/
+    /*-----------------------------------------------------------*/
 
-  /** Constant for action type -- error action. */
-  public static final int ERROR = 0;
+    /** Constant for action type -- error action. */
+    public static final int ERROR = 0;
 
-  /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-  /** Constant for action type -- shift action. */
-  public static final int SHIFT = 1;
+    /** Constant for action type -- shift action. */
+    public static final int SHIFT = 1;
 
-  /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-  /** Constants for action type -- reduce action. */
-  public static final int REDUCE = 2;
+    /** Constants for action type -- reduce action. */
+    public static final int REDUCE = 2;
 
-  /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-  /** Constants for action type -- reduce action. */
-  public static final int NONASSOC = 3;
+    /** Constants for action type -- reduce action. */
+    public static final int NONASSOC = 3;
 
-  /*-----------------------------------------------------------*/
-  /*--- General Methods ---------------------------------------*/
-  /*-----------------------------------------------------------*/
+    /*-----------------------------------------------------------*/
+    /*--- General Methods ---------------------------------------*/
+    /*-----------------------------------------------------------*/
 
-  /** Quick access to the type -- base class defaults to error. */
-  public int kind() {
-    return ERROR;
-  }
+    /** Quick access to the type -- base class defaults to error. */
+    public int kind() {
+        return ERROR;
+    }
 
-  /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-  /** Equality test. */
-  public boolean equals(parse_action other) {
-    /* we match all error actions */
-    return other != null && other.kind() == ERROR;
-  }
+    /** Equality test. */
+    public boolean equals(parse_action other) {
+        /* we match all error actions */
+        return other != null && other.kind() == ERROR;
+    }
 
-  /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-  /** Generic equality test. */
-  @Override
-  public boolean equals(Object other) {
-    if (other instanceof parse_action)
-      return equals((parse_action) other);
-    else
-      return false;
-  }
-  /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+    /** Generic equality test. */
+    @Override
+    public boolean equals(Object other) {
+        if (other instanceof parse_action)
+            return equals((parse_action) other);
+        else
+            return false;
+    }
+    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-  /** Compute a hash code. */
-  @Override
-  public int hashCode() {
-    /* all objects of this class hash together */
-    return 0xCafe123;
-  }
+    /** Compute a hash code. */
+    @Override
+    public int hashCode() {
+        /* all objects of this class hash together */
+        return 0xCafe123;
+    }
 
-  /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-  /** Convert to string. */
-  @Override
-  public String toString() {
-    return "ERROR";
-  }
+    /** Convert to string. */
+    @Override
+    public String toString() {
+        return "ERROR";
+    }
 
-  /*-----------------------------------------------------------*/
+    /*-----------------------------------------------------------*/
 }

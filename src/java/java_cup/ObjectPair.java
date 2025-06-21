@@ -2,6 +2,11 @@ package java_cup;
 
 import java.util.Objects;
 
+/**
+ * A simple pair of objects.
+ *
+ * @author kmar
+ */
 public final class ObjectPair<T, U> {
 
     private final T first;
@@ -38,9 +43,9 @@ public final class ObjectPair<T, U> {
     @Override
     public String toString() {
         return "ObjectPair{" +
-                "first=" + first +
-                ", second=" + second +
-                '}';
+            "first=" + first +
+            ", second=" + second +
+            '}';
     }
 
 }

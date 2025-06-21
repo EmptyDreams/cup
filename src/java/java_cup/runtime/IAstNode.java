@@ -4,6 +4,7 @@ import java.util.List;
 
 /**
  * Interface for all AST nodes.
+ *
  * @author kmar
  */
 @SuppressWarnings("unused")
@@ -11,6 +12,7 @@ public interface IAstNode {
 
     /**
      * Checks whether the value for the given label exists
+     *
      * @param label The label to check,
      *              the existence check label for the <code>isXxx</code> format
      *              should be passed along with the <code>is</code> prefix.
@@ -19,15 +21,17 @@ public interface IAstNode {
 
     /**
      * Returns the value with the given label.
+     *
      * @return the value with the given label, or null if the label does not exist
-     *         or the value is not of the expected type.
+     * or the value is not of the expected type.
      */
     Object getByLabel(String label);
 
     /**
      * Returns the node with the given label.
+     *
      * @return the node with the given label, or null if the label does not exist
-     *         or the value is not of type IAstNode.
+     * or the value is not of type IAstNode.
      */
     default IAstNode getNodeByLabel(String label) {
         Object node = getByLabel(label);
@@ -36,8 +40,9 @@ public interface IAstNode {
 
     /**
      * Returns the list with the given label.
+     *
      * @return the list with the given label, or null if the label does not exist
-     *         or the value is not of type List.
+     * or the value is not of type List.
      */
     default List<Object> getListByLabel(String label) {
         Object node = getByLabel(label);
@@ -47,8 +52,9 @@ public interface IAstNode {
 
     /**
      * Returns the String with the given label.
-     * @return the String, or null if the label does not exist 
-     *         or the value is not of type String.
+     *
+     * @return the String, or null if the label does not exist
+     * or the value is not of type String.
      */
     default String getStringByLabel(String label) {
         Object node = getByLabel(label);
@@ -57,8 +63,9 @@ public interface IAstNode {
 
     /**
      * Returns the Boolean with the given label.
-     * @return the Boolean, or null if the label does not exist 
-     *         or the value is not of type Boolean.
+     *
+     * @return the Boolean, or null if the label does not exist
+     * or the value is not of type Boolean.
      */
     default Boolean getBooleanByLabel(String label) {
         Object node = getByLabel(label);
@@ -67,8 +74,9 @@ public interface IAstNode {
 
     /**
      * Returns the Byte with the given label.
-     * @return the Byte, or null if the label does not exist 
-     *         or the value is not of type Byte.
+     *
+     * @return the Byte, or null if the label does not exist
+     * or the value is not of type Byte.
      */
     default Byte getByteByLabel(String label) {
         Object node = getByLabel(label);
@@ -77,8 +85,9 @@ public interface IAstNode {
 
     /**
      * Returns the Short with the given label.
-     * @return the Short, or null if the label does not exist 
-     *         or the value is not of type Short.
+     *
+     * @return the Short, or null if the label does not exist
+     * or the value is not of type Short.
      */
     default Short getShortByLabel(String label) {
         Object node = getByLabel(label);
@@ -87,8 +96,9 @@ public interface IAstNode {
 
     /**
      * Returns the Character with the given label.
-     * @return the Character, or null if the label does not exist 
-     *         or the value is not of type Character.
+     *
+     * @return the Character, or null if the label does not exist
+     * or the value is not of type Character.
      */
     default Character getCharacterByLabel(String label) {
         Object node = getByLabel(label);
@@ -97,8 +107,9 @@ public interface IAstNode {
 
     /**
      * Returns the Integer with the given label.
-     * @return the Integer, or null if the label does not exist 
-     *         or the value is not of type Integer.
+     *
+     * @return the Integer, or null if the label does not exist
+     * or the value is not of type Integer.
      */
     default Integer getIntegerByLabel(String label) {
         Object node = getByLabel(label);
@@ -107,8 +118,9 @@ public interface IAstNode {
 
     /**
      * Returns the Long with the given label.
-     * @return the Long, or null if the label does not exist 
-     *         or the value is not of type Long.
+     *
+     * @return the Long, or null if the label does not exist
+     * or the value is not of type Long.
      */
     default Long getLongByLabel(String label) {
         Object node = getByLabel(label);
@@ -117,8 +129,9 @@ public interface IAstNode {
 
     /**
      * Returns the Float with the given label.
-     * @return the Float, or null if the label does not exist 
-     *         or the value is not of type Float.
+     *
+     * @return the Float, or null if the label does not exist
+     * or the value is not of type Float.
      */
     default Float getFloatByLabel(String label) {
         Object node = getByLabel(label);
@@ -127,8 +140,9 @@ public interface IAstNode {
 
     /**
      * Returns the Double with the given label.
-     * @return the Double, or null if the label does not exist 
-     *         or the value is not of type Double.
+     *
+     * @return the Double, or null if the label does not exist
+     * or the value is not of type Double.
      */
     default Double getDoubleByLabel(String label) {
         Object node = getByLabel(label);

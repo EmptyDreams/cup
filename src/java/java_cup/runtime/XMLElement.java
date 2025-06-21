@@ -12,267 +12,277 @@ import java.util.List;
 
 public abstract class XMLElement {
 
-	public abstract List<XMLElement> selectById(String s);
+    public abstract List<XMLElement> selectById(String s);
 
-	public static void dump(XMLStreamWriter writer, XMLElement elem, String... blacklist) throws XMLStreamException {
-		dump(null, writer, elem, blacklist);
-	}
+    public static void dump(
+        XMLStreamWriter writer, XMLElement elem, String... blacklist
+    ) throws XMLStreamException {
+        dump(null, writer, elem, blacklist);
+    }
 
-	public static void dump(ScannerBuffer buffer, XMLStreamWriter writer, XMLElement elem, String... blacklist)
-			throws XMLStreamException {
-		writer.writeStartDocument("utf-8", "1.0");
-		writer.writeProcessingInstruction("xml-stylesheet", "href=\"tree.xsl\" type=\"text/xsl\"");
-		writer.writeStartElement("document");
+    public static void dump(
+        ScannerBuffer buffer, XMLStreamWriter writer, XMLElement elem, String... blacklist
+    ) throws XMLStreamException {
+        writer.writeStartDocument("utf-8", "1.0");
+        writer.writeProcessingInstruction("xml-stylesheet", "href=\"tree.xsl\" type=\"text/xsl\"");
+        writer.writeStartElement("document");
 
-		if (blacklist.length > 0) {
-			writer.writeStartElement("blacklist");
-			for (String s : blacklist) {
-				writer.writeStartElement("symbol");
-				writer.writeCharacters(s);
-				writer.writeEndElement();
-			}
-			writer.writeEndElement();
-		}
+        if (blacklist.length > 0) {
+            writer.writeStartElement("blacklist");
+            for (String s : blacklist) {
+                writer.writeStartElement("symbol");
+                writer.writeCharacters(s);
+                writer.writeEndElement();
+            }
+            writer.writeEndElement();
+        }
 
-		writer.writeStartElement("parsetree");
-		elem.dump(writer);
-		writer.writeEndElement();
+        writer.writeStartElement("parsetree");
+        elem.dump(writer);
+        writer.writeEndElement();
 
-		if (buffer != null) {
-			writer.writeStartElement("tokensequence");
-			for (Symbol s : buffer.getBuffered()) {
-				if (s instanceof ComplexSymbol) {
-					ComplexSymbol cs = (ComplexSymbol) s;
-					// TODO: Temporarily remove the name attribute.
-					if (cs.value() != null) {
-						writer.writeStartElement("token");
+        if (buffer != null) {
+            writer.writeStartElement("tokensequence");
+            for (Symbol s : buffer.getBuffered()) {
+                if (s instanceof ComplexSymbol) {
+                    ComplexSymbol cs = (ComplexSymbol) s;
+                    // TODO: Temporarily remove the name attribute.
+                    if (cs.value() != null) {
+                        writer.writeStartElement("token");
 //						writer.writeAttribute("name", cs.getName());
-						cs.getLeft().toXML(writer, "left");
-						writer.writeCharacters(cs.value() + "");
-						cs.getRight().toXML(writer, "right");
-						writer.writeEndElement();
-					} else {
-						writer.writeStartElement("keyword");
-						writer.writeAttribute("left", cs.getLeft() + "");
-						writer.writeAttribute("right", cs.getRight() + "");
+                        cs.getLeft().toXML(writer, "left");
+                        writer.writeCharacters(cs.value() + "");
+                        cs.getRight().toXML(writer, "right");
+                        writer.writeEndElement();
+                    } else {
+                        writer.writeStartElement("keyword");
+                        writer.writeAttribute("left", cs.getLeft() + "");
+                        writer.writeAttribute("right", cs.getRight() + "");
 //						writer.writeCharacters(cs.getName());
-						writer.writeEndElement();
-					}
-				} else if (s != null) {
-					writer.writeStartElement("token");
-					writer.writeCharacters(s.toString());
-					writer.writeEndElement();
-				}
-			}
-			writer.writeEndElement();
-		}
-		writer.writeEndElement();
-		writer.writeEndDocument();
-		writer.flush();
-		writer.close();
-	}
+                        writer.writeEndElement();
+                    }
+                } else if (s != null) {
+                    writer.writeStartElement("token");
+                    writer.writeCharacters(s.toString());
+                    writer.writeEndElement();
+                }
+            }
+            writer.writeEndElement();
+        }
+        writer.writeEndElement();
+        writer.writeEndDocument();
+        writer.flush();
+        writer.close();
+    }
 
-	protected String tagname;
+    protected String tagName;
 
-	public String getTagname() {
-		return tagname;
-	}
+    public String getTagName() {
+        return tagName;
+    }
 
-	public abstract Location right();
+    public abstract Location right();
 
-	public abstract Location left();
+    public abstract Location left();
 
-	protected abstract void dump(XMLStreamWriter writer) throws XMLStreamException;
+    protected abstract void dump(XMLStreamWriter writer) throws XMLStreamException;
 
-	public List<XMLElement> getChildren() {
-		return new LinkedList<>();
-	}
+    public List<XMLElement> getChildren() {
+        return new LinkedList<>();
+    }
 
-	public boolean hasChildren() {
-		return false;
-	}
+    public boolean hasChildren() {
+        return false;
+    }
 
-	public static class NonTerminal extends XMLElement {
-		@Override
-		public boolean hasChildren() {
-			return !list.isEmpty();
-		}
+    public static class NonTerminal extends XMLElement {
 
-		@Override
-		public List<XMLElement> getChildren() {
-			return list;
-		}
+        @Override
+        public boolean hasChildren() {
+            return !list.isEmpty();
+        }
 
-		@Override
-		public List<XMLElement> selectById(String s) {
-			LinkedList<XMLElement> response = new LinkedList<>();
-			if (tagname.equals(s))
-				response.add(this);
-			for (XMLElement e : list) {
-				List<XMLElement> selection = e.selectById(s);
-				response.addAll(selection);
-			}
-			return response;
-		}
+        @Override
+        public List<XMLElement> getChildren() {
+            return list;
+        }
 
-		private final int variant;
+        @Override
+        public List<XMLElement> selectById(String s) {
+            LinkedList<XMLElement> response = new LinkedList<>();
+            if (tagName.equals(s))
+                response.add(this);
+            for (XMLElement e : list) {
+                List<XMLElement> selection = e.selectById(s);
+                response.addAll(selection);
+            }
+            return response;
+        }
 
-		public int getVariant() {
-			return variant;
-		}
+        private final int variant;
 
-		LinkedList<XMLElement> list;
+        public int getVariant() {
+            return variant;
+        }
 
-		public NonTerminal(String tagname, int variant, XMLElement... l) {
-			this.tagname = tagname;
-			this.variant = variant;
-			list = new LinkedList<>(Arrays.asList(l));
-		}
+        LinkedList<XMLElement> list;
 
-		@Override
-		public Location left() {
-			for (XMLElement e : list) {
-				Location loc = e.left();
-				if (loc != null)
-					return loc;
-			}
-			return null;
-		}
+        public NonTerminal(String tagName, int variant, XMLElement... l) {
+            this.tagName = tagName;
+            this.variant = variant;
+            list = new LinkedList<>(Arrays.asList(l));
+        }
 
-		@Override
-		public Location right() {
-			for (Iterator<XMLElement> it = list.descendingIterator(); it.hasNext();) {
-				Location loc = it.next().right();
-				if (loc != null)
-					return loc;
-			}
-			return null;
-		}
+        @Override
+        public Location left() {
+            for (XMLElement e : list) {
+                Location loc = e.left();
+                if (loc != null)
+                    return loc;
+            }
+            return null;
+        }
 
-		@Override
-		public String toString() {
-			if (list.isEmpty()) {
-				return "<nonterminal id=\"" + tagname + "\" variant=\"" + variant + "\" />";
-			}
-			StringBuilder ret = new StringBuilder("<nonterminal id=\"" + tagname + "\" left=\"" + left() + "\" right=\"" + right()
-                    + "\" variant=\"" + variant + "\">");
-			for (XMLElement e : list)
-				ret.append(e.toString());
-			return ret + "</nonterminal>";
-		}
+        @Override
+        public Location right() {
+            for (Iterator<XMLElement> it = list.descendingIterator(); it.hasNext(); ) {
+                Location loc = it.next().right();
+                if (loc != null)
+                    return loc;
+            }
+            return null;
+        }
 
-		@Override
-		protected void dump(XMLStreamWriter writer) throws XMLStreamException {
-			writer.writeStartElement("nonterminal");
-			writer.writeAttribute("id", tagname);
-			writer.writeAttribute("variant", variant + "");
-			// if (!list.isEmpty()){
-			Location loc = left();
-			if (loc != null)
-				loc.toXML(writer, "left");
-			// }
-			for (XMLElement e : list)
-				e.dump(writer);
-			loc = right();
-			if (loc != null)
-				loc.toXML(writer, "right");
-			writer.writeEndElement();
-		}
-	}
+        @Override
+        public String toString() {
+            if (list.isEmpty()) {
+                return "<nonterminal id=\"" + tagName + "\" variant=\"" + variant + "\" />";
+            }
+            StringBuilder ret = new StringBuilder("<nonterminal id=\"" + tagName + "\" left=\"" + left() + "\" right=\"" + right()
+                + "\" variant=\"" + variant + "\">");
+            for (XMLElement e : list) {
+                ret.append(e.toString());
+            }
+            return ret + "</nonterminal>";
+        }
 
-	public static class Error extends XMLElement {
+        @Override
+        protected void dump(XMLStreamWriter writer) throws XMLStreamException {
+            writer.writeStartElement("nonterminal");
+            writer.writeAttribute("id", tagName);
+            writer.writeAttribute("variant", variant + "");
+            // if (!list.isEmpty()){
+            Location loc = left();
+            if (loc != null)
+                loc.toXML(writer, "left");
+            // }
+            for (XMLElement e : list) {
+                e.dump(writer);
+            }
+            loc = right();
+            if (loc != null)
+                loc.toXML(writer, "right");
+            writer.writeEndElement();
+        }
 
-		@Override
-		public List<XMLElement> selectById(String s) {
-			return new LinkedList<>();
-		}
+    }
 
-		Location l, r;
+    public static class Error extends XMLElement {
 
-		public Error(Location l, Location r) {
-			this.l = l;
-			this.r = r;
-		}
+        @Override
+        public List<XMLElement> selectById(String s) {
+            return new LinkedList<>();
+        }
 
-		@Override
-		public Location left() {
-			return l;
-		}
+        Location l, r;
 
-		@Override
-		public Location right() {
-			return r;
-		}
+        public Error(Location l, Location r) {
+            this.l = l;
+            this.r = r;
+        }
 
-		@Override
-		public String toString() {
-			return "<error left=\"" + l + "\" right=\"" + r + "\"/>";
-		}
+        @Override
+        public Location left() {
+            return l;
+        }
 
-		@Override
-		protected void dump(XMLStreamWriter writer) throws XMLStreamException {
-			writer.writeStartElement("error");
-			writer.writeAttribute("left", left() + "");
-			writer.writeAttribute("right", right() + "");
-			writer.writeEndElement();
-		}
-	}
+        @Override
+        public Location right() {
+            return r;
+        }
 
-	public static class Terminal extends XMLElement {
+        @Override
+        public String toString() {
+            return "<error left=\"" + l + "\" right=\"" + r + "\"/>";
+        }
 
-		@Override
-		public List<XMLElement> selectById(String s) {
-			List<XMLElement> ret = new LinkedList<>();
-			if (tagname.equals(s)) {
-				ret.add(this);
-			}
-			return ret;
-		}
+        @Override
+        protected void dump(XMLStreamWriter writer) throws XMLStreamException {
+            writer.writeStartElement("error");
+            writer.writeAttribute("left", left() + "");
+            writer.writeAttribute("right", right() + "");
+            writer.writeEndElement();
+        }
 
-		Location l, r;
-		Object value;
+    }
 
-		public Terminal(Location l, String symbolname, Location r) {
-			this(l, symbolname, null, r);
-		}
+    public static class Terminal extends XMLElement {
 
-		public Terminal(Location l, String symbolname, Object i, Location r) {
-			this.l = l;
-			this.r = r;
-			value = i;
-			tagname = symbolname;
-		}
+        @Override
+        public List<XMLElement> selectById(String s) {
+            List<XMLElement> ret = new LinkedList<>();
+            if (tagName.equals(s)) {
+                ret.add(this);
+            }
+            return ret;
+        }
 
-		public Object value() {
-			return value;
-		}
+        Location l, r;
+        Object value;
 
-		@Override
-		public Location left() {
-			return l;
-		}
+        public Terminal(Location l, String symbolName, Location r) {
+            this(l, symbolName, null, r);
+        }
 
-		@Override
-		public Location right() {
-			return r;
-		}
+        public Terminal(Location l, String symbolName, Object i, Location r) {
+            this.l = l;
+            this.r = r;
+            value = i;
+            tagName = symbolName;
+        }
 
-		@Override
-		public String toString() {
-			return (value == null) ? "<terminal id=\"" + tagname + "\"/>"
-					: "<terminal id=\"" + tagname + "\" left=\"" + l + "\" right=\"" + r + "\">" + value
-							+ "</terminal>";
-		}
+        public Object value() {
+            return value;
+        }
 
-		@Override
-		protected void dump(XMLStreamWriter writer) throws XMLStreamException {
-			writer.writeStartElement("terminal");
-			writer.writeAttribute("id", tagname);
-			writer.writeAttribute("left", left() + "");
-			writer.writeAttribute("right", right() + "");
-			if (value != null)
-				writer.writeCharacters(value + "");
-			writer.writeEndElement();
-		}
-	}
+        @Override
+        public Location left() {
+            return l;
+        }
+
+        @Override
+        public Location right() {
+            return r;
+        }
+
+        @Override
+        public String toString() {
+            return (value == null) ? "<terminal id=\"" + tagName + "\"/>"
+                : "<terminal id=\"" + tagName + "\" left=\"" + l + "\" right=\"" + r + "\">" + value
+                + "</terminal>";
+        }
+
+        @Override
+        protected void dump(XMLStreamWriter writer) throws XMLStreamException {
+            writer.writeStartElement("terminal");
+            writer.writeAttribute("id", tagName);
+            writer.writeAttribute("left", left() + "");
+            writer.writeAttribute("right", right() + "");
+            if (value != null)
+                writer.writeCharacters(value + "");
+            writer.writeEndElement();
+        }
+
+    }
+
 }
