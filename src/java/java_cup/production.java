@@ -639,7 +639,7 @@ public class production {
             .append("var ")
             .append(labelName)
             .append("Sym = ")
-            .append("(java_cup.runtime.symbol.def.DefaultSymbol)")
+            .append("(java_cup.runtime.symbol.def.DefaultSymbol) ")
             .append(emit.buildStackSymReader(offset))
             .append(";\n");
 
@@ -658,19 +658,21 @@ public class production {
                 .append(labelName)
                 .append("Right = ")
                 .append(labelName)
-                .append(".getRight();\n");
+                .append("Sym.getRight();\n");
         }
 
-        // xxx = xxxSym.value();
-        ret.append(indent)
-            .append(stack_type)
-            .append(' ')
-            .append(labelName)
-            .append(" = ")
-            .append(labelName)
-            .append("Sym.")
-            .append(emit.buildSymGetter(stack_type))
-            .append(";\n");
+        if (!labelName.isEmpty()) {
+            // xxx = xxxSym.value();
+            ret.append(indent)
+                .append(stack_type)
+                .append(' ')
+                .append(labelName)
+                .append(" = ")
+                .append(labelName)
+                .append("Sym.")
+                .append(emit.buildSymGetter(stack_type))
+                .append(";\n");
+        }
 
         return ret.toString();
     }

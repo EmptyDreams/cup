@@ -9,6 +9,12 @@ public class FlattenConfig {
     private final List<String> listSuffix = new ArrayList<>();
     private final List<Pattern> inlineExpr = new ArrayList<>();
     private final List<Pattern> namelessInlineExpr = new ArrayList<>();
+    private final List<Pattern> transparencyExpr = new ArrayList<>();
+
+    {
+        transparencyExpr.add(Pattern.compile("_EBNF_OPT_.+"));
+        transparencyExpr.add(Pattern.compile("_EBNF_LIST_TAIL_.+"));
+    }
 
     public FlattenConfig(String config) {
         String[] split = config.split("&");
@@ -34,6 +40,11 @@ public class FlattenConfig {
                 case "namelessInline":
                     for (String value : values) {
                         namelessInlineExpr.add(Pattern.compile(value.replace("+", "(.+)")));
+                    }
+                    break;
+                case "tr":
+                    for (String value : values) {
+                        transparencyExpr.add(Pattern.compile(value.replace("+", ".+")));
                     }
                     break;
                 default:
@@ -66,6 +77,11 @@ public class FlattenConfig {
             }
             return result.toString();
         }).filter(Objects::nonNull).findAny().orElse(null);
+    }
+
+    public boolean isTr(symbol sym) {
+        return transparencyExpr.stream()
+            .anyMatch(pattern -> pattern.matcher(sym.name()).matches());
     }
 
 }

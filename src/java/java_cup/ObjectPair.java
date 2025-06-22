@@ -25,6 +25,10 @@ public final class ObjectPair<T, U> {
         return second;
     }
 
+    public ObjectPair<T, U> modifySecond(U second) {
+        return new ObjectPair<>(first, second);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;

@@ -6,8 +6,7 @@ import java.util.stream.Collectors;
 
 public class AstNodeBuilder {
 
-    private AstNodeBuilder() {
-    }
+    private AstNodeBuilder() {}
 
     public static NonTermInfo initInfo(non_terminal nt) throws internal_error {
         Map<String, String> label2Type = new HashMap<>();

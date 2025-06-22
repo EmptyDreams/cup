@@ -1,5 +1,6 @@
 package java_cup;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -156,14 +157,13 @@ public abstract class symbol {
         String emptyAction
     ) throws internal_error {
         if (_optBox != null) return _optBox;
-        var newNt = non_terminal.create_new("_EBNF_OPT_", _stack_type);
+        var newNt = non_terminal.create_new("_EBNF_OPT_", stack_type());
         newNt._isInline = true;
-        boolean isAstNode = Main.ast_format != null;
         new production(
             newNt,
-            new production_part[]{new symbol_part(this, isAstNode ? "item" : null)},
+            new production_part[]{new symbol_part(this)},
             1,
-            isAstNode ? null : "RESULT = " + emit.buildStackSymReader(0) + ';'
+            "RESULT = " + emit.buildStackValueReader(stack_type(), 0) + ';'
         );
         new production(newNt, new production_part[0], 0, emptyAction);
         _optBox = newNt;
@@ -171,8 +171,7 @@ public abstract class symbol {
         return newNt;
     }
 
-    private non_terminal _listBox = null;
-    private non_terminal _listTailBox = null;
+    private final Map<List<production_part>, ObjectPair<non_terminal, non_terminal>> _listBoxCache = new HashMap<>();
 
     /**
      * Creates a new non_terminal for the list box.
@@ -210,48 +209,55 @@ public abstract class symbol {
                 type = type.substring(0, 1).toUpperCase() + type.substring(1);
                 break;
         }
-        if (_listBox == null) {
-            var newNt = non_terminal.create_new("_EBNF_LIST_", listType);
-            newNt._isInline = true;
-            new production(
-                newNt,
-                new production_part[]{new symbol_part(this)},
-                1,
-                isAstNode ? null : "var list = new ArrayList<" + type + ">();\n"
-                    + "list.add(" + emit.buildStackValueReader(type, 0) + ");\n"
-                    + "RESULT = list;"
-            );
-            var listProdPart = new production_part[2 + sepList.size()];
-            listProdPart[0] = new symbol_part(newNt);
-            for (int i = 0; i < sepList.size(); i++) {
-                listProdPart[i + 1] = sepList.get(i);
+        String finalType = type;
+        var cache = _listBoxCache.computeIfAbsent(sepList, k -> {
+            try {
+                var newNt = non_terminal.create_new("_EBNF_LIST_", listType);
+                newNt._isInline = true;
+                new production(
+                    newNt,
+                    new production_part[]{new symbol_part(this)},
+                    1,
+                    isAstNode ? null : "var list = new ArrayList<" + finalType + ">();\n"
+                        + "list.add(" + emit.buildStackValueReader(finalType, 0) + ");\n"
+                        + "RESULT = list;"
+                );
+                var listProdPart = new production_part[2 + sepList.size()];
+                listProdPart[0] = new symbol_part(newNt);
+                for (int i = 0; i < sepList.size(); i++) {
+                    listProdPart[i + 1] = sepList.get(i);
+                }
+                listProdPart[listProdPart.length - 1] = new symbol_part(this);
+                new production(
+                    newNt,
+                    listProdPart,
+                    listProdPart.length,
+                    listType + " list = "
+                        + emit.buildStackValueReader(listType, listProdPart.length - 1) + ";\n"
+                        + "list.add(" + emit.buildStackValueReader(finalType, 0) + ");\n"
+                        + "RESULT = list;"
+                );
+                symbols.put(newNt.name(), new symbol_part(newNt));
+                return new ObjectPair<>(newNt, null);
+            } catch (internal_error e) {
+                e.crash();
+                throw new AssertionError();
             }
-            listProdPart[listProdPart.length - 1] = new symbol_part(this);
-            new production(
-                newNt,
-                listProdPart,
-                listProdPart.length,
-                listType + " list = "
-                    + emit.buildStackValueReader(listType, listProdPart.length - 1) + ";\n"
-                    + "list.add(" + emit.buildStackValueReader(type, 0) + ");\n"
-                    + "RESULT = list;"
-            );
-            _listBox = newNt;
-            symbols.put(newNt.name(), new symbol_part(newNt));
-        }
+        });
         if (!allowTail) {
-            if (!allowEmpty) return _listBox;
-            return _listBox.createOptBox(
+            if (!allowEmpty) return cache.getFirst();
+            return cache.getFirst().createOptBox(
                 symbols,
                 "RESULT = java.util.Collections.<" + type + ">emptyList();"
             );
         }
-        if (_listTailBox == null) {
-            _listTailBox = createListTailBox(_listBox, sepList, type);
-            symbols.put(_listTailBox.name(), new symbol_part(_listTailBox));
+        if (cache.getSecond() == null) {
+            var tailNt = createListTailBox(cache.getFirst(), sepList, type);
+            symbols.put(tailNt.name(), new symbol_part(tailNt));
+            cache = cache.modifySecond(tailNt);
         }
-        if (!allowEmpty) return _listTailBox;
-        return _listTailBox.createOptBox(
+        if (!allowEmpty) return cache.getSecond();
+        return cache.getSecond().createOptBox(
             symbols,
             "RESULT = java.util.Collections.<" + type + ">emptyList();"
         );
