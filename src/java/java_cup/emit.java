@@ -935,7 +935,7 @@ public class emit {
             case "boolean":
                 return "getAsBoolean()";
             default:
-                return "value()";
+                return '<' + type + ">value()";
         }
     }
 

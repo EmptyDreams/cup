@@ -437,7 +437,7 @@ terminal
   START, SEMI, COMMA, STAR, DOT, PLUS, COLON, COLON_COLON, COLON_COLON_EQUALS, BAR, PRECEDENCE,
   LEFT, RIGHT, NONASSOC, PERCENT_PREC, PERCENT_NAMER,
   LPAREN, RPAREN, LBRACK, RBRACK, NONTERMINAL, GT, LT,
-  QUESTION, SUPER, EXTENDS, CLASS;
+  QUESTION, EXCLAMATION, SUPER, EXTENDS, CLASS;
 
 terminal String  ID, CODE_STRING;
 
@@ -454,8 +454,10 @@ non terminal
 non terminal String  nt_id, label_id, opt_label, terminal_id,
                      term_id, robust_id, typearglist, typearguement, wildcard;
 non terminal ObjectPair<String, String> symbol_id;
+non terminal List<ObjectPair> symbol_id_list;
 
-non terminal ObjectPair<String, Object> opt_quantifier;
+non terminal SymQuantifier opt_quantifier;
+non terminal String star_or_plus, question_or_exclamation;
 non terminal String opt_return_type;
 
 /*----------------------------------------------------------------*/ 
@@ -845,37 +847,27 @@ prod_part ::=
 	  /* if that fails, symbol is undeclared */
 	  if (symb == null) {
 	    if (ErrorManager.getManager().getErrorCount() == 0) {
-	      ErrorManager.getManager().emit_error("java_cup.runtime.Symbol \"" + symid.getFirst() + "\" has not been declared");
+	      ErrorManager.getManager().emit_error(
+	        "java_cup.runtime.Symbol \"" + symid.getFirst() + "\" has not been declared"
+	      );
         }
       } else if (quantifier != null && symb.is_action()) {
         if (ErrorManager.getManager().getErrorCount() == 0) {
-	      ErrorManager.getManager().emit_error("Action symbol \"" + symid.getFirst() + "\" cannot be used with a quantifier.");
+	      ErrorManager.getManager().emit_error(
+	        "Action symbol \"" + symid.getFirst() + "\" cannot be used with a quantifier."
+	      );
         }
       } else {
         if (quantifier != null) {
-          switch (quantifier.getFirst()) {
-            case "?": {
-              non_terminal newNt = ((symbol_part) symb).the_symbol().createOptBox();
-              symb = new symbol_part(newNt, null, symid.getSecond());
-              symbols.put(newNt.name(), new symbol_part(newNt));
-              break;
-            }
-            case "+": {
-              non_terminal newNt = ((symbol_part) symb).the_symbol().createListBox();
-              symb = new symbol_part(newNt, null, symid.getSecond() == null ? null : "List<" + symid.getSecond() + ">");
-              symbols.put(newNt.name(), new symbol_part(newNt));
-              break;
-            }
-            case "*": {
-              non_terminal listNt = ((symbol_part) symb).the_symbol().createListBox();
-              non_terminal optNt = listNt.createOptBox();
-              symbols.put(listNt.name(), new symbol_part(listNt));
-              symb = new symbol_part(optNt, null, symid.getSecond() == null ? null : "List<" + symid.getSecond() + ">");
-              symbols.put(optNt.name(), new symbol_part(optNt));
-              break;
-            }
-            default:
-              throw new AssertionError();
+          if (!quantifier.isList()) {
+            // ?
+            non_terminal newNt = ((symbol_part) symb).the_symbol().createOptBox(symbols, null);
+            symb = new symbol_part(newNt, null, symid.getSecond());
+          } else {
+            non_terminal newNt = ((symbol_part) symb).the_symbol().createListBox(
+              symbols, quantifier.getPartList(), quantifier.isAllowTail(), quantifier.isAllowEmpty()
+            );
+            symb = new symbol_part(newNt, null, symid.getSecond() == null ? null : "List<" + symid.getSecond() + ">");
           }
         } else if (symid.getSecond() != null) {
           symb = new symbol_part(((symbol_part) symb).the_symbol(), null, symid.getSecond());
@@ -893,10 +885,25 @@ prod_part ::=
 	;
 
 opt_quantifier ::=
-    QUESTION {: RESULT = new ObjectPair<>("?", null); :}
-    | STAR {: RESULT = new ObjectPair<>("*", null); :}
-    | PLUS {: RESULT = new ObjectPair<>("+", null); :}
-    | empty;
+  QUESTION {: RESULT = new SymQuantifier(); :}
+  | star_or_plus:sp {: RESULT = new SymQuantifier(null, "*".equals(sp), false); :}
+  | LBRACK symbol_id_list:list question_or_exclamation:qe RBRACK star_or_plus:sp {:
+    List<production_part> partList = new ArrayList<>(list.size());
+    for (ObjectPair<String, String> item : list) {
+      production_part part = symbols.get(item.getFirst());
+      partList.add(part);
+    }
+    RESULT = new SymQuantifier(partList, "*".equals(sp), "?".equals(qe));
+  :}
+  | empty;
+
+star_or_plus ::=
+  STAR {: RESULT = "*"; :}
+  | PLUS {: RESULT = "+"; :};
+
+question_or_exclamation ::=
+  QUESTION {: RESULT = "?"; :}
+  | EXCLAMATION {: RESULT = "!"; :};
 
 opt_return_type ::=
     COLON_COLON ID:type {: RESULT = type; :}
@@ -1066,6 +1073,16 @@ symbol_id ::=
 		RESULT = new ObjectPair<>("ILLEGAL", null);
 	:}
 	;
+
+symbol_id_list ::= symbol_id:item {:
+    List list = new ArrayList<>();
+    list.add(item);
+    RESULT = list;
+  :}
+  | symbol_id_list:list symbol_id:item {:
+    list.add(item);
+    RESULT = list;
+  :};
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
 

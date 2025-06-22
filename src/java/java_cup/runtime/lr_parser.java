@@ -521,7 +521,7 @@ public abstract class lr_parser {
             int first = 0;
             int last = (row.length - 1) / 2 - 1; /* leave out trailing default entry */
             while (first <= last) {
-                int probe = (first + last) >>> 2;
+                int probe = (first + last) >>> 1;
                 if (sym == row[probe * 2])
                     return row[probe * 2 + 1];
                 else if (sym > row[probe * 2])

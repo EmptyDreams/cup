@@ -62,6 +62,7 @@ ident = ([:jletter:] | "_" ) ([:jletterdigit:] | [:jletter:] | "_" )*
 
   {Whitespace}  {                                       }
   "?"           { return symbol(QUESTION);              }
+  "!"           { return symbol(EXCLAMATION);           }
   ";"           { return symbol(SEMI);                  }
   ","           { return symbol(COMMA);                 }
   "*"           { return symbol(STAR);                  }

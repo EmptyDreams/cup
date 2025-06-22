@@ -1,5 +1,8 @@
 package java_cup;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * This abstract class serves as the base class for grammar symbols (i.e., both
  * terminals and non-terminals). Each symbol has a name string, and a string
@@ -142,57 +145,140 @@ public abstract class symbol {
 
     /**
      * Creates a new non_terminal for the optional box.
+     * <p>
+     * By default, the new nonterminal return null if the match is null
      *
-     * @return non cache
+     * @param symbols All symbols map
+     * @param emptyAction The action to be executed if the match is null, allow null
      */
-    public final non_terminal createOptBox() throws internal_error {
+    public final non_terminal createOptBox(
+        Map<String, production_part> symbols,
+        String emptyAction
+    ) throws internal_error {
         if (_optBox != null) return _optBox;
         var newNt = non_terminal.create_new("_EBNF_OPT_", _stack_type);
         newNt._isInline = true;
         boolean isAstNode = Main.ast_format != null;
-        var itemProd = new production(
+        new production(
             newNt,
             new production_part[]{new symbol_part(this, isAstNode ? "item" : null)},
             1,
             isAstNode ? null : "RESULT = " + emit.buildStackSymReader(0) + ';'
         );
-        var emptyProd = new production(newNt, new production_part[0], 0);
-        newNt.add_production(itemProd);
-        newNt.add_production(emptyProd);
+        new production(newNt, new production_part[0], 0, emptyAction);
         _optBox = newNt;
+        symbols.put(newNt.name(), new symbol_part(newNt));
         return newNt;
     }
 
     private non_terminal _listBox = null;
+    private non_terminal _listTailBox = null;
 
-    public final non_terminal createListBox() throws internal_error {
-        if (_listBox != null) return _listBox;
+    /**
+     * Creates a new non_terminal for the list box.
+     * <p>
+     * The new nonterminal returns a {@code List<Type>}, where {@code Type} is the type of the nonterminal
+     * (or, if the nonterminal type is a primitive type, a wrapper) and an empty list,
+     * if allowed to be empty.
+     * <p>
+     * The new nonterminal that never returns null.
+     *
+     * @param symbols All symbols map
+     * @param sepList The separator for a list
+     * @param allowTail Whether to allow an extra separator at the end of a list
+     * @param allowEmpty Whether a list is allowed to be empty
+     */
+    public final non_terminal createListBox(
+        Map<String, production_part> symbols,
+        List<production_part> sepList, boolean allowTail, boolean allowEmpty
+    ) throws internal_error {
         boolean isAstNode = Main.ast_format != null;
         var type = isAstNode ? astClassName() : _stack_type;
-        var newNt = non_terminal.create_new("_EBNF_LIST_", "List<" + type + '>');
+        // convert primitive types to their wrapper (because the jvm does not support primitive generics)
+        switch (type) {
+            case "char":
+                type = "Character";
+                break;
+            case "boolean":
+            case "byte":
+            case "short":
+            case "int":
+            case "long":
+            case "float":
+            case "double":
+                type = type.substring(0, 1).toUpperCase() + type.substring(1);
+                break;
+        }
+        if (_listBox == null) {
+            var newNt = non_terminal.create_new("_EBNF_LIST_", "List<" + type + '>');
+            newNt._isInline = true;
+            new production(
+                newNt,
+                new production_part[]{new symbol_part(this)},
+                1,
+                isAstNode ? null : "var list = new ArrayList<" + type + ">();\n"
+                    + "list.add(" + emit.buildStackValueReader(type, 0) + ");\n"
+                    + "RESULT = list;"
+            );
+            var listProdPart = new production_part[2 + sepList.size()];
+            listProdPart[0] = new symbol_part(newNt);
+            for (int i = 0; i < sepList.size(); i++) {
+                listProdPart[i + 1] = sepList.get(i);
+            }
+            listProdPart[listProdPart.length - 1] = new symbol_part(this);
+            new production(
+                newNt,
+                listProdPart,
+                listProdPart.length,
+                "List<" + type + "> list = "
+                    + emit.buildStackValueReader("List", listProdPart.length - 1) + ";\n"
+                    + "list.add(" + emit.buildStackValueReader(type, 0) + ");\n"
+                    + "RESULT = list;"
+            );
+            _listBox = newNt;
+            symbols.put(newNt.name(), new symbol_part(newNt));
+        }
+        if (!allowTail) {
+            if (!allowEmpty) return _listBox;
+            return _listBox.createOptBox(
+                symbols,
+                "RESULT = java.util.Collections.<" + type + ">emptyList();"
+            );
+        }
+        if (_listTailBox == null) {
+            _listTailBox = createListTailBox(_listBox, sepList, type);
+            symbols.put(_listTailBox.name(), new symbol_part(_listTailBox));
+        }
+        if (!allowEmpty) return _listTailBox;
+        return _listTailBox.createOptBox(
+            symbols,
+            "RESULT = java.util.Collections.<" + type + ">emptyList();"
+        );
+    }
+
+    private static non_terminal createListTailBox(
+        non_terminal nt, List<production_part> split, String type
+    ) throws internal_error {
+        var listType = "List<" + type + ">";
+        var newNt = non_terminal.create_new("_EBNF_LIST_TAIL_", listType);
         newNt._isInline = true;
-        var itemProd = new production(
+        new production(
             newNt,
-            new production_part[]{new symbol_part(this, isAstNode ? "item" : null)},
+            new production_part[]{new symbol_part(nt)},
             1,
-            isAstNode ? null : "var list = new ArrayList<" + type + ">();\n"
-                + "list.add(" + emit.buildStackValueReader(stack_type(), 0) + ");\n"
-                + "RESULT = list;"
+            "RESULT = " + emit.buildStackValueReader(listType, 0) + ";"
         );
-        var listProd = new production(
+        var splitPart = new production_part[1 + split.size()];
+        splitPart[0] = new symbol_part(nt);
+        for (int i = 0; i < split.size(); i++) {
+            splitPart[i + 1] = split.get(i);
+        }
+        new production(
             newNt,
-            new production_part[]{
-                new symbol_part(newNt),
-                new symbol_part(this, isAstNode ? "item" : null)
-            },
-            2,
-            isAstNode ? null : "List<" + type + "> list = " + emit.buildStackValueReader("List", 1) + ";\n"
-                + "list.add(" + emit.buildStackValueReader(stack_type(), 0) + ");\n"
-                + "RESULT = list;"
+            splitPart,
+            splitPart.length,
+            "RESULT = " + emit.buildStackValueReader(listType, splitPart.length - 1) + ";"
         );
-        newNt.add_production(listProd);
-        newNt.add_production(itemProd);
-        _listBox = newNt;
         return newNt;
     }
 
