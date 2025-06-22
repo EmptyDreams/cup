@@ -911,11 +911,22 @@ public class emit {
         return matcher.find();
     }
 
+    /**
+     * Builds a string to read a symbol from the stack.
+     *
+     * @param offset the offset of the symbol to read
+     */
     static String buildStackSymReader(int offset) {
         return emit.pre("stack")
             + ((offset == 0) ? ".peek()" : (".elementAt(" + emit.pre("top") + "-" + offset + ")"));
     }
 
+    /**
+     * Code to construct a method that reads a value from a Symbol.
+     *
+     * @param type The type of the value to read.
+     * @return eg. "int" -> "getAsInt()"
+     */
     static String buildSymGetter(String type) {
         switch (type) {
             case "byte":
@@ -939,8 +950,34 @@ public class emit {
         }
     }
 
+    /**
+     * Construct code that reads the value of an item in stack
+     *
+     * @param type the type of the value
+     * @param offset the offset of the symbol in the stack
+     */
     static String buildStackValueReader(String type, int offset) {
         return buildStackSymReader(offset) + '.' + buildSymGetter(type);
+    }
+
+    /**
+     * Builds a list expression for the given item type.
+     *
+     * @return eg. "int" -> "List&lt;Integer&gt;"
+     */
+    static String buildListExpr(String itemType) {
+        if (itemType == null) return "List";
+        switch (itemType) {
+            case "byte": return "List<Byte>";
+            case "short": return "List<Short>";
+            case "int": return "List<Integer>";
+            case "long": return "List<Long>";
+            case "float": return "List<Float>";
+            case "double": return "List<Double>";
+            case "char": return "List<Character>";
+            case "boolean": return "List<Boolean>";
+            default: return "List<" + itemType + '>';
+        }
     }
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */

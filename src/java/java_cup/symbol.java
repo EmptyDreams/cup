@@ -83,7 +83,7 @@ public abstract class symbol {
                 if (is_non_term()) {
                     var symbol = (non_terminal) this;
                     String itemType = symbol.getListItemType();
-                    if (itemType != null) return "List<" + itemType + '>';
+                    if (itemType != null) return emit.buildListExpr(itemType);
                 }
                 break;
         }
@@ -194,6 +194,7 @@ public abstract class symbol {
     ) throws internal_error {
         boolean isAstNode = Main.ast_format != null;
         var type = isAstNode ? astClassName() : _stack_type;
+        var listType = emit.buildListExpr(type);
         // convert primitive types to their wrapper (because the jvm does not support primitive generics)
         switch (type) {
             case "char":
@@ -210,7 +211,7 @@ public abstract class symbol {
                 break;
         }
         if (_listBox == null) {
-            var newNt = non_terminal.create_new("_EBNF_LIST_", "List<" + type + '>');
+            var newNt = non_terminal.create_new("_EBNF_LIST_", listType);
             newNt._isInline = true;
             new production(
                 newNt,
@@ -230,8 +231,8 @@ public abstract class symbol {
                 newNt,
                 listProdPart,
                 listProdPart.length,
-                "List<" + type + "> list = "
-                    + emit.buildStackValueReader("List", listProdPart.length - 1) + ";\n"
+                listType + " list = "
+                    + emit.buildStackValueReader(listType, listProdPart.length - 1) + ";\n"
                     + "list.add(" + emit.buildStackValueReader(type, 0) + ");\n"
                     + "RESULT = list;"
             );
@@ -259,7 +260,7 @@ public abstract class symbol {
     private static non_terminal createListTailBox(
         non_terminal nt, List<production_part> split, String type
     ) throws internal_error {
-        var listType = "List<" + type + ">";
+        var listType = emit.buildListExpr(type);
         var newNt = non_terminal.create_new("_EBNF_LIST_TAIL_", listType);
         newNt._isInline = true;
         new production(

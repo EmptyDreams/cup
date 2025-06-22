@@ -867,7 +867,7 @@ prod_part ::=
             non_terminal newNt = ((symbol_part) symb).the_symbol().createListBox(
               symbols, quantifier.getPartList(), quantifier.isAllowTail(), quantifier.isAllowEmpty()
             );
-            symb = new symbol_part(newNt, null, symid.getSecond() == null ? null : "List<" + symid.getSecond() + ">");
+            symb = new symbol_part(newNt, null, symid.getSecond() == null ? null : emit.buildListExpr(symid.getSecond()));
           }
         } else if (symid.getSecond() != null) {
           symb = new symbol_part(((symbol_part) symb).the_symbol(), null, symid.getSecond());
