@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 public class FlattenConfig {
 
-    private final List<String> listSuffix = new ArrayList<>();
     private final List<Pattern> inlineExpr = new ArrayList<>();
     private final List<Pattern> namelessInlineExpr = new ArrayList<>();
     private final List<Pattern> transparencyExpr = new ArrayList<>();
@@ -29,9 +28,6 @@ public class FlattenConfig {
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toList());
             switch (key) {
-                case "list":
-                    listSuffix.addAll(values);
-                    break;
                 case "inline":
                     for (String value : values) {
                         inlineExpr.add(Pattern.compile(value.replace("+", "(.+)")));
@@ -54,10 +50,6 @@ public class FlattenConfig {
     }
 
     public FlattenConfig() {}
-
-    public boolean isListName(String name) {
-        return listSuffix.stream().anyMatch(name::endsWith);
-    }
 
     public String getInlineName(String name) {
         var isNameless = namelessInlineExpr.stream()

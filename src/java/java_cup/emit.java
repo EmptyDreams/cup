@@ -1412,7 +1412,7 @@ public class emit {
 
     public static void node_classes(File dir) throws internal_error, IOException {
         for (non_terminal nt : non_terminal.all()) {
-            if (!nt.isListExpr() && !nt.isEmptySymbol()) {
+            if (!nt.isEmptySymbol() && !nt.isInlineNt()) {
                 node_class(dir, nt);
             }
         }

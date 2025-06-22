@@ -144,63 +144,10 @@ public class production {
             if (Main.ast_format != null && tail_action == null) {
                 String indentation = "              ";
                 if (isEmptyProduction()) {
-                    if (lhs_sym.isListExpr()) {
-                        actionBuilder.append(indentation).append("RESULT = Collections.emptyList();\n");
-                    } else {
-                        actionBuilder.append(indentation)
-                            .append("RESULT = new ")
-                            .append(lhs_sym.astClassName())
-                            .append("();\n");
-                    }
-                } else if (lhs_sym.isListExpr()) {
-                    int selfIndex = -1;
-                    for (int k = 0; k < _rhs_length; k++) {
-                        var rhs = _rhs[k];
-                        if (rhs.label() == null || rhs.is_action()) continue;
-                        var sym = ((symbol_part) rhs).the_symbol();
-                        if (lhs_sym.equals(sym)) {
-                            selfIndex = k;
-                            break;
-                        }
-                    }
-                    var onlyLabelPart = getOnlyLabelPart();
-                    if (onlyLabelPart == null) {
-                        // List<xxx> flattenList = stack.elementAt(top - 1).value();
-                        actionBuilder.append(indentation)
-                            .append("List flattenList = ")
-                            .append(emit.buildStackValueReader("List", _rhs_length - 1 - selfIndex))
-                            .append(";\n");
-                    } else if (selfIndex == -1) {
-                        symbol sym = onlyLabelPart.the_symbol();
-                        String className = sym.astClassName();
-                        actionBuilder.append(indentation)
-                            // List<xxx> flattenList = new ArrayList<>();
-                            .append("List<")
-                            .append(className)
-                            .append("> flattenList = new ArrayList<>();\n")
-                            // flattenList.add((xxx) label);
-                            .append(indentation)
-                            .append("flattenList.add((")
-                            .append(className)
-                            .append(") ")
-                            .append(onlyLabelPart.label())
-                            .append(");\n");
-                    } else {
-                        String className = onlyLabelPart.the_symbol().astClassName();
-                        actionBuilder.append(indentation)
-                            // List<xxx> flattenList = stack.elementAt(top - 1).value();
-                            .append("List<").append(className).append("> flattenList = ")
-                            .append(emit.buildStackValueReader("List", _rhs_length - 1 - selfIndex))
-                            .append(";\n")
-                            // flattenList.add((xxx) label);
-                            .append(indentation)
-                            .append("flattenList.add((")
-                            .append(className)
-                            .append(") ")
-                            .append(onlyLabelPart.label())
-                            .append(");\n");
-                    }
-                    actionBuilder.append(indentation).append("RESULT = flattenList;");
+                    actionBuilder.append(indentation)
+                        .append("RESULT = new ")
+                        .append(lhs_sym.astClassName())
+                        .append("();\n");
                 } else {
                     String className = symbol.getNtNodeClassName(lhs_sym.name());
                     String nodeName = emit.pre("treeNode");
