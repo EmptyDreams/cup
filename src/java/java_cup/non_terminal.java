@@ -168,23 +168,40 @@ public class non_terminal extends symbol {
      * <li>- second: the action associated with the inline expression (may be null)</li>
      * </ul>
      */
-    final Map<PositionFinder, Map<Integer, ObjectPair<List<String>, String>>> _inlineLabels = new HashMap<>();
-
-    boolean _isInline = false;
-    private boolean _isLaInline = false;
+    final Map<PositionFinder, Map<Integer, ObjectPair<List<String>, String>>> _annoLabels = new HashMap<>();
+    private Map<production, Map<Integer, ObjectPair<List<String>, String>>> _annoLabelsCache = new HashMap<>();
 
     /**
-     * Checks if the current nonterminal is an inline nonterminal
+     * Reads label and action information for all inline expressions contained in the specified production
+     *
+     * @return The key is the number
      */
-    public boolean isInlineNt() {
-        return _isInline;
+    public Map<Integer, ObjectPair<List<String>, String>> getAnnoLabelAndAction(production prod) {
+        if (_annoLabelsCache == null) {
+            Map<production, Map<Integer, ObjectPair<List<String>, String>>> cache = new HashMap<>();
+            for (var entry : _annoLabels.entrySet()) {
+                cache.put(entry.getKey().getProd(), entry.getValue());
+            }
+            _annoLabelsCache = cache;
+        }
+        return _annoLabelsCache.get(prod);
+    }
+
+    boolean _isAnno = false;
+    private boolean _isLaAnno = false;
+
+    /**
+     * Checks if the current nonterminal is an annoying nonterminal
+     */
+    public boolean isAnno() {
+        return _isAnno;
     }
 
     /**
-     * Check if the nonterminal is an inline expression containing a label or action.
+     * Check if the nonterminal is an annoying expression containing a label or action.
      */
-    public boolean isLaInline() {
-        return _isLaInline;
+    public boolean isLaAnno() {
+        return _isLaAnno;
     }
 
     /**
@@ -228,11 +245,11 @@ public class non_terminal extends symbol {
                 Main.ast_format == null ? "Object" : "IAstNode"
             )
         );
-        subNt._isInline = true;
-        subNt._isLaInline = true;
-        emit.hasInlineCode = true;
+        subNt._isAnno = true;
+        subNt._isLaAnno = true;
+        emit.hasAnnoCode = true;
         if (hasLabel || hasAction) {
-            var pairMap = subNt._inlineLabels.computeIfAbsent(posFinder, k -> new HashMap<>());
+            var pairMap = subNt._annoLabels.computeIfAbsent(posFinder, k -> new HashMap<>());
             ObjectPair<List<String>, String> value = new ObjectPair<>(labels, action);
             if (pairMap.containsKey(subIndex)) {
                 throw new AssertionError();
@@ -263,7 +280,7 @@ public class non_terminal extends symbol {
                 Main.ast_format == null ? "Object" : "IAstNode"
             )
         );
-        subNt._isInline = true;
+        subNt._isAnno = true;
         return subNt;
     }
 
@@ -279,13 +296,13 @@ public class non_terminal extends symbol {
             /* consider each non-terminal */
             for (non_terminal nt : all())
                 /* only look at things that aren't already marked nullable */ {
-                if (!nt.nullable())
+                if (!nt.nullable()) {
                     if (nt.looks_nullable()) {
                         nt._nullable = true;
                         change = true;
                     }
+                }
             }
-
         }
 
         /* do one last pass over the productions to finalize all of them */
@@ -366,55 +383,6 @@ public class non_terminal extends symbol {
     /** Nullability of this non terminal. */
     public boolean nullable() {
         return _nullable;
-    }
-
-    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
-
-    private Map<String, symbol> _inlineExpr = null;
-
-    /**
-     * Get the inline expression of a non-terminal.
-     *
-     * @return Key is the label, value is the symbol.
-     */
-    public Map<String, symbol> getInlineExpr() throws internal_error {
-        if (_inlineExpr != null) return _inlineExpr;
-        var config = Main.ast_flatten;
-        var map = new HashMap<String, symbol>();
-        for (production prod : productions()) {
-            for (var entry : prod.getLabel2SymbolPartMap().entrySet()) {
-                var label = entry.getKey();
-                var sym = entry.getValue().the_symbol();
-                var inlineName = config.getInlineName(label);
-                if (sym.is_non_term() && inlineName != null) {
-                    var subMap = ((non_terminal) sym).getInlineExpr();
-                    for (var subEntry : subMap.entrySet()) {
-                        var subLabel = emit.joinName(inlineName, subEntry.getKey());
-                        var subSym = subEntry.getValue();
-                        var oldSym = map.put(subLabel, subSym);
-                        if (oldSym != null && !oldSym.equals(subSym)) {
-                            throw new internal_error("There is a duplication of label when expanding inline expr: " + this);
-                        }
-                    }
-                } else {
-                    var oldSym = map.put(label, sym);
-                    if (oldSym != null && !oldSym.equals(sym)) {
-                        throw new internal_error("There is a duplication of label when expanding inline expr: " + this);
-                    }
-                }
-            }
-        }
-        _inlineExpr = Collections.unmodifiableMap(map);
-        return _inlineExpr;
-    }
-
-    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
-
-    /**
-     * Check if a non-terminal is an empty symbol.
-     */
-    public boolean isEmptySymbol() {
-        return num_productions() == 1 && productions().iterator().next()._rhs_length == 0;
     }
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */

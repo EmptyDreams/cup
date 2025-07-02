@@ -138,12 +138,15 @@ public class production {
          * frankf
          */
         if (tail_action != null && tail_action.code_string() != null) {
+            hasTailAction = true;
             actionBuilder.append("\t\t").append(tail_action.code_string());
+        } else {
+            hasTailAction = action_str != null;
         }
         _action = new LazyContainer<>(() -> {
-            if (Main.ast_format != null && tail_action == null) {
+            if (Main.ast_format != null && !hasTailAction) {
                 String indentation = "              ";
-                if (isEmptyProduction()) {
+                if (check_nullable()) {
                     actionBuilder.append(indentation)
                         .append("RESULT = new ")
                         .append(lhs_sym.astClassName())
@@ -192,22 +195,6 @@ public class production {
 
         /* put us in the production list of the lhs non terminal */
         lhs_sym.add_production(this);
-    }
-
-    /**
-     * Get the only label of the production.
-     *
-     * @return Return null when the number of labels is not equal to 1.
-     */
-    private symbol_part getOnlyLabelPart() {
-        symbol_part sym = null;
-        for (production_part part : _rhs) {
-            if (part.label() != null && !part.is_action()) {
-                if (sym != null) return null;
-                sym = (symbol_part) part;
-            }
-        }
-        return sym;
     }
 
     private String prodName = null;
@@ -418,43 +405,6 @@ public class production {
         return _labels;
     }
 
-    private Map<String, symbol> _label2SymbolExpandInlineMap;
-
-    /**
-     * Gets a map of all labels and symbols in a production (flattens all inlines).
-     * <p>
-     * The result is cached after first computation (lazy initialization) and subsequent calls
-     * return the cached unmodifiable map. This ensures labels are only processed once.
-     */
-    public Map<String, symbol> getLabel2SymbolExpandInlineMap() throws internal_error {
-        if (_label2SymbolExpandInlineMap != null) return _label2SymbolExpandInlineMap;
-        Map<String, symbol> map = new HashMap<>();
-        for (int i = 0; i < rhs_length(); i++) {
-            var rhs = _rhs[i];
-            var label = rhs.label();
-            if (label == null || rhs.is_action()) continue;
-            var sym = ((symbol_part) rhs).the_symbol();
-            var inlineName = Main.ast_flatten.getInlineName(label);
-            if (sym.is_non_term() && inlineName != null) {
-                var subMap = ((non_terminal) sym).getInlineExpr();
-                for (var subEntry : subMap.entrySet()) {
-                    var subLabel = emit.joinName(inlineName, subEntry.getKey());
-                    if (map.containsKey(subLabel)) {
-                        throw new internal_error("There is a duplication of label when expanding inline expr: " + this);
-                    }
-                    map.put(subLabel, subEntry.getValue());
-                }
-            } else {
-                var oldSym = map.put(label, sym);
-                if (oldSym != null && !oldSym.equals(sym)) {
-                    throw new internal_error("There is a duplication of label when expanding inline expr: " + this);
-                }
-            }
-        }
-        _label2SymbolExpandInlineMap = Collections.unmodifiableMap(map);
-        return _label2SymbolExpandInlineMap;
-    }
-
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
     /** How much of the right hand side array we are presently using. */
@@ -472,6 +422,7 @@ public class production {
      * with this production.
      */
     protected LazyContainer<action_part> _action;
+    private final boolean hasTailAction;
 
     /**
      * An action_part containing code for the action to be performed when we reduce
@@ -479,6 +430,14 @@ public class production {
      */
     public action_part action() throws internal_error {
         return _action.get();
+    }
+
+    /**
+     * Whether this production has a tail action
+     * @return The return value of {@link #action} may have a value when false is returned
+     */
+    public boolean hasTailAction() {
+        return hasTailAction;
     }
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -855,25 +814,6 @@ public class production {
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-    /**
-     * Check to see if the production is an empty production.
-     */
-    public boolean isEmptyProduction() {
-        int length = rhs_length();
-        if (length == 0) return true;
-        if (length != 1) return false;
-        production_part rhs = null;
-        try {
-            rhs = rhs(0);
-        } catch (internal_error ignored) {}
-        if (rhs == null || rhs.is_action()) return false;
-        var symbolPart = (symbol_part) rhs;
-        var sym = symbolPart.the_symbol();
-        return sym.is_non_term() && ((non_terminal) sym).isEmptySymbol();
-    }
-
-    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
-
     /** Equality comparison. */
     public boolean equals(production other) {
         return other != null && other._index == _index;
@@ -1002,15 +942,15 @@ public class production {
         }
 
         public int getProdIndex() {
+            return getProd().index();
+        }
+
+        public production getProd() {
             var itor = nt.productions().iterator();
             for (int i = 0; i < prodIndexInNt; i++) {
                 itor.next();
             }
-            return itor.next()._index;
-        }
-
-        public int getProdIndexInNt() {
-            return prodIndexInNt;
+            return itor.next();
         }
 
         @Override

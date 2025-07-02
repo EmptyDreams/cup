@@ -137,6 +137,13 @@ public abstract class symbol {
     private non_terminal _optBox = null;
 
     /**
+     * Check if the current symbol is {@code ?} The nullable symbol produced by the operator.
+     */
+    public boolean isOptBox() {
+        return _optBox == this;
+    }
+
+    /**
      * Creates a new non_terminal for the optional box.
      * <p>
      * By default, the new nonterminal return null if the match is null
@@ -145,20 +152,23 @@ public abstract class symbol {
      * @param emptyAction The action to be executed if the match is null, allow null
      */
     public final non_terminal createOptBox(
-        Map<String, production_part> symbols,
-        String emptyAction
+        Map<String, production_part> symbols, String emptyAction
     ) throws internal_error {
         if (_optBox != null) return _optBox;
         var newNt = non_terminal.create_new("_EBNF_OPT_", stack_type());
-        newNt._isInline = true;
+        newNt._isAnno = true;
         new production(
             newNt,
             new production_part[]{new symbol_part(this)},
             1,
             "RESULT = " + emit.buildStackValueReader(stack_type(), 0) + ';'
         );
+        if (Main.ast_format != null && (emptyAction == null || emptyAction.isEmpty())) {
+            emptyAction = "";
+        }
         new production(newNt, new production_part[0], 0, emptyAction);
         _optBox = newNt;
+        ((symbol) newNt)._optBox = newNt;
         symbols.put(newNt.name(), new symbol_part(newNt));
         return newNt;
     }
@@ -205,7 +215,7 @@ public abstract class symbol {
         var cache = _listBoxCache.computeIfAbsent(sepList, k -> {
             try {
                 var newNt = non_terminal.create_new("_EBNF_LIST_", listType);
-                newNt._isInline = true;
+                newNt._isAnno = true;
                 new production(
                     newNt,
                     new production_part[]{new symbol_part(this)},
@@ -260,7 +270,7 @@ public abstract class symbol {
     ) throws internal_error {
         var listType = emit.buildListExpr(type);
         var newNt = non_terminal.create_new("_EBNF_LIST_TAIL_", listType);
-        newNt._isInline = true;
+        newNt._isAnno = true;
         new production(
             newNt,
             new production_part[]{new symbol_part(nt)},

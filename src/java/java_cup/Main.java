@@ -123,8 +123,6 @@ public class Main {
     /* kmar added this in [2025-04, 2025-05] */
     /** User option -- the format of the AST class to be generated */
     protected static String ast_format = null;
-    /** User option -- suffix configuration for AST flatten */
-    protected static FlattenConfig ast_flatten = null;
     /** User option -- automatically empty the target folder */
     private static boolean autoClear = false;
 
@@ -426,12 +424,6 @@ public class Main {
                 } else {
                     ast_format = "Node%s";
                 }
-            } else if (argv[i].equals("-ast_flatten")) {
-                if (++i >= len || argv[i].startsWith("-") || argv[i].endsWith(".cup")) {
-                    usage("-ast_flatten must have a name argument");
-                }
-                String argument = argv[i];
-                ast_flatten = new FlattenConfig(argument);
             } else if (argv[i].equals("-compact_red"))
                 opt_compact_red = true;
             else if (argv[i].equals("-nosummary"))
@@ -495,10 +487,6 @@ public class Main {
             } else {
                 usage("Unrecognized option \"" + argv[i] + "\"");
             }
-        }
-
-        if (ast_flatten == null) {
-            ast_flatten = new FlattenConfig();
         }
     }
 

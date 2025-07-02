@@ -54,6 +54,16 @@ public class symbol_part extends production_part {
         return _the_symbol;
     }
 
+    private boolean isInline = false;
+
+    public boolean isInline() {
+        return isInline;
+    }
+
+    public void markInline() {
+        isInline = true;
+    }
+
     /*-----------------------------------------------------------*/
     /*--- General Methods ---------------------------------------*/
     /*-----------------------------------------------------------*/

@@ -2,11 +2,9 @@ package java_cup;
 
 import java_cup.runtime.ArrayStack;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -262,7 +260,7 @@ public class emit {
     protected static boolean _xmlactions;
     protected static boolean _genericlabels;
 
-    static boolean hasInlineCode = false;
+    static boolean hasAnnoCode = false;
 
     /**
      * whether or not to emit code for left and right values
@@ -574,10 +572,10 @@ public class emit {
                 out.println("          /*. . . . . . . . . . . . . . . . . . . .*/");
                 out.println("          case " + prod.index() + ": { // " + prod.to_simple_string());
 
-                if (prod.lhs().the_symbol().is_non_term() && ((non_terminal) prod.lhs().the_symbol()).isLaInline()) {
+                if (prod.lhs().the_symbol().is_non_term() && ((non_terminal) prod.lhs().the_symbol()).isLaAnno()) {
                     out.println("            switch (currentProductionIndex) {");
                     var nt = (non_terminal) prod.lhs().the_symbol();
-                    for (var entry : nt._inlineLabels.entrySet()) {
+                    for (var entry : nt._annoLabels.entrySet()) {
                         var posFinder = entry.getKey();
                         var pairMap = entry.getValue();
                         var fromProdIndex = posFinder.getProdIndex();
@@ -614,8 +612,7 @@ public class emit {
                     continue;
                 }
 
-                var resultType = Main.ast_format == null ?
-                    prod.lhs().the_symbol().stack_type() : prod.lhs().the_symbol().astClassName();
+                var resultType = prod.lhs().the_symbol().stack_type();
                 var propagate = new StringBuilder();
                 /*
                  * Add code to propagate RESULT assignments that occur in action code embedded
@@ -834,9 +831,9 @@ public class emit {
 
     private static void emit_inline_action_code(PrintWriter writer) throws internal_error {
         for (production prod : production.all()) {
-            if (!prod.lhs().the_symbol().is_non_term() || !((non_terminal) prod.lhs().the_symbol()).isLaInline()) continue;
+            if (!prod.lhs().the_symbol().is_non_term() || !((non_terminal) prod.lhs().the_symbol()).isLaAnno()) continue;
             var nt = (non_terminal) prod.lhs().the_symbol();
-            for (var entry : nt._inlineLabels.entrySet()) {
+            for (var entry : nt._annoLabels.entrySet()) {
                 var posFinder = entry.getKey();
                 var pairMap = entry.getValue();
                 var fromProdIndex = posFinder.getProdIndex();
@@ -978,6 +975,22 @@ public class emit {
             case "boolean": return "List<Boolean>";
             default: return "List<" + itemType + '>';
         }
+    }
+
+    private static int exprNameIndex = 0;
+
+    /**
+     * Get the name of the inline expression.
+     *
+     * @param nt The inline non-terminal
+     * @param prod The production in which the non-terminal is located
+     * @param index The inline expression is the number in the production
+     */
+    static String getAnnoExprName(non_terminal nt, production prod, int index) {
+        if (!nt.isLaAnno()) {
+            return nt.astClassName() + '_' + prod.index() + "__" + ++exprNameIndex;
+        }
+        return nt.astClassName() + '_' + prod.index() + '_' + index;
     }
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -1288,7 +1301,7 @@ public class emit {
         out.println("@SuppressWarnings({\"unused\", \"UnnecessaryUnicodeEscape\"})");
         out.println("public class " + parser_class_name + typeArgument() + " extends java_cup.runtime.lr_parser {");
 
-        if (hasInlineCode) {
+        if (hasAnnoCode) {
             out.println();
             out.println("  /** Used to record the number of expressions in the production when parsing an inline expression. */");
             out.println("  private int inlineProdIndex = 0;");
@@ -1401,7 +1414,7 @@ public class emit {
         else
             emit_xmlaction_code(out, start_prod);
 
-        if (hasInlineCode)
+        if (hasAnnoCode)
             emit_inline_action_code(out);
 
         /* end of class */
@@ -1411,22 +1424,11 @@ public class emit {
     }
 
     public static void node_classes(File dir) throws internal_error, IOException {
-        for (non_terminal nt : non_terminal.all()) {
-            if (!nt.isEmptySymbol() && !nt.isInlineNt()) {
-                node_class(dir, nt);
-            }
-        }
-    }
-
-    private static void node_class(File dir, non_terminal nt) throws internal_error, IOException {
-        String className = symbol.getNtNodeClassName(nt.name());
-        try (
-            BufferedWriter writer = Files.newBufferedWriter(new File(dir, className + ".java").toPath());
-            PrintWriter out = new PrintWriter(writer)
-        ) {
-            var info = AstNodeBuilder.initInfo(nt);
-            AstNodeBuilder.generate(out, info);
-        }
+        if (non_terminal.START_nt.num_productions() == 0) return;
+        assert non_terminal.START_nt.num_productions() == 1;
+        var prod = non_terminal.START_nt.productions().iterator().next();
+        var a = AstNodeBuilder.initInfo(((symbol_part) prod.rhs(0)).the_symbol());
+        System.out.println(a);
     }
 
     /**

@@ -80,6 +80,7 @@ ident = ([:jletter:] | "_" ) ([:jletterdigit:] | [:jletter:] | "_" )*
   "%namer"      { return symbol(PERCENT_NAMER);         }
   ">"           { return symbol(GT);                    }
   "<"           { return symbol(LT);                    }
+  "..."         { return symbol(SPREAD);                }
   {Comment}     {                                       }
   "{:"          { sb = new StringBuilder(); csline=yyline+1; cscolumn=yycolumn+1; yybegin(CODESEG);    }
   "package"     { return symbol(PACKAGE);       }

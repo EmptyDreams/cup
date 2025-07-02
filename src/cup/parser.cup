@@ -147,7 +147,7 @@ action code {:
       var sym = ((symbol_part) item).the_symbol();
       if (!sym.is_non_term()) continue;
       var nt = (non_terminal) sym;
-      if (!nt.isInlineNt()) continue;
+      if (!nt.isAnno()) continue;
       ++result;
       for (var subProd : nt.productions()) {
         result += countInline(subProd._rhs, subProd.rhs_length());
@@ -309,7 +309,7 @@ action code {:
           .anyMatch(
             part -> !part.is_action() &&
               ((symbol_part) part).the_symbol().is_non_term() &&
-              ((non_terminal) ((symbol_part) part).the_symbol()).isInlineNt()
+              ((non_terminal) ((symbol_part) part).the_symbol()).isAnno()
           );
         if (exists) {
           // The logic here is to determine the index of the production,
@@ -436,7 +436,7 @@ terminal
   PACKAGE, IMPORT, STATIC ,CODE, ACTION, PARSER, TERMINAL, NON, INIT, SCAN, WITH, 
   START, SEMI, COMMA, STAR, DOT, PLUS, COLON, COLON_COLON, COLON_COLON_EQUALS, BAR, PRECEDENCE,
   LEFT, RIGHT, NONASSOC, PERCENT_PREC, PERCENT_NAMER,
-  LPAREN, RPAREN, LBRACK, RBRACK, NONTERMINAL, GT, LT,
+  LPAREN, RPAREN, LBRACK, RBRACK, NONTERMINAL, GT, LT, SPREAD,
   QUESTION, EXCLAMATION, SUPER, EXTENDS, CLASS;
 
 terminal String  ID, CODE_STRING;
@@ -457,6 +457,7 @@ non terminal ObjectPair<String, String> symbol_id;
 non terminal List<ObjectPair> symbol_id_list;
 
 non terminal SymQuantifier opt_quantifier;
+non terminal boolean opt_spread;
 non terminal String star_or_plus, question_or_exclamation;
 non terminal String opt_return_type;
 
@@ -839,7 +840,7 @@ prod_part_list ::= prod_part_list prod_part | empty;
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
 
 prod_part ::=
-	symbol_id:symid opt_quantifier:quantifier opt_label:labid
+	opt_spread:is_spread symbol_id:symid opt_quantifier:quantifier opt_label:labid
 	{:
 	  /* try to look up the id */
 	  production_part symb = (production_part) symbols.get(symid.getFirst());
@@ -857,6 +858,12 @@ prod_part ::=
 	        "Action symbol \"" + symid.getFirst() + "\" cannot be used with a quantifier."
 	      );
         }
+      } else if (is_spread && symb.is_action()) {
+        if (ErrorManager.getManager().getErrorCount() == 0) {
+          ErrorManager.getManager().emit_error(
+            "Action symbol \"" + symid.getFirst() + "\" cannot use '... 'operator"
+          );
+        }
       } else {
         if (quantifier != null) {
           if (!quantifier.isList()) {
@@ -873,7 +880,9 @@ prod_part ::=
           symb = new symbol_part(((symbol_part) symb).the_symbol(), null, symid.getSecond());
         }
 	    /* add a labeled production part */
-	    add_rhs_part(add_lab(symb, labid));
+	    production_part part = add_lab(symb, labid);
+	    if (is_spread) ((symbol_part) part).markInline();
+	    add_rhs_part(part);
       }
 	:}
 	|
@@ -883,6 +892,8 @@ prod_part ::=
       add_rhs_part(new action_part(attach_debug_symbol(get_new_debug_id(),code_str)));
 	:}
 	;
+
+opt_spread ::= SPREAD {: RESULT = true; :} | empty {: RESULT = false; :};
 
 opt_quantifier ::=
   QUESTION {: RESULT = new SymQuantifier(); :}
