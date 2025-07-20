@@ -5,8 +5,11 @@ import java_cup.runtime.ArrayStack;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -326,21 +329,6 @@ public class emit {
         return prefix + parser_class_name + "$" + str;
     }
 
-    /**
-     * This function analyzes the label name to determine if it follows common naming patterns
-     * for boolean flags that represent whether a symbol exists (e.g., "isXxx", "is0", "is_xxx").
-     *
-     * @param label The name of the label to check.
-     */
-    protected static boolean isExistenceVar(String label) {
-        if (label.length() < 3 || !label.startsWith("is")) return false;
-        char third = label.charAt(2);
-        if (third == '_') {
-            return label.length() != 3;
-        }
-        return Character.isUpperCase(third) || Character.isDigit(third);
-    }
-
     private static final Pattern _stPattern = Pattern.compile(
         "[A-Z]{2,}(?=[A-Z][a-z]|\\b)|" +
             "[A-Z]?[a-z]+|" +
@@ -375,24 +363,7 @@ public class emit {
 
     protected static String joinName(String prefix, String name) {
         if (prefix == null || prefix.isEmpty()) return name;
-        StringBuilder sb = new StringBuilder(prefix.length() + name.length());
-        if (isExistenceVar(name)) {
-            sb.append("is");
-            sb.append(Character.toUpperCase(prefix.charAt(0)));
-            for (int i = 1; i < prefix.length(); i++) {
-                sb.append(prefix.charAt(i));
-            }
-            for (int i = 2; i < name.length(); i++) {
-                sb.append(name.charAt(i));
-            }
-        } else {
-            sb.append(prefix);
-            sb.append(Character.toUpperCase(name.charAt(0)));
-            for (int i = 1; i < name.length(); i++) {
-                sb.append(name.charAt(i));
-            }
-        }
-        return sb.toString();
+        return prefix + castToStName(name);
     }
 
     /**
@@ -1427,8 +1398,34 @@ public class emit {
         if (non_terminal.START_nt.num_productions() == 0) return;
         assert non_terminal.START_nt.num_productions() == 1;
         var prod = non_terminal.START_nt.productions().iterator().next();
-        var a = AstNodeBuilder.initInfo(((symbol_part) prod.rhs(0)).the_symbol());
-        System.out.println(a);
+        var root = AstNodeBuilder.buildGraph(((symbol_part) prod.rhs(0)).the_symbol());
+        var typeList = new ArrayList<AstNodeBuilder.VirtualType>();
+        var typeRecord = new HashSet<AstNodeBuilder.VirtualType>();
+        typeList.add(root);
+        typeRecord.add(root);
+        for (int i = 0; i < typeList.size(); ++i) {
+            var type = typeList.get(i);
+            type.allFields().stream()
+                .map(it -> it.type)
+                .filter(it -> it.isAstNode)
+                .filter(typeRecord::add)
+                .forEach(typeList::add);
+        }
+        for (var type : typeList) {
+            var fileName = type.className + ".java";
+            var file = new File(dir, fileName);
+            var clazz = AstNodeBuilder.buildClass(type);
+            try (
+                var writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8);
+                var printer = new PrintWriter(writer)
+            ) {
+                emit.emit_package(printer);
+                printer.println("import java.util.*;");
+                printer.println("import java_cup.runtime.*;");
+                printer.println();
+                printer.println(clazz.toCodeString(0));
+            }
+        }
     }
 
     /**

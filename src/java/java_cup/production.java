@@ -167,8 +167,9 @@ public class production {
                         boolean isFirst = true;
                         for (var entry : partMap.entrySet()) {
                             var label = entry.getKey();
-                            if (emit.isExistenceVar(label)) continue;
-                            var sym = entry.getValue().the_symbol();
+                            var part = entry.getValue();
+                            if (part.isExistCheck()) continue;
+                            var sym = part.the_symbol();
                             if (isFirst) isFirst = false;
                             else actionBuilder.append(",\n");
                             // (xxx) label
@@ -601,7 +602,7 @@ public class production {
                 String label;
                 /* if it has a label, make declaration! */
                 if ((label = part.label()) != null || emit._xmlactions) {
-                    if (label != null && emit.isExistenceVar(label)) continue;
+                    if (part.isExistCheck() && !part.the_symbol().isOptBox()) continue;
                     if (label == null)
                         label = part.the_symbol().name() + pos;
                     var type = part.getType();

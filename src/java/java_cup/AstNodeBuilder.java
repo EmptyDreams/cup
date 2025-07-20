@@ -2,39 +2,34 @@ package java_cup;
 
 import java_cup.runtime.ArrayStack;
 
-import java.io.PrintWriter;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class AstNodeBuilder {
 
     private AstNodeBuilder() {}
 
     private static final Map<non_terminal, VirtualType> typeCache = new HashMap<>();
-    private static final Map<String, VirtualType> basicTypeCache = new HashMap<>();
 
-    public static VirtualType initInfo(symbol sym) throws internal_error {
-        if (sym.is_non_term() && ("IAstNode".equals(sym.stack_type()) || non_terminal.START_nt.equals(sym))) {
-            return initInfo((non_terminal) sym, null, 0);
+    public static VirtualType buildGraph(symbol sym) throws internal_error {
+        if (sym.is_non_term() && ("IAstNode".equals(sym.stack_type()))) {
+            return buildGraph((non_terminal) sym, null, 0);
         } else {
-            return basicTypeCache.computeIfAbsent(sym.astClassName(), k -> {
-                var type = new VirtualType();
-                type.className = k;
-                type.prods = Collections.emptyList();
-                return type;
-            });
+            return VirtualType.ofBasic(sym.astClassName());
         }
     }
 
-    private static VirtualType initInfo(non_terminal nt, production fromProd, int index) throws internal_error {
+    private static VirtualType buildGraph(non_terminal nt, production fromProd, int index) throws internal_error {
         if (nt.isAnno() && fromProd == null) return null;
         if (typeCache.containsKey(nt)) return typeCache.get(nt);
-        var type = new VirtualType();
+        var type = new VirtualType(true);
         if (!nt.isAnno()) typeCache.put(nt, type);
         int count = 0;
         Map<String, VirtualProduction> prods = new HashMap<>();
-        var annoLabelsMap = fromProd == null ? null : ((non_terminal) fromProd.lhs().the_symbol()).getAnnoLabelAndAction(fromProd);
+        var annoLabelsMap = fromProd == null ? null : nt.getAnnoLabelAndAction(fromProd);
         for (production prod : nt.productions()) {
-            if (prod.hasTailAction() && !nt.equals(non_terminal.START_nt)) continue;
+            if (prod.hasTailAction()) continue;
             var anno = annoLabelsMap == null ? null : annoLabelsMap.get(prod.index());
             if (anno != null && anno.getSecond() != null) continue;
             var annoLabels = anno == null ? null : anno.getFirst().iterator();
@@ -52,14 +47,14 @@ public class AstNodeBuilder {
                 if (label == null && !symbolPart.isInline()) continue;
                 var symbol = symbolPart.the_symbol();
                 if (symbol.is_non_term() && ((non_terminal) symbol).isAnno()) {
-                    var subType = initInfo((non_terminal) symbol, fromProd == null ? prod : fromProd, index);
+                    var subType = buildGraph((non_terminal) symbol, fromProd == null ? prod : fromProd, index);
                     if (subType == null) continue;
                     index += subType.count + 1;
                     count += subType.count + 1;
-                    fields.add(new VirtualField(label, subType, symbolPart.isInline()));
+                    fields.add(new VirtualField(label, subType, symbolPart));
                 } else {
-                    var subType = initInfo(symbol);
-                    fields.add(new VirtualField(label, subType, symbolPart.isInline()));
+                    var subType = buildGraph(symbol);
+                    fields.add(new VirtualField(label, subType, symbolPart));
                 }
             }
             var newProd = new VirtualProduction(name, fields);
@@ -74,217 +69,262 @@ public class AstNodeBuilder {
         return type;
     }
 
-    public static void generate(PrintWriter writer, VirtualType info, boolean isInner) throws internal_error {
-        throw new AssertionError();
-//        if (!isInner) {
-//            emit.emit_package(writer);
-//            writer.println("import java.util.*;");
-//            writer.println("import java_cup.runtime.IAstNode;");
-//            writer.println();
-//
-//            writer.println("@SuppressWarnings({");
-//            writer.println("  \"SpellCheckingInspection\",");
-//            writer.println("  \"EnhancedSwitchMigration\",");
-//            writer.println("  \"UnnecessaryLocalVariable\",");
-//            writer.println("  \"RedundantSuppression\"");
-//            writer.println("})");
-//            writer.println("public class " + info.className + " implements IAstNode {");
-//        } else {
-//            writer.println("  public static class " + info.className + " implements IAstNode {");
-//        }
-//        writer.println();
-//        String prefix = isInner ? "  " : "";
-//        var allGetters = info.allGetters();
-//        // Generating getters
-//        for (VirtualField field : allGetters) {
-//            var label = field.label;
-//            var type = field.type;
-//            if (isExistenceVar(label)) {
-//                writer.println(prefix + "  public boolean " + label + "() {");
-//                writer.println(prefix + "    return false;");
-//                writer.println(prefix + "  }");
-//                writer.println();
-//            } else {
-//                writer.println(prefix + "  public boolean has" + castToStName(label) + "() {");
-//                writer.println(prefix + "    return false;");
-//                writer.println(prefix + "  }");
-//                writer.println();
-//                writer.println(prefix + "  public " + type + " get" + castToStName(label) + "() {");
-//                switch (type) {
-//                    case "byte": case "short": case "int": case "long": case "float": case "double":
-//                        writer.println(prefix + "    return 0;");
-//                        break;
-//                    case "boolean":
-//                        writer.println(prefix + "    return false;");
-//                        break;
-//                    case "char":
-//                        writer.println(prefix + "    return '\\0';");
-//                        break;
-//                    default:
-//                        writer.println(prefix + "    return null;");
-//                        break;
-//                }
-//                writer.println(prefix + "  }");
-//                writer.println();
-//            }
-//        }
-//        // Generating hasLabel method
-//        writer.println(prefix + "  @Override");
-//        writer.println(prefix + "  public final boolean hasLabel(String label) {");
-//        if (allGetters.isEmpty()) {
-//            writer.println(prefix + "    return false;");
-//        } else if (allGetters.size() == 1) {
-//            var label = allGetters.iterator().next().label;
-//            if (isExistenceVar(label)) {
-//                writer.println(prefix + "    return \"" + label  + "\".equals(label) && " + label + "();");
-//            } else {
-//                writer.println(prefix + "    return \"" + label  + "\".equals(label) && has" + castToStName(label) + "();");
-//            }
-//        } else {
-//            writer.println(prefix + "    switch (label) {");
-//            for (VirtualField field : allGetters) {
-//                var label = field.label;
-//                writer.println(prefix + "      case \"" + label + "\":");
-//                if (isExistenceVar(label)) {
-//                    writer.println(prefix + "        return " + label + "();");
-//                } else {
-//                    writer.println(prefix + "        return has" + castToStName(label) + "();");
-//                }
-//            }
-//            writer.println(prefix + "      default: return false;");
-//            writer.println(prefix + "    }");
-//        }
-//        writer.println(prefix + "  }");
-//        writer.println();
-//        // Generating getByLabel method
-//        var commonGetters = allGetters.stream()
-//            .filter(it -> !isExistenceVar(it.label))
-//            .collect(Collectors.toList());
-//        writer.println(prefix + "  public final Object getByLabel(String label) {");
-//        if (commonGetters.isEmpty()) {
-//            writer.println(prefix + "    return null;");
-//        } else if (commonGetters.size() == 1) {
-//            var label = commonGetters.get(0).label;
-//            writer.println(prefix + "    return \"" + label + "\".equals(label) ? get" + castToStName(label) + "() : null;");
-//        } else {
-//            writer.println(prefix + "    switch (label) {");
-//            for (var label : commonGetters) {
-//                writer.println(prefix + "      case \"" + label.label + "\":");
-//                writer.println(prefix + "        return get" + castToStName(label.label) + "();");
-//            }
-//            writer.println(prefix + "      default: return null;");
-//            writer.println(prefix + "    }");
-//        }
-//        writer.println(prefix + "  }");
-//        writer.println();
-//        // Generating static factory methods
-//        for (var prod : info.prods) {
-//            writer.print(prefix + "  public static " + prod.name + " build" + prod.name + "(");
-//            boolean isFirst = true;
-//            for (VirtualField field : prod.allGetters()) {
-//                if (isExistenceVar(field.label)) continue;
-//                if (isFirst) {
-//                    isFirst = false;
-//                    writer.println();
-//                } else {
-//                    writer.println(',');
-//                }
-//                writer.print(prefix + "    " + field.type + ' ' + field.label);
-//            }
-//            if (!isFirst) {
-//                writer.println();
-//                writer.print(prefix + "  ");
-//            }
-//            writer.println(") {");
-//            writer.println(prefix + "    " + prod.name + " result = new " + prod.name + "();");
-//            for (VirtualField field : prod.allGetters()) {
-//                if (isExistenceVar(field.label)) continue;
-//                writer.println(prefix + "    result." + field.label + " = " + field.label + ';');
-//            }
-//            writer.println(prefix + "    return result;");
-//            writer.println(prefix + "  }");
-//            writer.println();
-//        }
-//        // generate class for each virtual production
-//        for (var prod : info.prods) {
-//            for (String text : prod.srcExprs) {
-//                writer.println(prefix + "  // " + text);
-//            }
-//            writer.println(prefix + "  public static final class " + prod.name + " extends " + info.className + " {");
-//            writer.println();
-//            var hasField = false;
-//            for (var field : prod.items) {
-//                if (isExistenceVar(field.label)) continue;
-//                hasField = true;
-//                writer.println(prefix + "    private " + field.type + " " + field.label + ';');
-//            }
-//            if (hasField) {
-//                writer.println();
-//            }
-//            for (var field : prod.allGetters()) {
-//                if (isExistenceVar(field.label)) {
-//                    writer.println(prefix + "    @Override");
-//                    writer.println(prefix + "    public boolean " + field.label + "() {");
-//                    if (field.fromLabel == null) {
-//                        writer.println(prefix + "      return true;");
-//                    } else {
-//                        writer.println(prefix + "      return " + field.fromLabel + '.' + field.subLabel + "();");
-//                    }
-//                    writer.println(prefix + "    }");
-//                } else {
-//                    writer.println(prefix + "    @Override");
-//                    writer.println(prefix + "    public boolean has" + castToStName(field.label) + "() {");
-//                    if (field.fromLabel == null) {
-//                        writer.println(prefix + "      return true;");
-//                    } else {
-//                        writer.println(prefix + "      return " + field.fromLabel + ".has" + castToStName(field.subLabel) + "();");
-//                    }
-//                    writer.println(prefix + "    }");
-//                    writer.println();
-//                    writer.println(prefix + "    @Override");
-//                    writer.println(prefix + "    public " + field.type + " get" + castToStName(field.label) + "() {");
-//                    if (field.fromLabel == null) {
-//                        writer.println(prefix + "      return " + field.label + ';');
-//                    } else {
-//                        writer.println(prefix + "      return " + field.fromLabel + ".get" + castToStName(field.subLabel) + "();");
-//                    }
-//                    writer.println(prefix + "   }");
-//                }
-//                writer.println();
-//            }
-//            writer.println(prefix + "  }");
-//            writer.println();
-//        }
-//        // generate class for each inline non-terminal
-//        if (!isInner) {
-//            List<VirtualType> deque = new LinkedList<>(info.subTerms);
-//            while (!deque.isEmpty()) {
-//                VirtualType subInfo = deque.remove(0);
-//                generate(writer, subInfo, true);
-//                deque.addAll(subInfo.subTerms);
-//            }
-//        }
-//        writer.println(prefix + '}');
+    public static VirtualClass buildClass(VirtualType vtype) {
+        var clazz = new VirtualClass(vtype.className);
+        clazz.markSuper("IAstNode");
+        var allMethodField = vtype.prods.stream()
+            .flatMap(it -> it.fields.stream())
+            .distinct()
+            .flatMap(VirtualField::allSubFields)
+            .collect(Collectors.toList());
+        for (VirtualField field : allMethodField) {
+            clazz.addMethod(new VirtualMethod(
+                emit.joinName("has", field.joinLabel()),
+                "boolean",
+                Collections.emptyList(),
+                List.of("return false;")
+            ));
+        }
+        for (VirtualField field : allMethodField) {
+            if (field.isExistCheck()) continue;
+            clazz.addMethod(new VirtualMethod(
+                emit.joinName("get", field.joinLabel()),
+                field.type.toString(),
+                Collections.emptyList(),
+                List.of("return " + field.type.getDefaultExpr() + ';')
+            ));
+        }
+        // build hasLabel
+        if (allMethodField.isEmpty()) {
+            clazz.addMethod(new VirtualMethod(
+                "hasLabel",
+                "boolean",
+                List.of(new VirtualField("label", VirtualType.ofBasic("String"), 0)),
+                List.of("return false;")
+            ).withAnnotation("@Override").markFinal());
+        } else if (allMethodField.size() == 1) {
+            var field = allMethodField.get(0);
+            clazz.addMethod(new VirtualMethod(
+                "hasLabel",
+                "boolean",
+                List.of(new VirtualField("label", VirtualType.ofBasic("String"), 0)),
+                List.of(
+                    "return \"" + field.joinLabel() + "\".equals(label) && "
+                        + emit.joinName("has", field.joinLabel()) + "();"
+                )
+            ).withAnnotation("@Override").markFinal());
+        } else {
+            List<String> exprs = new ArrayList<>(allMethodField.size() + 3);
+            exprs.add("switch (label) {");
+            for (VirtualField field : allMethodField) {
+                exprs.add(
+                    "  case \"" + field.joinLabel() + "\": return "
+                        + emit.joinName("has", field.joinLabel()) + "();"
+                );
+            }
+            exprs.add("  default: return false;");
+            exprs.add("}");
+            clazz.addMethod(new VirtualMethod(
+                "hasLabel",
+                "boolean",
+                List.of(new VirtualField("label", VirtualType.ofBasic("String"), 0)),
+                exprs
+            ).withAnnotation("@Override").markFinal());
+        }
+        // build getByLabel
+        if (allMethodField.isEmpty()) {
+            clazz.addMethod(new VirtualMethod(
+                "getByLabel",
+                "Object",
+                List.of(new VirtualField("label", VirtualType.ofBasic("String"), 0)),
+                List.of("return null;")
+            ).withAnnotation("@Override").markFinal());
+        } else if (allMethodField.size() == 1) {
+            var field = allMethodField.get(0);
+            clazz.addMethod(new VirtualMethod(
+                "getByLabel",
+                "Object",
+                List.of(new VirtualField("label", VirtualType.ofBasic("String"), 0)),
+                List.of(
+                    "return \"" + field.joinLabel() + "\".equals(label) ? "
+                        + emit.joinName("get", field.joinLabel()) + "() : null;"
+                )
+            ).withAnnotation("@Override").markFinal());
+        } else {
+            List<String> exprs = new ArrayList<>(allMethodField.size() + 3);
+            exprs.add("switch (label) {");
+            for (VirtualField field : allMethodField) {
+                exprs.add(
+                    "  case \"" + field.joinLabel() + "\": return "
+                        + emit.joinName("get", field.joinLabel()) + "();"
+                );
+            }
+            exprs.add("  default: return null;");
+            exprs.add("}");
+            clazz.addMethod(new VirtualMethod(
+                "getByLabel",
+                "Object",
+                List.of(new VirtualField("label", VirtualType.ofBasic("String"), 0)),
+                exprs
+            ).withAnnotation("@Override").markFinal());
+        }
+        for (VirtualProduction prod : vtype.prods) {
+            var allSubFields = prod.fields.stream()
+                .flatMap(VirtualField::allSubFields)
+                .collect(Collectors.toList());
+            if (allSubFields.isEmpty()) continue;
+            var subClass = new VirtualClass(prod.name)
+                .markStatic()
+                .markFinal();
+            subClass.markParent(clazz.name);
+            // build field
+            int basicExistCount = (int) prod.fields.stream()
+                .filter(it -> it.isOptBox() && it.type.isBasic())
+                .count();
+            prod.fields.forEach(subClass::addField);
+            if (basicExistCount != 0) {
+                subClass.markMask(basicExistCount);
+            }
+            // build getter
+            allSubFields.stream()
+                .map(VirtualField::buildGetter)
+                .filter(Objects::nonNull)
+                .map(method -> method.withAnnotation("@Override"))
+                .forEach(subClass::addMethod);
+            // build checker
+            int basicIndex = 0;
+            for (VirtualField field : allSubFields) {
+                String expr;
+                if (field.fromField != null) {
+                    var fromField = field.fromField;
+                    if (fromField.isOptBox()) {
+                        expr = "return " + fromField.label + " != null && "
+                            + fromField.label + '.'
+                            + emit.joinName("has", field.label) + "();";
+                    } else {
+                        expr = "return " + fromField.label + '.'
+                            + emit.joinName("has", field.label) + "();";
+                    }
+                } else if (field.isOptBox() && field.type.isBasic()) {
+                    var index = basicIndex++;
+                    if (basicExistCount <= 64) {
+                        expr = "return (" + emit.pre("mask") + " & " + index + ") != 0;";
+                    } else {
+                        expr = "return " + emit.pre("mask") + ".get(" + index + ");";
+                    }
+                    subClass.addMethod(new VirtualMethod(
+                        emit.joinName("mark", field.joinLabel()),
+                        "void",
+                        Collections.emptyList(),
+                        List.of(
+                            basicExistCount <= 64 ?
+                                emit.pre("mask") + " |= " + index + ';' :
+                                emit.pre("mask") + ".set(" + index + ");"
+                        )
+                    ));
+                } else if (field.isOptBox()) {
+                    expr = "return " + field.label + " != null;";
+                } else {
+                    expr = "return true;";
+                }
+                subClass.addMethod(new VirtualMethod(
+                    emit.joinName("has", field.label),
+                    "boolean",
+                    Collections.emptyList(),
+                    List.of(expr)
+                ).withAnnotation("@Override"));
+            }
+            clazz.addClass(subClass);
+        }
+        return clazz;
     }
-
+    
     public static class VirtualType {
+
+        public final boolean isAstNode;
 
         public String className;
         public List<VirtualProduction> prods;
         public int count = 0;
         public boolean isAnno = false;
 
+        public VirtualType(boolean isAstNode) {
+            this.isAstNode = isAstNode;
+        }
+
+        private List<VirtualField> allFields;
+
+        public List<VirtualField> allFields() {
+            if (allFields != null) return allFields;
+            allFields = prods.stream()
+                .flatMap(prod -> prod.fields.stream())
+                .distinct()
+                .collect(Collectors.toList());
+            return allFields;
+        }
+
+        public boolean isBasic() {
+            switch (className) {
+                case "byte":
+                case "short":
+                case "int":
+                case "long":
+                case "float":
+                case "double":
+                case "char":
+                case "boolean":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public String getDefaultExpr() {
+            switch (className) {
+                case "byte":
+                case "short":
+                case "int":
+                case "long":
+                case "float":
+                case "double":
+                    return "0";
+                case "char":
+                    return "'\\0'";
+                case "boolean":
+                    return "false";
+                default:
+                    return "null";
+            }
+        }
+
+        @Override
+        public String toString() {
+            return className;
+        }
+
+
+        private static final Map<String, VirtualType> basicTypeCache = new HashMap<>();
+
+        public static VirtualType ofBasic(String name) {
+            return basicTypeCache.computeIfAbsent(name, k -> {
+                var type = new VirtualType(false);
+                type.className = k;
+                type.prods = Collections.emptyList();
+                return type;
+            });
+        }
+
     }
 
     public static class VirtualProduction {
 
         public final String name;
-        public final List<VirtualField> items;
+        public final List<VirtualField> fields;
         public final List<String> srcExprs = new ArrayList<>();
 
-        public VirtualProduction(String name, List<VirtualField> items) {
+        public VirtualProduction(String name, List<VirtualField> fields) {
             this.name = name;
-            this.items = Collections.unmodifiableList(items);
+            this.fields = Collections.unmodifiableList(fields);
         }
 
         @Override
@@ -302,16 +342,98 @@ public class AstNodeBuilder {
 
     }
 
-    public static class VirtualField {
+    public static class VirtualField implements Comparable<VirtualField> {
 
         public final String label;
         public final VirtualType type;
-        public final boolean isInline;
+        private final production_part part;
+        private final int mask;
 
-        public VirtualField(String label, VirtualType type, boolean isInline) {
+        private VirtualField fromField;
+
+        public VirtualField(String label, VirtualType type, production_part part) {
             this.label = label;
             this.type = type;
-            this.isInline = isInline;
+            this.part = part;
+            this.mask = 0;
+        }
+
+        private VirtualField(String label, VirtualType type, int mask) {
+            this.label = label;
+            this.type = type;
+            this.part = null;
+            this.mask = mask;
+        }
+
+        public String joinLabel() {
+            return fromField == null ? label : emit.joinName(fromField.label, label);
+        }
+
+        public boolean isInline() {
+            return (mask & 0b1) != 0 || (part != null && !part.is_action() && ((symbol_part) part).isInline());
+        }
+
+        public boolean isExistCheck() {
+            return (mask & 0b10) != 0 || (part != null && part.isExistCheck());
+        }
+
+        public boolean isOptBox() {
+            return (mask & 0b100) != 0 || (part != null && !part.is_action() && ((symbol_part) part).the_symbol().isOptBox());
+        }
+
+        public VirtualMethod buildGetter() {
+            if (isExistCheck() || isInline()) return null;
+            if (fromField != null) {
+                String expr;
+                if (fromField.isOptBox()) {
+                    var defValue = fromField.type.getDefaultExpr();
+                    expr = "return " + fromField.label + " == null ? " + defValue + " : "
+                        + fromField.label + '.' + emit.joinName("get", joinLabel()) + "();";
+                } else {
+                    expr = "return " + fromField.label + '.' + emit.joinName("get", label) + "();";
+                }
+                return new VirtualMethod(
+                    emit.joinName("get", joinLabel()),
+                    type.toString(),
+                    Collections.emptyList(),
+                    List.of(expr)
+                );
+            }
+            return new VirtualMethod(
+                emit.joinName("get", label),
+                type.toString(),
+                Collections.emptyList(),
+                List.of("return " + label + ';')
+            );
+        }
+
+        public VirtualField createSub(String fromLabel) {
+            int newMask = 0;
+            if (part == null) {
+                newMask = mask;
+            } else {
+                if (isInline()) newMask |= 0b1;
+                if (isExistCheck()) newMask |= 0b10;
+                if (isOptBox()) newMask |= 0b100;
+            }
+            var result = new VirtualField(
+                emit.joinName(fromLabel, label),
+                type,
+                newMask
+            );
+            result.fromField = fromField == null ? this : fromField;
+            return result;
+        }
+
+        public String toCodeString() {
+            return "private " + type + ' ' + label + ';';
+        }
+
+        public Stream<VirtualField> allSubFields() {
+            if (!isInline()) return Stream.of(this);
+            return type.allFields().stream()
+                .flatMap(VirtualField::allSubFields)
+                .map(field -> field.createSub(label));
         }
 
         @Override
@@ -325,6 +447,168 @@ public class AstNodeBuilder {
         @Override
         public int hashCode() {
             return label.hashCode();
+        }
+
+        @Override
+        public int compareTo(VirtualField o) {
+            return label.compareTo(o.label);
+        }
+
+    }
+
+    public static class VirtualClass {
+
+        private final String name;
+        private final List<VirtualField> fields = new ArrayList<>();
+        private final List<VirtualMethod>  methods = new ArrayList<>();
+        private final List<VirtualClass> subclasses = new ArrayList<>();
+
+        private boolean isStatic = false;
+        private boolean isFinal = false;
+        private String parentClass = null;
+        private String superInterface = null;
+
+        private String maskMode = "none";
+
+        public VirtualClass(String name) {
+            this.name = name;
+        }
+
+        public void addField(VirtualField field) {
+            fields.add(field);
+        }
+
+        public void addMethod(VirtualMethod method) {
+            methods.add(method);
+        }
+
+        public void addClass(VirtualClass clazz) {
+            subclasses.add(clazz);
+        }
+
+        public void markParent(String parentClass) {
+            this.parentClass = parentClass;
+        }
+
+        public void markSuper(String superInterface) {
+            this.superInterface = superInterface;
+        }
+
+        public void markMask(int count) {
+            if (count <= 32) maskMode = "int";
+            else if (count <= 64) maskMode = "long";
+            else maskMode = "BigSet";
+        }
+
+        public VirtualClass markStatic() {
+            isStatic = true;
+            return this;
+        }
+
+        public VirtualClass markFinal() {
+            isFinal = true;
+            return this;
+        }
+
+        public String toCodeString(int indent) {
+            String indentText = "  ".repeat(indent);
+            StringBuilder builder = new StringBuilder();
+            builder.append(indentText).append("public ");
+            if (isStatic) builder.append("static ");
+            if (isFinal) builder.append("final ");
+            builder.append("class ").append(name);
+            if (parentClass != null) builder.append(" extends ").append(parentClass);
+            if (superInterface != null) builder.append(" implements ").append(superInterface);
+            builder.append(" {\n\n");
+            if (!fields.isEmpty()) {
+                for (VirtualField field : fields) {
+                    builder.append(indentText).append("  ")
+                        .append(field.toCodeString())
+                        .append('\n');
+                }
+                if (!"none".equals(maskMode)) {
+                    builder.append(indentText).append("  ")
+                        .append(maskMode)
+                        .append(' ')
+                        .append(emit.pre("mask"))
+                        .append(';');
+                }
+                builder.append('\n');
+            }
+            if (!methods.isEmpty()) {
+                for (VirtualMethod method : methods) {
+                    builder.append(method.toCodeString(indent + 1))
+                        .append('\n');
+                }
+                builder.append('\n');
+            }
+            if (!subclasses.isEmpty()) {
+                for (VirtualClass subclass : subclasses) {
+                    builder.append(subclass.toCodeString(indent + 1))
+                        .append('\n');
+                }
+                builder.append('\n');
+            }
+            builder.append(indentText).append('}');
+            return builder.toString();
+        }
+
+    }
+
+    public static class VirtualMethod {
+
+        public final String name;
+        public final String returnType;
+        public final List<VirtualField> params;
+        public final List<String> exprs;
+
+        private boolean isFinal = false;
+        private final List<String> annotations = new ArrayList<>();
+
+        public VirtualMethod(String name, String returnType, List<VirtualField> params, List<String> exprs) {
+            this.name = name;
+            this.returnType = returnType;
+            this.params = Collections.unmodifiableList(params);
+            this.exprs = Collections.unmodifiableList(exprs);
+        }
+
+        public VirtualMethod markFinal() {
+            isFinal = true;
+            return this;
+        }
+
+        public VirtualMethod withAnnotation(String annotation) {
+            annotations.add(annotation);
+            return this;
+        }
+
+        public String toCodeString(int indent) {
+            String indentText = "  ".repeat(indent);
+            var builder = new StringBuilder();
+            for (String annotation : annotations) {
+                builder.append(indentText).append(annotation).append('\n');
+            }
+            builder.append(indentText)
+                .append("public ");
+            if (isFinal) builder.append("final ");
+            builder.append(returnType).append(' ').append(name).append('(');
+            if (!params.isEmpty()) {
+                boolean isFirst = true;
+                for (VirtualField field : params) {
+                    if (isFirst) isFirst = false;
+                    else builder.append(',');
+                    builder.append('\n').append(indentText).append("  ")
+                        .append(field.type).append(' ').append(field.label);
+                }
+                builder.append('\n').append(indentText);
+            }
+            builder.append(") {\n");
+            for (String expr : exprs) {
+                builder.append(indentText).append("  ").append(expr);
+                builder.append('\n');
+            }
+            builder.append(indentText).append("}\n");
+            return builder.toString();
         }
 
     }

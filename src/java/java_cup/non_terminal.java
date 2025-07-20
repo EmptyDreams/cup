@@ -169,7 +169,7 @@ public class non_terminal extends symbol {
      * </ul>
      */
     final Map<PositionFinder, Map<Integer, ObjectPair<List<String>, String>>> _annoLabels = new HashMap<>();
-    private Map<production, Map<Integer, ObjectPair<List<String>, String>>> _annoLabelsCache = new HashMap<>();
+    private Map<production, Map<Integer, ObjectPair<List<String>, String>>> _annoLabelsCache;
 
     /**
      * Reads label and action information for all inline expressions contained in the specified production
