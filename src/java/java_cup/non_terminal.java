@@ -156,35 +156,47 @@ public class non_terminal extends symbol {
 
     private static final Map<String, non_terminal> _useRhsCache = new HashMap<>();
     /**
-     * Stores labels of inline expressions in the current non-terminal production.
-     *
-     * <p>The key is the value of production#index, and the value is a list of inline expressions
-     * corresponding to that production.
-     *
-     * <p>The list is ordered according to the appearance sequence of inline expressions within
-     * the production (pre-order traversal). Each pair in the list contains:
-     * <ul>
-     * <li>- first: a list of labels</li>
-     * <li>- second: the action associated with the inline expression (may be null)</li>
-     * </ul>
+     * <p>Stores labels and action code blocks for each anonymous non-terminal.
+     * <p>The key is the production in which the anonymous non-terminal resides,
+     * supporting different labels and actions for the same anonymous non-terminal
+     * used in different positions.
+     * <p>The value is a sequence of all anonymous
+     * non-terminals contained in that production.
      */
-    final Map<PositionFinder, Map<Integer, ObjectPair<List<String>, String>>> _annoLabels = new HashMap<>();
-    private Map<production, Map<Integer, ObjectPair<List<String>, String>>> _annoLabelsCache;
+    private static final Map<PositionFinder, List<AnnoNtInfo>> _annoLabels = new HashMap<>();
+    private static Map<production, List<AnnoNtInfo>> _annoLabelsCache;
 
     /**
      * Reads label and action information for all inline expressions contained in the specified production
      *
      * @return The key is the number
      */
-    public Map<Integer, ObjectPair<List<String>, String>> getAnnoLabelAndAction(production prod) {
+    public static List<AnnoNtInfo> getAnnoLabelAndAction(production prod) {
         if (_annoLabelsCache == null) {
-            Map<production, Map<Integer, ObjectPair<List<String>, String>>> cache = new HashMap<>();
+            Map<production, List<AnnoNtInfo>> cache = new HashMap<>();
             for (var entry : _annoLabels.entrySet()) {
                 cache.put(entry.getKey().getProd(), entry.getValue());
             }
             _annoLabelsCache = cache;
         }
         return _annoLabelsCache.get(prod);
+    }
+
+    /**
+     * Get all information about the anonymous nonterminal
+     * @param nt the anonymous nonterminal
+     * @return all information about the anonymous nonterminal
+     */
+    public static List<ObjectPair<PositionFinder, AnnoNtInfo>> getAnnoNtAllInfo(non_terminal nt) {
+        var list = new ArrayList<ObjectPair<PositionFinder, AnnoNtInfo>>();
+        for (var entry : _annoLabels.entrySet()) {
+            for (var info : entry.getValue()) {
+                if (info.getNt() == nt) {
+                    list.add(new ObjectPair<>(entry.getKey(), info));
+                }
+            }
+        }
+        return list;
     }
 
     boolean _isAnno = false;
@@ -211,7 +223,7 @@ public class non_terminal extends symbol {
      * @return the child non_terminal, if the nt object is newly created, it does not contain any production
      */
     non_terminal createSubNt(
-        production_part[] parts, int length, PositionFinder posFinder, int subIndex
+        production_part[] parts, int length, PositionFinder posFinder
     ) throws internal_error {
         boolean hasLabel = false;
         boolean hasAction = length != 0 && parts[length - 1].is_action();
@@ -249,12 +261,12 @@ public class non_terminal extends symbol {
         subNt._isLaAnno = true;
         emit.hasAnnoCode = true;
         if (hasLabel || hasAction) {
-            var pairMap = subNt._annoLabels.computeIfAbsent(posFinder, k -> new HashMap<>());
-            ObjectPair<List<String>, String> value = new ObjectPair<>(labels, action);
-            if (pairMap.containsKey(subIndex)) {
-                throw new AssertionError();
-            }
-            pairMap.put(subIndex, value);
+            var infoList = _annoLabels.computeIfAbsent(
+                posFinder,
+                k -> new LinkedList<>()
+            );
+            var info = new AnnoNtInfo(subNt, infoList.size(), labels, action);
+            infoList.add(info);
         }
         return subNt;
     }

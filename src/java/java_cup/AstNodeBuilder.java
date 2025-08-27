@@ -14,7 +14,7 @@ public class AstNodeBuilder {
 
     public static VirtualType buildGraph(symbol sym) throws internal_error {
         if (sym.is_non_term() && ("IAstNode".equals(sym.stack_type()))) {
-            return buildGraph((non_terminal) sym, null, 0);
+            return buildGraph((non_terminal) sym, null, -1);
         } else {
             return VirtualType.ofBasic(sym.astClassName());
         }
@@ -25,32 +25,36 @@ public class AstNodeBuilder {
         if (typeCache.containsKey(nt)) return typeCache.get(nt);
         var type = new VirtualType(true);
         if (!nt.isAnno()) typeCache.put(nt, type);
-        int count = 0;
+        int annoCount = 0;
         Map<String, VirtualProduction> prods = new HashMap<>();
-        var annoLabelsMap = fromProd == null ? null : nt.getAnnoLabelAndAction(fromProd);
+        var annoItor = fromProd == null ? null : non_terminal.getAnnoLabelAndAction(fromProd).iterator();
         for (production prod : nt.productions()) {
             if (prod.hasTailAction()) continue;
-            var anno = annoLabelsMap == null ? null : annoLabelsMap.get(prod.index());
-            if (anno != null && anno.getSecond() != null) continue;
-            var annoLabels = anno == null ? null : anno.getFirst().iterator();
             var name = prod.getProdName();
             if (prods.containsKey(name)) {
                 prods.get(name).srcExprs.add(prod.to_simple_string());
                 continue;
             }
+            // 如果当前符号是匿名符号，则通过 annoItor 读取 label 和 action
+            var annoInfo = annoItor == null ? null : annoItor.next();
+            var annoLabelList = annoInfo == null ? null : annoInfo.getLabelList();
+            if (annoInfo != null && annoInfo.getAction() != null) continue;
             List<VirtualField> fields = new ArrayStack<>();
             for (int i = 0; i < prod.rhs_length(); i++) {
                 var rhs = prod.rhs(i);
                 if (rhs.is_action()) continue;
                 var symbolPart = (symbol_part) rhs;
-                var label = annoLabels == null ? rhs.label() : annoLabels.next();
-                if (label == null && !symbolPart.isInline()) continue;
                 var symbol = symbolPart.the_symbol();
-                if (symbol.is_non_term() && ((non_terminal) symbol).isAnno()) {
-                    var subType = buildGraph((non_terminal) symbol, fromProd == null ? prod : fromProd, index);
+                //noinspection DataFlowIssue
+                String label = fromProd == null ? symbolPart.label() : annoLabelList.get(i);
+                // 跳过没有 label 且非内联的符号
+                if (label == null && !symbolPart.isInline()) continue;
+                var subNt = symbol.is_non_term() ? (non_terminal) symbol : null;
+                if (subNt != null && subNt.isAnno()) {
+                    var annoIndex = annoCount++;
+                    var subType = buildGraph(subNt, prod, annoIndex);
                     if (subType == null) continue;
-                    index += subType.count + 1;
-                    count += subType.count + 1;
+                    ++annoIndex;
                     fields.add(new VirtualField(label, subType, symbolPart));
                 } else {
                     var subType = buildGraph(symbol);
@@ -61,8 +65,7 @@ public class AstNodeBuilder {
             newProd.srcExprs.add(prod.to_simple_string());
             prods.put(name, newProd);
         }
-        if (!nt.isLaAnno() && nt.isAnno() && count == 0) return null;
-        type.count = count;
+        if (!nt.isLaAnno() && nt.isAnno()) return null;
         type.prods = List.copyOf(prods.values());
         type.isAnno = fromProd != null;
         type.className = type.isAnno ? emit.getAnnoExprName((non_terminal) fromProd.lhs().the_symbol(), fromProd, index) : nt.astClassName();
@@ -245,7 +248,6 @@ public class AstNodeBuilder {
 
         public String className;
         public List<VirtualProduction> prods;
-        public int count = 0;
         public boolean isAnno = false;
 
         public VirtualType(boolean isAstNode) {

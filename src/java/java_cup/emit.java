@@ -544,41 +544,40 @@ public class emit {
                 out.println("          case " + prod.index() + ": { // " + prod.to_simple_string());
 
                 if (prod.lhs().the_symbol().is_non_term() && ((non_terminal) prod.lhs().the_symbol()).isLaAnno()) {
-                    out.println("            switch (currentProductionIndex) {");
+                    out.println("            switch (currentAnnoCode) {");
                     var nt = (non_terminal) prod.lhs().the_symbol();
-                    for (var entry : nt._annoLabels.entrySet()) {
-                        var posFinder = entry.getKey();
-                        var pairMap = entry.getValue();
+                    var infoList = non_terminal.getAnnoNtAllInfo(nt);
+                    for (var entry : infoList) {
+                        var posFinder = entry.getFirst();
+                        var info = entry.getSecond();
                         var fromProdIndex = posFinder.getProdIndex();
-                        out.println("              case " + fromProdIndex + ":");
-                        out.println("                switch (inlineProdIndex++) {");
-                        for (Integer i : pairMap.keySet()) {
-                            out.println("                  case " + i + ':');
-                            var methodName = "_inlineProd_" + fromProdIndex + '_' + nt.index() + '_' + i;
-                            out.println("                    " + pre("result") + " = " + methodName + '(');
-                            out.println("                      " + pre("act_num") + ',');
-                            out.println("                      " + pre("stack") + ',');
-                            out.println("                      " + pre("top"));
-                            out.println("                    );");
-                            out.println("                    break;");
-                        }
-                        out.println("                  default:");
-                        out.print("                    " + pre("result") + " = getSymbolFactory().newSymbol(" + nt.index() + ", ");
-                        if (prod.rhs_length() < 2) {
-                            out.print(buildStackSymReader(0));
-                        } else {
-                            out.print(
-                                pre("stack") + ".subList(" +
-                                    pre("top") + " - " + (prod.rhs_length() - 1) + ", " + pre("top") + " + 1)"
-                            );
-                        }
-                        out.println(");");
-                        out.println("                    break;");
-                        out.println("                }");
+                        var annoCode = (fromProdIndex << 5) | info.getIndexInProd();
+                        out.println("              case " + annoCode + ':');
+                        var methodName = "_annoAction_" + annoCode;
+                        out.println("                " + pre("result") + " = " + methodName + '(');
+                        out.println("                  " + pre("act_num") + ',');
+                        out.println("                  " + pre("stack") + ',');
+                        out.println("                  " + pre("top"));
+                        out.println("                );");
                         out.println("                break;");
                     }
+                    out.println("              default:");
+                    out.print("                " + pre("result") + " = getSymbolFactory().newSymbol(" + nt.index() + ", ");
+                    if (prod.rhs_length() < 2) {
+                        out.print(buildStackSymReader(0));
+                    } else {
+                        out.print(
+                            pre("stack") + ".subList(" +
+                                pre("top") + " - " + (prod.rhs_length() - 1) + ", " + pre("top") + " + 1)"
+                        );
+                    }
+                    out.println(");");
+                    out.println("                break;");
                     out.println("            }");
-                    out.println("            break;");
+                    if (infoList.size() > 1) {
+                        out.println("            ++currentAnnoCode;");
+                    }
+                    out.println("            return " + pre("result") + ';');
                     out.println("          }");
                     continue;
                 }
@@ -804,59 +803,57 @@ public class emit {
         for (production prod : production.all()) {
             if (!prod.lhs().the_symbol().is_non_term() || !((non_terminal) prod.lhs().the_symbol()).isLaAnno()) continue;
             var nt = (non_terminal) prod.lhs().the_symbol();
-            for (var entry : nt._annoLabels.entrySet()) {
-                var posFinder = entry.getKey();
-                var pairMap = entry.getValue();
+            var annoList = non_terminal.getAnnoNtAllInfo(nt);
+            for (var entry : annoList) {
+                var posFinder = entry.getFirst();
+                var info = entry.getSecond();
                 var fromProdIndex = posFinder.getProdIndex();
-                for (var pairEntry : pairMap.entrySet()) {
-                    var i = pairEntry.getKey();
-                    var methodName = "_inlineProd_" + fromProdIndex + '_' + nt.index() + '_' + i;
-                    writer.println("  private java_cup.runtime.Symbol " + methodName + "(");
-                    writer.println("    int " + pre("act_num") + ',');
-                    writer.println("    java_cup.runtime.ArrayStack<java_cup.runtime.Symbol> " + pre("stack") + ',');
-                    writer.println("    int " + pre("top"));
-                    writer.println("  ) {");
-                    writer.println("    java_cup.runtime.Symbol " + pre("result") + ';');
-                    var pairItem = pairEntry.getValue();
-                    var labels = pairItem.getFirst();
-                    var actionCode = pairItem.getSecond();
-                    for (int k = 0; k < labels.size(); k++) {
-                        var label = labels.get(k);
-                        if (label == null) continue;
-                        int offset = labels.size() - k - 1;
-                        writer.print(
-                            production.make_declaration(
-                                label,
-                                ((symbol_part) prod.rhs(k)).the_symbol().stack_type(),
-                                offset
-                            )
-                        );
-                    }
-                    boolean hasResult = false;
-                    if (actionCode != null) {
-                        writer.println(actionCode);
-                        hasResult = hasReadOrWriteResult(actionCode);
-                    }
-                    writer.println("    return getSymbolFactory().newSymbol(");
-                    writer.println("      " + nt.index() + ',');
-                    if (labels.size() > 1) {
-                        writer.print(
-                            "      " + pre("stack") + ".subList(" +
-                                pre("top") + " - " + (labels.size() - 1) + ", " + pre("top") + " + 1)"
-                        );
-                    } else {
-                        writer.print("      " + buildStackSymReader(0));
-                    }
-                    if (hasResult) {
-                        writer.println(',');
-                        writer.println("      RESULT");
-                    } else {
-                        writer.println();
-                    }
-                    writer.println("    );");
-                    writer.println("  }");
+                var annoCode = (fromProdIndex << 5) | info.getIndexInProd();
+                var methodName = "_annoAction_" + annoCode;
+                writer.println("  private java_cup.runtime.Symbol " + methodName + "(");
+                writer.println("    int " + pre("act_num") + ',');
+                writer.println("    java_cup.runtime.ArrayStack<java_cup.runtime.Symbol> " + pre("stack") + ',');
+                writer.println("    int " + pre("top"));
+                writer.println("  ) {");
+                writer.println("    java_cup.runtime.Symbol " + pre("result") + ';');
+                List<String> labelList = info.getLabelList();
+                for (int i = 0, labelListSize = labelList.size(); i < labelListSize; i++) {
+                    String label = labelList.get(i);
+                    if (label == null) continue;
+                    int offset = labelList.size() - i - 1;
+                    writer.print(
+                        production.make_declaration(
+                            label,
+                            ((symbol_part) prod.rhs(i)).the_symbol().stack_type(),
+                            offset
+                        )
+                    );
+                }
+                var actionCode = info.getAction();
+                var hasResult = false;
+                if (actionCode != null) {
+                    writer.println(actionCode);
+                    hasResult = hasReadOrWriteResult(actionCode);
+                }
+                writer.println("    return getSymbolFactory().newSymbol(");
+                writer.println("      " + nt.index() + ',');
+                if (labelList.size() > 1) {
+                    writer.print(
+                        "      " + pre("stack") + ".subList(" +
+                            pre("top") + " - " + (labelList.size() - 1) + ", " + pre("top") + " + 1)"
+                    );
+                } else {
+                    writer.print("      " + buildStackSymReader(0));
+                }
+                if (hasResult) {
+                    writer.println(',');
+                    writer.println("      RESULT");
+                } else {
                     writer.println();
                 }
+                writer.println("    );");
+                writer.println("  }");
+                writer.println();
             }
         }
     }
@@ -1274,14 +1271,11 @@ public class emit {
 
         if (hasAnnoCode) {
             out.println();
-            out.println("  /** Used to record the number of expressions in the production when parsing an inline expression. */");
-            out.println("  private int inlineProdIndex = 0;");
-            out.println("  /** Keep track of which production is currently being specified to aid in parsing inline expressions. */");
-            out.println("  private int currentProductionIndex = 0;");
+            out.println("  /** Used to locate the anonymous non-terminal currently being reduced. */");
+            out.println("  private int currentAnnoCode = 0;");
             out.println();
             out.println("  protected void _pushInlineProd(int prodIndex) {");
-            out.println("    currentProductionIndex = prodIndex;");
-            out.println("    inlineProdIndex = 0;");
+            out.println("    currentAnnoCode = prodIndex << 5;");
             out.println("  }");
         }
 

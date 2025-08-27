@@ -130,32 +130,6 @@ action code {:
   /** start a new right hand side */
   protected void new_rhs() { rhs_pos = 0; }
 
-  private int countInline() {
-    int result = 0;
-    for (var array : rhsPartsCache) {
-      result += countInline(array, array.length);
-    }
-    result += countInline(rhs_parts, rhs_pos);
-    return result;
-  }
-
-  private int countInline(production_part[] array, int length) {
-    int result = 0;
-    for (int i = 0; i < length; i++) {
-      var item = array[i];
-      if (item.is_action()) continue;
-      var sym = ((symbol_part) item).the_symbol();
-      if (!sym.is_non_term()) continue;
-      var nt = (non_terminal) sym;
-      if (!nt.isAnno()) continue;
-      ++result;
-      for (var subProd : nt.productions()) {
-        result += countInline(subProd._rhs, subProd.rhs_length());
-      }
-    }
-    return result;
-  }
-
   /**
    * Sometimes we need to temporarily shelve an existing rhs and restore it later.
    * <br/>
@@ -189,7 +163,10 @@ action code {:
     subNtRecord.get(subNtRecord.size() - 1).add(new symbol_part(nt));
   }
 
-  private void newSubNtList() {
+  private void newSubNtList() throws internal_error {
+    if (!subNtRecord.isEmpty()) {
+      throw new internal_error("Anonymous non-terminals cannot be nested");
+    }
     subNtRecord.add(new ArrayList<>());
   }
 
@@ -286,7 +263,7 @@ action code {:
       non_terminal subNt = null;
       if (!rhsPartsCache.isEmpty() && isSubList) {
         subNt = lhs_nt.createSubNt(
-          rhs_parts, rhs_pos, production.PositionFinder.newInstance(lhs_nt), countInline()
+          rhs_parts, rhs_pos, production.PositionFinder.newInstance(lhs_nt)
         );
         lastSubNtName = subNt.name();
         symbols.put(lastSubNtName, new symbol_part(subNt));
@@ -840,7 +817,7 @@ prod_part_list ::= prod_part_list prod_part | empty;
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
 
 prod_part ::=
-	opt_spread:is_spread symbol_id:symid opt_quantifier:quantifier opt_label:labid
+	opt_spread:spread symbol_id:symid opt_quantifier:quantifier opt_label:labid
 	{:
 	  /* try to look up the id */
 	  production_part symb = (production_part) symbols.get(symid.getFirst());
@@ -858,7 +835,7 @@ prod_part ::=
 	        "Action symbol \"" + symid.getFirst() + "\" cannot be used with a quantifier."
 	      );
         }
-      } else if (is_spread && symb.is_action()) {
+      } else if (spread && symb.is_action()) {
         if (ErrorManager.getManager().getErrorCount() == 0) {
           ErrorManager.getManager().emit_error(
             "Action symbol \"" + symid.getFirst() + "\" cannot use '... 'operator"
@@ -881,7 +858,7 @@ prod_part ::=
         }
 	    /* add a labeled production part */
 	    production_part part = add_lab(symb, labid);
-	    if (is_spread) ((symbol_part) part).markInline();
+	    if (spread) ((symbol_part) part).markInline();
 	    add_rhs_part(part);
       }
 	:}

@@ -542,11 +542,14 @@ public class production {
     protected static String make_declaration(String labelName, String stack_type, int offset) {
         StringBuilder ret = new StringBuilder(256);
         String indent = "              ";
+        var symbolName = Main.locations ? "complex.ComplexSymbol" : "def.DefaultSymbol";
         ret.append(indent)
             .append("var ")
             .append(labelName)
             .append("Sym = ")
-            .append("(java_cup.runtime.symbol.def.DefaultSymbol) ")
+            .append("(java_cup.runtime.symbol.")
+            .append(symbolName)
+            .append(") ")
             .append(emit.buildStackSymReader(offset))
             .append(";\n");
 
