@@ -20,7 +20,7 @@ public class reduce_action extends parse_action {
      *
      * @param prod the production this action reduces with.
      */
-    public reduce_action(production prod) throws internal_error {
+    public reduce_action(Production prod) throws internal_error {
         /* sanity check */
         if (prod == null)
             throw new internal_error("Attempt to create a reduce_action with a null production");
@@ -32,10 +32,10 @@ public class reduce_action extends parse_action {
     /*-----------------------------------------------------------*/
 
     /** The production we reduce with. */
-    protected production _reduce_with;
+    protected Production _reduce_with;
 
     /** The production we reduce with. */
-    public production reduce_with() {
+    public Production reduce_with() {
         return _reduce_with;
     }
 

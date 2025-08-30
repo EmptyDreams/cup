@@ -9,7 +9,7 @@ package java_cup;
  *
  * @author Scott Hudson
  * @version last update: 11/25/95
- * @see java_cup.production
+ * @see Production
  */
 public class action_part extends production_part {
 

@@ -24,7 +24,7 @@ import java.util.*;
  * @see java_cup.symbol_part
  * @see java_cup.action_part
  */
-public class production {
+public class Production {
 
     /*-----------------------------------------------------------*/
     /*--- Constructor(s) ----------------------------------------*/
@@ -59,7 +59,7 @@ public class production {
      * actions at the end where they can be handled as part of a reduce by the
      * parser.
      */
-    public production(
+    public Production(
         non_terminal lhs_sym, production_part[] rhs_parts, int rhs_l, String action_str
     ) throws internal_error {
         int rightlen = rhs_l;
@@ -208,7 +208,7 @@ public class production {
             o:
             while (true) {
                 var newName = 'S' + signature(labels, ++count);
-                for (production prod : nt.productions()) {
+                for (Production prod : nt.productions()) {
                     if (newName.equals(prod.prodName) && !equalsLabels(prod)) {
                         continue o;
                     }
@@ -260,7 +260,7 @@ public class production {
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
     /** Constructor with no action string. */
-    public production(non_terminal lhs_sym, production_part[] rhs_parts, int rhs_l) throws internal_error {
+    public Production(non_terminal lhs_sym, production_part[] rhs_parts, int rhs_l) throws internal_error {
         this(lhs_sym, rhs_parts, rhs_l, null);
     }
 
@@ -270,7 +270,7 @@ public class production {
      * Constructor with precedence and associativity of production contextually
      * define
      */
-    public production(
+    public Production(
         non_terminal lhs_sym, production_part[] rhs_parts, int rhs_l, String action_str, int prec_num,
         int prec_side
     ) throws internal_error {
@@ -285,7 +285,7 @@ public class production {
     /*
      * Constructor w/ no action string and contextual precedence defined
      */
-    public production(non_terminal lhs_sym, production_part[] rhs_parts, int rhs_l, int prec_num, int prec_side)
+    public Production(non_terminal lhs_sym, production_part[] rhs_parts, int rhs_l, int prec_num, int prec_side)
         throws internal_error {
         this(lhs_sym, rhs_parts, rhs_l, null);
         /* set the precedence */
@@ -302,15 +302,15 @@ public class production {
     /**
      * Table of all productions. Elements are stored using their index as the key.
      */
-    protected static MonotonicIntObjectArrayMap<production> _all = new MonotonicIntObjectArrayMap<>();
+    protected static MonotonicIntObjectArrayMap<Production> _all = new MonotonicIntObjectArrayMap<>();
 
     /** Access to all productions. */
-    public static Iterable<production> all() {
+    public static Iterable<Production> all() {
         return _all.values();
     }
 
     /** Lookup a production by index. */
-    public static production find(int indx) {
+    public static Production find(int indx) {
         return _all.get(indx);
     }
 
@@ -819,14 +819,14 @@ public class production {
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
     /** Equality comparison. */
-    public boolean equals(production other) {
+    public boolean equals(Production other) {
         return other != null && other._index == _index;
     }
 
     /**
      * Compare whether the label is exactly the same between two productions
      */
-    public boolean equalsLabels(production other) {
+    public boolean equalsLabels(Production other) {
         if (other == null) return false;
         if (other._index == _index) return true;
         int thisIndex = 0, thatIndex = 0;
@@ -866,7 +866,7 @@ public class production {
     /** Generic equality comparison. */
     @Override
     public boolean equals(Object other) {
-        return other instanceof production && equals((production) other);
+        return other instanceof Production && equals((Production) other);
     }
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -949,7 +949,7 @@ public class production {
             return getProd().index();
         }
 
-        public production getProd() {
+        public Production getProd() {
             var itor = nt.productions().iterator();
             for (int i = 0; i < prodIndexInNt; i++) {
                 itor.next();

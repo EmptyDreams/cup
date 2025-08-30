@@ -263,7 +263,7 @@ action code {:
       non_terminal subNt = null;
       if (!rhsPartsCache.isEmpty() && isSubList) {
         subNt = lhs_nt.createSubNt(
-          rhs_parts, rhs_pos, production.PositionFinder.newInstance(lhs_nt)
+          rhs_parts, rhs_pos, Production.PositionFinder.newInstance(lhs_nt)
         );
         lastSubNtName = subNt.name();
         symbols.put(lastSubNtName, new symbol_part(subNt));
@@ -305,16 +305,16 @@ action code {:
           }
           // insert the action to the first position
           System.arraycopy(rhs_parts, 0, rhs_parts, 1, rhs_pos++);
-          rhs_parts[0] = new action_part("_pushInlineProd(" + (production.number() + count) + ");", true);
+          rhs_parts[0] = new action_part("_pushInlineProd(" + (Production.number() + count) + ");", true);
         }
       } else if (subNt.num_productions() != 0) {
         new_rhs();
         return;
       }
       /* build the production */
-      production p;
+      Production p;
       if (sym instanceof terminal) {
-        p = new production(
+        p = new Production(
           nt, rhs_parts, rhs_pos,
           ((terminal) sym).precedence_num(),
           ((terminal) sym).precedence_side()
@@ -326,7 +326,7 @@ action code {:
             "Invalid terminal " + term_name + " for contextual precedence assignment"
           );
         }
-        p = new production(nt, rhs_parts, rhs_pos);
+        p = new Production(nt, rhs_parts, rhs_pos);
       }
       if (is_namer) {
         if (prod_name == null || prod_name.isEmpty()) {
@@ -348,7 +348,7 @@ action code {:
         add_rhs_part(new symbol_part(terminal.EOF));
         if (!emit._xmlactions) add_rhs_part(new action_part("RESULT = start_val;"));
         if (sym instanceof terminal) {
-          emit.start_production = new production(
+          emit.start_production = new Production(
             non_terminal.START_nt,
             rhs_parts,
             rhs_pos,
@@ -356,7 +356,7 @@ action code {:
             ((terminal) sym).precedence_side()
           );
         } else {
-          emit.start_production = new production(non_terminal.START_nt, rhs_parts, rhs_pos);
+          emit.start_production = new Production(non_terminal.START_nt, rhs_parts, rhs_pos);
         }
         new_rhs();
       }
@@ -748,7 +748,7 @@ start_spec ::=
 	      add_rhs_part(new symbol_part(terminal.EOF));
 	      if (!emit._xmlactions) add_rhs_part(new action_part("RESULT = start_val;"));
 	      emit.start_production = 
-		     new production(non_terminal.START_nt, rhs_parts, rhs_pos);
+		     new Production(non_terminal.START_nt, rhs_parts, rhs_pos);
 	      new_rhs();
 	    }
 	:}

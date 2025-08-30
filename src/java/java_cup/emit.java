@@ -179,7 +179,7 @@ public class emit {
     /**
      * The start production of the grammar.
      */
-    public static production start_production = null;
+    public static Production start_production = null;
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
@@ -495,8 +495,8 @@ public class emit {
      * @param out        stream to produce output on.
      * @param start_prod the start production of the grammar.
      */
-    protected static void emit_action_code(PrintWriter out, production start_prod) throws internal_error {
-        production prod;
+    protected static void emit_action_code(PrintWriter out, Production start_prod) throws internal_error {
+        Production prod;
 
         long start_time = System.currentTimeMillis();
 
@@ -517,7 +517,7 @@ public class emit {
         }
 
         out.println();
-        for (int instancecounter = 0; instancecounter <= production.number() / UPPER_LIMIT; instancecounter++) {
+        for (int instancecounter = 0; instancecounter <= Production.number() / UPPER_LIMIT; instancecounter++) {
             out.println("  /** Method " + instancecounter + " with the actual generated action code for actions "
                 + (instancecounter * UPPER_LIMIT) + " to " + ((instancecounter + 1) * UPPER_LIMIT) + ". */");
             out.println("  public final java_cup.runtime.Symbol " + pre("do_action_part")
@@ -536,9 +536,9 @@ public class emit {
             // START Switch
             /* emit action code for each production as a separate case */
             int proditeration = instancecounter * UPPER_LIMIT;
-            prod = production.find(proditeration);
+            prod = Production.find(proditeration);
             for (; proditeration < Math.min((instancecounter + 1) * UPPER_LIMIT,
-                production.number()); prod = production.find(++proditeration)) {
+                Production.number()); prod = Production.find(++proditeration)) {
                 /* case label */
                 out.println("          /*. . . . . . . . . . . . . . . . . . . .*/");
                 out.println("          case " + prod.index() + ": { // " + prod.to_simple_string());
@@ -750,7 +750,7 @@ public class emit {
         out.println("    throws java.lang.Exception");
         out.println("    {");
 
-        if (production.number() < UPPER_LIMIT) { // Make it simple for the optimizer to inline!
+        if (Production.number() < UPPER_LIMIT) { // Make it simple for the optimizer to inline!
             out.println("              return " + pre("do_action_part") + String.format("%08d", 0) + "(");
             out.println("                               " + pre("act_num,"));
             out.println("                               " + pre("stack,"));
@@ -771,7 +771,7 @@ public class emit {
         out.println("        {");
 
         /* emit action code for each production as a separate case */
-        for (int instancecounter = 0; instancecounter <= production.number() / UPPER_LIMIT; instancecounter++) {
+        for (int instancecounter = 0; instancecounter <= Production.number() / UPPER_LIMIT; instancecounter++) {
             /* case label */
             out.println("          /*. . . . . . . . " + (instancecounter * UPPER_LIMIT) + " < #action < "
                 + ((instancecounter + 1) * UPPER_LIMIT) + ". . . . . . . . . . . .*/");
@@ -800,7 +800,7 @@ public class emit {
     }
 
     private static void emit_inline_action_code(PrintWriter writer) throws internal_error {
-        for (production prod : production.all()) {
+        for (Production prod : Production.all()) {
             if (!prod.lhs().the_symbol().is_non_term() || !((non_terminal) prod.lhs().the_symbol()).isLaAnno()) continue;
             var nt = (non_terminal) prod.lhs().the_symbol();
             var annoList = non_terminal.getAnnoNtAllInfo(nt);
@@ -822,7 +822,7 @@ public class emit {
                     if (label == null) continue;
                     int offset = labelList.size() - i - 1;
                     writer.print(
-                        production.make_declaration(
+                        Production.make_declaration(
                             label,
                             ((symbol_part) prod.rhs(i)).the_symbol().stack_type(),
                             offset
@@ -954,7 +954,7 @@ public class emit {
      * @param prod The production in which the non-terminal is located
      * @param index The inline expression is the number in the production
      */
-    static String getAnnoExprName(non_terminal nt, production prod, int index) {
+    static String getAnnoExprName(non_terminal nt, Production prod, int index) {
         if (!nt.isLaAnno()) {
             return nt.astClassName() + '_' + prod.index() + "__" + ++exprNameIndex;
         }
@@ -969,19 +969,19 @@ public class emit {
      * @param out stream to produce output on.
      */
     protected static void emit_production_table(PrintWriter out) {
-        production[] all_prods;
+        Production[] all_prods;
 
         long start_time = System.currentTimeMillis();
 
         /* collect up the productions in order */
-        all_prods = new production[production.number()];
-        for (var prod : production.all()) {
+        all_prods = new Production[Production.number()];
+        for (var prod : Production.all()) {
             all_prods[prod.index()] = prod;
         }
 
         // make short[][]
-        short[][] prod_table = new short[production.number()][2];
-        for (int i = 0; i < production.number(); i++) {
+        short[][] prod_table = new short[Production.number()][2];
+        for (int i = 0; i < Production.number(); i++) {
             var prod = all_prods[i];
             // { lhs symbol , rhs size }
             prod_table[i][0] = (short) prod.lhs().the_symbol().index();
@@ -1240,7 +1240,7 @@ public class emit {
      */
     public static void parser(
         PrintWriter out, parse_action_table action_table, parse_reduce_table reduce_table,
-        int start_st, production start_prod, boolean compact_reduces, boolean suppress_scanner
+        int start_st, Production start_prod, boolean compact_reduces, boolean suppress_scanner
     ) throws internal_error {
         long start_time = System.currentTimeMillis();
 
@@ -1428,8 +1428,8 @@ public class emit {
      * @param out        stream to produce output on.
      * @param start_prod the start production of the grammar.
      */
-    protected static void emit_xmlaction_code(PrintWriter out, production start_prod) throws internal_error {
-        production prod;
+    protected static void emit_xmlaction_code(PrintWriter out, Production start_prod) throws internal_error {
+        Production prod;
 
         long start_time = System.currentTimeMillis();
 
@@ -1447,7 +1447,7 @@ public class emit {
         out.println("  private final " + parser_class_name + typeArgument() + " parser;");
 
         out.println();
-        for (int instancecounter = 0; instancecounter <= production.number() / UPPER_LIMIT; instancecounter++) {
+        for (int instancecounter = 0; instancecounter <= Production.number() / UPPER_LIMIT; instancecounter++) {
             out.println("  /** Method " + instancecounter + " with the actual generated action code for actions "
                 + (instancecounter * UPPER_LIMIT) + " to " + ((instancecounter + 1) * UPPER_LIMIT) + ". */");
             out.println("  public final java_cup.runtime.Symbol " + pre("do_action_part")
@@ -1466,9 +1466,9 @@ public class emit {
             // START Switch
             /* emit action code for each production as a separate case */
             int proditeration = instancecounter * UPPER_LIMIT;
-            prod = production.find(proditeration);
+            prod = Production.find(proditeration);
             for (; proditeration < Math.min((instancecounter + 1) * UPPER_LIMIT,
-                production.number()); prod = production.find(++proditeration)) {
+                Production.number()); prod = Production.find(++proditeration)) {
                 /* case label */
                 out.println("          /*. . . . . . . . . . . . . . . . . . . .*/");
                 out.println("          case " + prod.index() + ": // " + prod.to_simple_string());
@@ -1510,7 +1510,7 @@ public class emit {
                 // determine the variant:
                 int variant = 0;
                 for (int i = 0; i < proditeration; i++) {
-                    if (production.find(i).lhs().equals(prod.lhs()))
+                    if (Production.find(i).lhs().equals(prod.lhs()))
                         variant++;
                 }
 
@@ -1575,7 +1575,7 @@ public class emit {
         out.println("    throws java.lang.Exception");
         out.println("    {");
 
-        if (production.number() < UPPER_LIMIT) { // Make it simple for the optimizer to inline!
+        if (Production.number() < UPPER_LIMIT) { // Make it simple for the optimizer to inline!
             out.println("              return " + pre("do_action_part") + String.format("%08d", 0) + "(");
             out.println("                               " + pre("act_num,"));
             out.println("                               " + pre("stack,"));
@@ -1596,7 +1596,7 @@ public class emit {
         out.println("        {");
 
         /* emit action code for each production as a separate case */
-        for (int instancecounter = 0; instancecounter <= production.number() / UPPER_LIMIT; instancecounter++) {
+        for (int instancecounter = 0; instancecounter <= Production.number() / UPPER_LIMIT; instancecounter++) {
             /* case label */
             out.println("          /*. . . . . . . . " + (instancecounter * UPPER_LIMIT) + " < #action < "
                 + ((instancecounter + 1) * UPPER_LIMIT) + ". . . . . . . . . . . .*/");

@@ -276,7 +276,7 @@ public class lalr_state {
      * @see java_cup.lalr_item_set#compute_closure
      * @see java_cup.lalr_state#propagate_all_lookaheads
      */
-    public static lalr_state build_machine(production start_prod) throws internal_error {
+    public static lalr_state build_machine(Production start_prod) throws internal_error {
         lalr_state start_state;
         lalr_item_set start_items;
         lalr_item_set kernel;
@@ -474,7 +474,7 @@ public class lalr_state {
                     our_act_row.under_term[sym.index()] = act;
                 } else {
                     /* we now have at least one conflict */
-                    production p = ((reduce_action) our_act_row.under_term[sym.index()]).reduce_with();
+                    Production p = ((reduce_action) our_act_row.under_term[sym.index()]).reduce_with();
                     /* shift always wins */
                     if (!fix_with_precedence(p, sym.index(), our_act_row, act)) {
                         our_act_row.under_term[sym.index()] = act;
@@ -513,7 +513,7 @@ public class lalr_state {
      * @param act        the rule in conflict with the table entry
      */
     protected boolean fix_with_precedence(
-        production p, int term_index, parse_action_row table_row, parse_action act
+        Production p, int term_index, parse_action_row table_row, parse_action act
     ) throws internal_error {
         terminal term = terminal.find(term_index);
         /* if the production has a precedence number, it can be fixed */

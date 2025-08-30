@@ -6,7 +6,7 @@ package java_cup;
  *
  * @author Scott Hudson
  * @version last updated: 11/25/95
- * @see java_cup.production
+ * @see Production
  */
 public class symbol_part extends production_part {
 

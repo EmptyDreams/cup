@@ -1,6 +1,6 @@
 package java_cup;
 
-import java_cup.production.PositionFinder;
+import java_cup.Production.PositionFinder;
 
 import java.util.*;
 
@@ -164,16 +164,16 @@ public class non_terminal extends symbol {
      * non-terminals contained in that production.
      */
     private static final Map<PositionFinder, List<AnnoNtInfo>> _annoLabels = new HashMap<>();
-    private static Map<production, List<AnnoNtInfo>> _annoLabelsCache;
+    private static Map<Production, List<AnnoNtInfo>> _annoLabelsCache;
 
     /**
      * Reads label and action information for all inline expressions contained in the specified production
      *
      * @return The key is the number
      */
-    public static List<AnnoNtInfo> getAnnoLabelAndAction(production prod) {
+    public static List<AnnoNtInfo> getAnnoLabelAndAction(Production prod) {
         if (_annoLabelsCache == null) {
-            Map<production, List<AnnoNtInfo>> cache = new HashMap<>();
+            Map<Production, List<AnnoNtInfo>> cache = new HashMap<>();
             for (var entry : _annoLabels.entrySet()) {
                 cache.put(entry.getKey().getProd(), entry.getValue());
             }
@@ -318,7 +318,7 @@ public class non_terminal extends symbol {
         }
 
         /* do one last pass over the productions to finalize all of them */
-        for (production prod : production.all()) {
+        for (Production prod : Production.all()) {
             prod.set_nullable(prod.check_nullable());
         }
     }
@@ -338,7 +338,7 @@ public class non_terminal extends symbol {
             /* consider each non-terminal */
             for (non_terminal nt : all()) {
                 /* consider every production of that non terminal */
-                for (production prod : nt.productions()) {
+                for (Production prod : nt.productions()) {
                     /* get the updated first of that production */
                     terminal_set prod_first = prod.check_first_set();
 
@@ -357,14 +357,14 @@ public class non_terminal extends symbol {
     /*-----------------------------------------------------------*/
 
     /** Table of all productions with this non terminal on the LHS. */
-    protected Set<production> _productions = new LinkedHashSet<>(11);
+    protected Set<Production> _productions = new LinkedHashSet<>(11);
 
     /**
      * Access to productions with this non terminal on the LHS.
      *
      * <p>Traverses in the order of addition.
      */
-    public Iterable<production> productions() {
+    public Iterable<Production> productions() {
         return _productions;
     }
 
@@ -378,7 +378,7 @@ public class non_terminal extends symbol {
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
     /** Add a production to our set of productions. */
-    public void add_production(production prod) throws internal_error {
+    public void add_production(Production prod) throws internal_error {
         /* catch improper productions */
         if (prod == null || prod.lhs() == null || prod.lhs().the_symbol() != this)
             throw new internal_error("Attempt to add invalid production to non terminal production table");
@@ -422,7 +422,7 @@ public class non_terminal extends symbol {
     /** Test to see if this non terminal currently looks nullable. */
     protected boolean looks_nullable() throws internal_error {
         /* look and see if any of the productions now look nullable */
-        for (production prod : productions())
+        for (Production prod : productions())
             /* if the production can go to empty, we are nullable */ {
             if (prod.check_nullable())
                 return true;

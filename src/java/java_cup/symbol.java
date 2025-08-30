@@ -157,7 +157,7 @@ public abstract class symbol {
         if (_optBox != null) return _optBox;
         var newNt = non_terminal.create_new("_EBNF_OPT_", stack_type());
         newNt._isAnno = true;
-        new production(
+        new Production(
             newNt,
             new production_part[]{new symbol_part(this)},
             1,
@@ -166,7 +166,7 @@ public abstract class symbol {
         if (Main.ast_format != null && (emptyAction == null || emptyAction.isEmpty())) {
             emptyAction = "";
         }
-        new production(newNt, new production_part[0], 0, emptyAction);
+        new Production(newNt, new production_part[0], 0, emptyAction);
         _optBox = newNt;
         ((symbol) newNt)._optBox = newNt;
         symbols.put(newNt.name(), new symbol_part(newNt));
@@ -216,7 +216,7 @@ public abstract class symbol {
             try {
                 var newNt = non_terminal.create_new("_EBNF_LIST_", listType);
                 newNt._isAnno = true;
-                new production(
+                new Production(
                     newNt,
                     new production_part[]{new symbol_part(this)},
                     1,
@@ -230,7 +230,7 @@ public abstract class symbol {
                     listProdPart[i + 1] = sepList.get(i);
                 }
                 listProdPart[listProdPart.length - 1] = new symbol_part(this);
-                new production(
+                new Production(
                     newNt,
                     listProdPart,
                     listProdPart.length,
@@ -271,7 +271,7 @@ public abstract class symbol {
         var listType = emit.buildListExpr(type);
         var newNt = non_terminal.create_new("_EBNF_LIST_TAIL_", listType);
         newNt._isAnno = true;
-        new production(
+        new Production(
             newNt,
             new production_part[]{new symbol_part(nt)},
             1,
@@ -282,7 +282,7 @@ public abstract class symbol {
         for (int i = 0; i < split.size(); i++) {
             splitPart[i + 1] = split.get(i);
         }
-        new production(
+        new Production(
             newNt,
             splitPart,
             splitPart.length,

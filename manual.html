@@ -875,7 +875,7 @@ supplied action code.  In general, all names beginning with the prefix of
 <tt>CUP$</tt> are reserved for internal uses by CUP generated code. <p> 
 
 The <tt>parser</tt> class contains the actual generated parser.  It is 
-a subclass of <tt>java_cup.runtime.lr_parser</tt> which implements a 
+a subclass of <tt>java_cup.runtime.LrParser</tt> which implements a
 general table driven framework for an LR parser.  The generated <tt>parser</tt>
 class provides a series of tables for use by the general framework.  
 Three tables are provided:
@@ -1016,7 +1016,7 @@ public interface Scanner {
 </pre>
 <p>
 In addition to the methods described in <a href="#parser">section
-4</a>, the <code>java_cup.runtime.lr_parser</code> class has two new
+4</a>, the <code>java_cup.runtime.LrParser</code> class has two new
 accessor methods, <code>setScanner()</code> and <code>getScanner()</code>.
 The default implementation of <a href="#scan_method"><code>scan()</code></a>
 is:

@@ -20,7 +20,7 @@ public class AstNodeBuilder {
         }
     }
 
-    private static VirtualType buildGraph(non_terminal nt, production fromProd, int index) throws internal_error {
+    private static VirtualType buildGraph(non_terminal nt, Production fromProd, int index) throws internal_error {
         if (nt.isAnno() && fromProd == null) return null;
         if (typeCache.containsKey(nt)) return typeCache.get(nt);
         var type = new VirtualType(true);
@@ -28,7 +28,7 @@ public class AstNodeBuilder {
         int annoCount = 0;
         Map<String, VirtualProduction> prods = new HashMap<>();
         var annoItor = fromProd == null ? null : non_terminal.getAnnoLabelAndAction(fromProd).iterator();
-        for (production prod : nt.productions()) {
+        for (Production prod : nt.productions()) {
             if (prod.hasTailAction()) continue;
             var name = prod.getProdName();
             if (prods.containsKey(name)) {

@@ -74,7 +74,7 @@ public class parse_action_table {
         }
 
         /* now go across every production and make sure we hit it */
-        for (var prod : production.all()) {
+        for (var prod : Production.all()) {
             /* if we didn't hit it give a warning */
             if (prod.num_reductions() == 0) {
                 /*

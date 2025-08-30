@@ -35,7 +35,7 @@ public class lr_item_core {
      * @param prod production this item uses.
      * @param pos  position of the "dot" within the item.
      */
-    public lr_item_core(production prod, int pos) throws internal_error {
+    public lr_item_core(Production prod, int pos) throws internal_error {
         if (prod == null)
             throw new internal_error("Attempt to create an lr_item_core with a null production");
         if (pos < 0 || pos > prod.rhs_length())
@@ -61,7 +61,7 @@ public class lr_item_core {
      *
      * @param prod production this item uses.
      */
-    public lr_item_core(production prod) throws internal_error {
+    public lr_item_core(Production prod) throws internal_error {
         this(prod, 0);
     }
 
@@ -70,10 +70,10 @@ public class lr_item_core {
     /*-----------------------------------------------------------*/
 
     /** The production for the item. */
-    protected production _the_production;
+    protected Production _the_production;
 
     /** The production for the item. */
-    public production the_production() {
+    public Production the_production() {
         return _the_production;
     }
 

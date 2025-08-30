@@ -9,7 +9,7 @@ package java_cup;
  * @author Scott Hudson
  * @version last updated: 11/25/95
  */
-public class action_production extends production {
+public class action_production extends Production {
 
     /**
      * Constructor.
@@ -22,7 +22,7 @@ public class action_production extends production {
      * @param indexOfIntermediateResult the index of the result of the previous intermediate action on the stack relative to top, -1 if no previous action
      */
     public action_production(
-        production base,
+        Production base,
         non_terminal lhs_sym,
         production_part[] rhs_parts,
         int rhs_len,
@@ -47,12 +47,12 @@ public class action_production extends production {
     /**
      * The production we were taken out of.
      */
-    protected production _base_production;
+    protected Production _base_production;
 
     /**
      * The production we were taken out of.
      */
-    public production base_production() {
+    public Production base_production() {
         return _base_production;
     }
 
