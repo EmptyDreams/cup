@@ -135,12 +135,20 @@ public abstract class symbol {
     /*-----------------------------------------------------------*/
 
     private non_terminal _optBox = null;
+    private symbol _optContent = null;
 
     /**
      * Check if the current symbol is {@code ?} The nullable symbol produced by the operator.
      */
     public boolean isOptBox() {
         return _optBox == this;
+    }
+
+    /**
+     * If this symbol is an OptBox or ListBox, returns the symbol it wraps, otherwise returns null.
+     */
+    public symbol getBoxContent() {
+        return _optContent;
     }
 
     /**
@@ -169,11 +177,17 @@ public abstract class symbol {
         new Production(newNt, new production_part[0], 0, emptyAction);
         _optBox = newNt;
         ((symbol) newNt)._optBox = newNt;
+        ((symbol) newNt)._optContent = this;
         symbols.put(newNt.name(), new symbol_part(newNt));
         return newNt;
     }
 
     private final Map<List<production_part>, ObjectPair<non_terminal, non_terminal>> _listBoxCache = new HashMap<>();
+    private boolean _isListBox = false;
+
+    public boolean isListBox() {
+        return _isListBox;
+    }
 
     /**
      * Creates a new non_terminal for the list box.
@@ -216,6 +230,7 @@ public abstract class symbol {
             try {
                 var newNt = non_terminal.create_new("_EBNF_LIST_", listType);
                 newNt._isAnno = true;
+                ((symbol) newNt)._isListBox = true;
                 new Production(
                     newNt,
                     new production_part[]{new symbol_part(this)},

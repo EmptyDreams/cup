@@ -25,9 +25,9 @@ public class AstNodeBuilder {
         if (typeCache.containsKey(nt)) return typeCache.get(nt);
         var type = new VirtualType(true);
         if (!nt.isAnno()) typeCache.put(nt, type);
-        int annoCount = 0;
         Map<String, VirtualProduction> prods = new HashMap<>();
-        var annoItor = fromProd == null ? null : non_terminal.getAnnoLabelAndAction(fromProd).iterator();
+        var isBox = nt.isOptBox() || nt.isListBox();
+        var annoItor = nt.isAnno() && !isBox ? non_terminal.getAnnoLabelAndAction(fromProd).iterator() : null;
         for (Production prod : nt.productions()) {
             if (prod.hasTailAction()) continue;
             var name = prod.getProdName();
@@ -35,26 +35,25 @@ public class AstNodeBuilder {
                 prods.get(name).srcExprs.add(prod.to_simple_string());
                 continue;
             }
-            // 如果当前符号是匿名符号，则通过 annoItor 读取 label 和 action
+            // If the current symbol is an anonymous symbol, read label and action through annoItor
             var annoInfo = annoItor == null ? null : annoItor.next();
             var annoLabelList = annoInfo == null ? null : annoInfo.getLabelList();
             if (annoInfo != null && annoInfo.getAction() != null) continue;
             List<VirtualField> fields = new ArrayStack<>();
+            int annoCount = 0;
             for (int i = 0; i < prod.rhs_length(); i++) {
                 var rhs = prod.rhs(i);
                 if (rhs.is_action()) continue;
                 var symbolPart = (symbol_part) rhs;
                 var symbol = symbolPart.the_symbol();
-                //noinspection DataFlowIssue
-                String label = fromProd == null ? symbolPart.label() : annoLabelList.get(i);
-                // 跳过没有 label 且非内联的符号
+                String label = annoLabelList == null ? symbolPart.label() : annoLabelList.get(i);
+                // Skip symbols without label and not inline
                 if (label == null && !symbolPart.isInline()) continue;
                 var subNt = symbol.is_non_term() ? (non_terminal) symbol : null;
                 if (subNt != null && subNt.isAnno()) {
                     var annoIndex = annoCount++;
                     var subType = buildGraph(subNt, prod, annoIndex);
                     if (subType == null) continue;
-                    ++annoIndex;
                     fields.add(new VirtualField(label, subType, symbolPart));
                 } else {
                     var subType = buildGraph(symbol);
@@ -68,7 +67,11 @@ public class AstNodeBuilder {
         if (!nt.isLaAnno() && nt.isAnno()) return null;
         type.prods = List.copyOf(prods.values());
         type.isAnno = fromProd != null;
-        type.className = type.isAnno ? emit.getAnnoExprName((non_terminal) fromProd.lhs().the_symbol(), fromProd, index) : nt.astClassName();
+        if (type.isAnno) {
+            type.className = emit.getAnnoExprName((non_terminal) fromProd.lhs().the_symbol(), fromProd, index);
+        } else {
+            type.className = nt.astClassName();
+        }
         return type;
     }
 
@@ -176,14 +179,50 @@ public class AstNodeBuilder {
                 .flatMap(VirtualField::allSubFields)
                 .collect(Collectors.toList());
             if (allSubFields.isEmpty()) continue;
+            int basicExistCount = (int) prod.fields.stream()
+                .filter(it -> it.isOptBox() && it.type.isBasic())
+                .count();
+            // build factory method
+            var factoryExprs = new ArrayList<String>();
+            factoryExprs.add("var obj = new " + prod.name + "();");
+            if (basicExistCount > 0) {
+                if (basicExistCount <= 32) {
+                    factoryExprs.add("int mask = 0;");
+                } else if (basicExistCount <= 64) {
+                    factoryExprs.add("long mask = 0;");
+                } else {
+                    factoryExprs.add("var mask = obj." + emit.pre("mask"));
+                }
+            }
+            int basicIndex = 0;
+            for (VirtualField field : allSubFields) {
+                if (field.isOptBox() && field.type.isBasic()) {
+                    int index = ++basicIndex;
+                    factoryExprs.add("if (" + field.label + " != null) {");
+                    if (basicExistCount <= 32) {
+                        factoryExprs.add("  mask |= 0x" + Integer.toHexString(index) + ";");
+                    } else if (basicExistCount <= 64) {
+                        factoryExprs.add("  mask |= 0x" + Long.toHexString(index) + "L;");
+                    } else {
+                        factoryExprs.add("  mask.set(" + index + ");");
+                    }
+                    factoryExprs.add("  obj." + field.label + " = " + field.label + ';');
+                    factoryExprs.add("}");
+                } else {
+                    factoryExprs.add("obj." + field.label + " = " + field.label + ';');
+                }
+            }
+            factoryExprs.add("return obj;");
+            // continue build class
+            clazz.addMethod(
+                new VirtualMethod("build" + prod.name, prod.name, allSubFields, factoryExprs)
+                    .markStatic()
+            );
             var subClass = new VirtualClass(prod.name)
                 .markStatic()
                 .markFinal();
             subClass.markParent(clazz.name);
             // build field
-            int basicExistCount = (int) prod.fields.stream()
-                .filter(it -> it.isOptBox() && it.type.isBasic())
-                .count();
             prod.fields.forEach(subClass::addField);
             if (basicExistCount != 0) {
                 subClass.markMask(basicExistCount);
@@ -195,7 +234,6 @@ public class AstNodeBuilder {
                 .map(method -> method.withAnnotation("@Override"))
                 .forEach(subClass::addMethod);
             // build checker
-            int basicIndex = 0;
             for (VirtualField field : allSubFields) {
                 String expr;
                 if (field.fromField != null) {
@@ -209,9 +247,11 @@ public class AstNodeBuilder {
                             + emit.joinName("has", field.label) + "();";
                     }
                 } else if (field.isOptBox() && field.type.isBasic()) {
-                    var index = basicIndex++;
-                    if (basicExistCount <= 64) {
-                        expr = "return (" + emit.pre("mask") + " & " + index + ") != 0;";
+                    var index = ++basicIndex;
+                    if (basicExistCount <= 32) {
+                        expr = "return (" + emit.pre("mask") + " & 0x" + Integer.toHexString(1 << (index - 1)) + ") != 0;";
+                    } else if (basicExistCount <= 64) {
+                        expr = "return (" + emit.pre("mask") + " & 0x" + Long.toHexString(1L << (index - 1)) + "L) != 0;";
                     } else {
                         expr = "return " + emit.pre("mask") + ".get(" + index + ");";
                     }
@@ -565,6 +605,7 @@ public class AstNodeBuilder {
         public final List<String> exprs;
 
         private boolean isFinal = false;
+        private  boolean isStatic = false;
         private final List<String> annotations = new ArrayList<>();
 
         public VirtualMethod(String name, String returnType, List<VirtualField> params, List<String> exprs) {
@@ -576,6 +617,11 @@ public class AstNodeBuilder {
 
         public VirtualMethod markFinal() {
             isFinal = true;
+            return this;
+        }
+
+        public VirtualMethod markStatic() {
+            isStatic = true;
             return this;
         }
 
@@ -592,6 +638,7 @@ public class AstNodeBuilder {
             }
             builder.append(indentText)
                 .append("public ");
+            if (isStatic) builder.append("static ");
             if (isFinal) builder.append("final ");
             builder.append(returnType).append(' ').append(name).append('(');
             if (!params.isEmpty()) {

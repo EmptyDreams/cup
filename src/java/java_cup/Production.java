@@ -146,7 +146,7 @@ public class Production {
         _action = new LazyContainer<>(() -> {
             if (Main.ast_format != null && !hasTailAction) {
                 String indentation = "              ";
-                if (check_nullable()) {
+                if (isNull()) {
                     actionBuilder.append(indentation)
                         .append("RESULT = new ")
                         .append(lhs_sym.astClassName())
@@ -165,6 +165,7 @@ public class Production {
                             .append(className).append(' ').append(nodeName).append(" = ")
                             .append(className).append(".build").append(getProdName()).append("(\n");
                         boolean isFirst = true;
+                        int annoIndex = 0;
                         for (var entry : partMap.entrySet()) {
                             var label = entry.getKey();
                             var part = entry.getValue();
@@ -173,8 +174,15 @@ public class Production {
                             if (isFirst) isFirst = false;
                             else actionBuilder.append(",\n");
                             // (xxx) label
+                            var nt = sym.is_non_term() ? (non_terminal) sym : null;
+                            String typeName;
+                            if (nt != null && nt.isAnno()) {
+                                typeName = emit.getAnnoExprName(lhs_sym, this, annoIndex++);
+                            } else {
+                                typeName = sym.astClassName();
+                            }
                             actionBuilder.append(indentation).append("  ")
-                                .append("(").append(sym.astClassName()).append(") ").append(label);
+                                .append("(").append(typeName).append(") ").append(label);
                         }
                         actionBuilder.append('\n').append(indentation).append(");\n");
                     }
@@ -741,6 +749,26 @@ public class Production {
     }
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+
+    /**
+     * Check if the current expression is an empty expression
+     */
+    public boolean isNull() throws internal_error {
+        for (int pos = 0; pos < rhs_length(); pos++) {
+            var part = rhs(pos);
+            if (part.is_action()) continue;
+            var sym = ((symbol_part) part).the_symbol();
+            if (sym.is_non_term()) {
+                var nt = (non_terminal) sym;
+                for (Production prod : nt.productions()) {
+                    if (!prod.isNull()) return false;
+                }
+            } else {
+                return false;
+            }
+        }
+        return true;
+    }
 
     /**
      * Check to see if the production (now) appears to be nullable. A production is

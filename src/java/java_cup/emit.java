@@ -945,8 +945,6 @@ public class emit {
         }
     }
 
-    private static int exprNameIndex = 0;
-
     /**
      * Get the name of the inline expression.
      *
@@ -955,9 +953,6 @@ public class emit {
      * @param index The inline expression is the number in the production
      */
     static String getAnnoExprName(non_terminal nt, Production prod, int index) {
-        if (!nt.isLaAnno()) {
-            return nt.astClassName() + '_' + prod.index() + "__" + ++exprNameIndex;
-        }
         return nt.astClassName() + '_' + prod.index() + '_' + index;
     }
 
