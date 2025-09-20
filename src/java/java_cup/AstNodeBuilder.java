@@ -26,8 +26,20 @@ public class AstNodeBuilder {
         var type = new VirtualType(true);
         if (!nt.isAnno()) typeCache.put(nt, type);
         Map<String, VirtualProduction> prods = new HashMap<>();
-        var isBox = nt.isOptBox() || nt.isListBox();
-        var annoItor = nt.isAnno() && !isBox ? non_terminal.getAnnoLabelAndAction(fromProd).iterator() : null;
+        if (nt.isOptBox()) {
+            var subSymbol = nt.getOptContent();
+            var result = buildGraph(subSymbol);
+            if (result == null) return null;
+            result.castToBox();
+            return result;
+        } else if (nt.isListBox()) {
+            var subSymbol = nt.getListElementContent();
+            var result = buildGraph(subSymbol);
+            if (result == null) return null;
+            result.castToBox();
+            return result.toList();
+        }
+        var annoItor = nt.isAnno() ? non_terminal.getAnnoLabelAndAction(fromProd).iterator() : null;
         for (Production prod : nt.productions()) {
             if (prod.hasTailAction()) continue;
             var name = prod.getProdName();
@@ -339,11 +351,56 @@ public class AstNodeBuilder {
             }
         }
 
+        public void castToBox() {
+            switch (className) {
+                case "byte":
+                    className = "Byte";
+                    break;
+                case "short":
+                    className = "Short";
+                    break;
+                case "int":
+                    className = "Integer";
+                    break;
+                case "long":
+                    className = "Long";
+                    break;
+                case "float":
+                    className = "Float";
+                    break;
+                case "double":
+                    className = "Double";
+                    break;
+                case "char":
+                    className = "Character";
+                    break;
+                case "boolean":
+                    className = "Boolean";
+                    break;
+            }
+        }
+
         @Override
         public String toString() {
             return className;
         }
 
+        private VirtualType _innerType;
+
+        public VirtualType toList() {
+            var type = new VirtualType(false);
+            type.className = "List<" + className + '>';
+            type.prods = Collections.emptyList();
+            type._innerType = this;
+            return type;
+        }
+
+        public Stream<VirtualType> types() {
+            if (_innerType != null) {
+                return Stream.of(this, _innerType);
+            }
+            return Stream.of(this);
+        }
 
         private static final Map<String, VirtualType> basicTypeCache = new HashMap<>();
 

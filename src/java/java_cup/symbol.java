@@ -147,7 +147,7 @@ public abstract class symbol {
     /**
      * If this symbol is an OptBox or ListBox, returns the symbol it wraps, otherwise returns null.
      */
-    public symbol getBoxContent() {
+    public symbol getOptContent() {
         return _optContent;
     }
 
@@ -183,10 +183,19 @@ public abstract class symbol {
     }
 
     private final Map<List<production_part>, ObjectPair<non_terminal, non_terminal>> _listBoxCache = new HashMap<>();
-    private boolean _isListBox = false;
+    private symbol _listElementSymbol = null;
 
     public boolean isListBox() {
-        return _isListBox;
+        return _listElementSymbol != null;
+    }
+
+    /**
+     * Returns the type of elements stored in the list when {@link #isListBox()} is true.
+     *
+     * @return the element type, or null if not a list box or element type is not set
+     */
+    public symbol getListElementContent() {
+        return _listElementSymbol;
     }
 
     /**
@@ -230,7 +239,7 @@ public abstract class symbol {
             try {
                 var newNt = non_terminal.create_new("_EBNF_LIST_", listType);
                 newNt._isAnno = true;
-                ((symbol) newNt)._isListBox = true;
+                ((symbol) newNt)._listElementSymbol = this;
                 new Production(
                     newNt,
                     new production_part[]{new symbol_part(this)},
@@ -286,6 +295,7 @@ public abstract class symbol {
         var listType = emit.buildListExpr(type);
         var newNt = non_terminal.create_new("_EBNF_LIST_TAIL_", listType);
         newNt._isAnno = true;
+        ((symbol) newNt)._listElementSymbol = nt.getListElementContent();
         new Production(
             newNt,
             new production_part[]{new symbol_part(nt)},

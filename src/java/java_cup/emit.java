@@ -834,6 +834,27 @@ public class emit {
                 if (actionCode != null) {
                     writer.println(actionCode);
                     hasResult = hasReadOrWriteResult(actionCode);
+                } else if (Main.ast_format != null) {
+                    // Automatically generate action code for anonymous non-terminals in AST mode
+                    String indentation = "    ";
+                    String className = getAnnoExprName((non_terminal) posFinder.getProd().lhs().the_symbol(), posFinder.getProd(), info.getIndexInProd());
+                    String nodeName = pre("treeNode");
+                    if (labelList.isEmpty()) {
+                        writer.println(indentation + className + " " + nodeName + " = new " + className + "();");
+                    } else {
+                        writer.println(indentation + className + " " + nodeName + " = " + className + ".build" + 
+                                     prod.getProdName() + "(");
+                        boolean isFirst = true;
+                        for (String label : labelList) {
+                            if (isFirst) isFirst = false;
+                            else writer.println(",");
+                            writer.print(indentation + "  " + label);
+                        }
+                        writer.println();
+                        writer.println(indentation + ");");
+                    }
+                    writer.println(indentation + "var RESULT = " + nodeName + ";");
+                    hasResult = true;
                 }
                 writer.println("    return getSymbolFactory().newSymbol(");
                 writer.println("      " + nt.index() + ',');
@@ -946,11 +967,11 @@ public class emit {
     }
 
     /**
-     * Get the name of the inline expression.
+     * Get the name of the anonymous non-terminal expression.
      *
-     * @param nt The inline non-terminal
-     * @param prod The production in which the non-terminal is located
-     * @param index The inline expression is the number in the production
+     * @param nt The parent non-terminal that contains the anonymous non-terminal
+     * @param prod The production in which the anonymous non-terminal is located
+     * @param index The index of the anonymous non-terminal within the production
      */
     static String getAnnoExprName(non_terminal nt, Production prod, int index) {
         return nt.astClassName() + '_' + prod.index() + '_' + index;
@@ -1396,6 +1417,7 @@ public class emit {
             var type = typeList.get(i);
             type.allFields().stream()
                 .map(it -> it.type)
+                .flatMap(AstNodeBuilder.VirtualType::types)
                 .filter(it -> it.isAstNode)
                 .filter(typeRecord::add)
                 .forEach(typeList::add);
