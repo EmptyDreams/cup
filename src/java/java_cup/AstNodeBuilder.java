@@ -28,13 +28,23 @@ public class AstNodeBuilder {
         Map<String, VirtualProduction> prods = new HashMap<>();
         if (nt.isOptBox()) {
             var subSymbol = nt.getOptContent();
-            var result = buildGraph(subSymbol);
+            VirtualType result;
+            if (subSymbol.is_non_term()) {
+                result = buildGraph((non_terminal) subSymbol, fromProd, index);
+            } else {
+                result = buildGraph(subSymbol);
+            }
             if (result == null) return null;
             result.castToBox();
             return result;
         } else if (nt.isListBox()) {
             var subSymbol = nt.getListElementContent();
-            var result = buildGraph(subSymbol);
+            VirtualType result;
+            if (subSymbol.is_non_term()) {
+                result = buildGraph((non_terminal) subSymbol, fromProd, index);
+            } else {
+                result = buildGraph(subSymbol);
+            }
             if (result == null) return null;
             result.castToBox();
             return result.toList();
@@ -489,9 +499,9 @@ public class AstNodeBuilder {
             if (fromField != null) {
                 String expr;
                 if (fromField.isOptBox()) {
-                    var defValue = fromField.type.getDefaultExpr();
+                    var defValue = type.getDefaultExpr();
                     expr = "return " + fromField.label + " == null ? " + defValue + " : "
-                        + fromField.label + '.' + emit.joinName("get", joinLabel()) + "();";
+                        + fromField.label + '.' + emit.joinName("get", label) + "();";
                 } else {
                     expr = "return " + fromField.label + '.' + emit.joinName("get", label) + "();";
                 }
