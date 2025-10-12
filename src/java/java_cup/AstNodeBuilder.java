@@ -283,7 +283,7 @@ public class AstNodeBuilder {
                     expr = "return true;";
                 }
                 subClass.addMethod(new VirtualMethod(
-                    emit.joinName("has", field.label),
+                    emit.joinName("has", field.joinLabel()),
                     "boolean",
                     Collections.emptyList(),
                     List.of(expr)
@@ -506,7 +506,7 @@ public class AstNodeBuilder {
             );
         }
 
-        public VirtualField createSub(String fromLabel) {
+        public VirtualField createSub(VirtualField fromField) {
             int newMask = 0;
             if (part == null) {
                 newMask = mask;
@@ -515,12 +515,8 @@ public class AstNodeBuilder {
                 if (isExistCheck()) newMask |= 0b10;
                 if (isOptBox()) newMask |= 0b100;
             }
-            var result = new VirtualField(
-                emit.joinName(fromLabel, label),
-                type,
-                newMask
-            );
-            result.fromField = fromField == null ? this : fromField;
+            var result = new VirtualField(label, type, newMask);
+            result.fromField = fromField;
             return result;
         }
 
@@ -532,7 +528,7 @@ public class AstNodeBuilder {
             if (!isInline()) return Stream.of(this);
             return type.allFields().stream()
                 .flatMap(VirtualField::allSubFields)
-                .map(field -> field.createSub(label));
+                .map(field -> field.createSub(this));
         }
 
         @Override
