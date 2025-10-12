@@ -207,7 +207,7 @@ public class AstNodeBuilder {
                 }
             }
             int basicIndex = 0;
-            for (VirtualField field : allSubFields) {
+            for (VirtualField field : prod.fields) {
                 if (field.isOptBox() && field.type.isBasic()) {
                     int index = ++basicIndex;
                     factoryExprs.add("if (" + field.label + " != null) {");
@@ -227,8 +227,12 @@ public class AstNodeBuilder {
             factoryExprs.add("return obj;");
             // continue build class
             clazz.addMethod(
-                new VirtualMethod("build" + prod.name, prod.name, allSubFields, factoryExprs)
-                    .markStatic()
+                new VirtualMethod(
+                    "build" + prod.name,
+                    prod.name,
+                    prod.fields,
+                    factoryExprs
+                ).markStatic()
             );
             var subClass = new VirtualClass(prod.name)
                 .markStatic()
