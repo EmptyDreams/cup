@@ -841,6 +841,12 @@ prod_part ::=
             "Action symbol \"" + symid.getFirst() + "\" cannot use '... 'operator"
           );
         }
+      } else if (spread && quantifier != null && quantifier.isList()) {
+        if (ErrorManager.getManager().getErrorCount() == 0) {
+          ErrorManager.getManager().emit_error(
+            "List symbol \"" + symid.getFirst() + "\" cannot use '... 'operator"
+          );
+        }
       } else {
         if (quantifier != null) {
           if (!quantifier.isList()) {
