@@ -713,16 +713,16 @@ terminal_id ::= term_id:sym
 	  
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
 
-term_id ::= symbol_id:sym
+term_id ::= symbol_id:sym_id
         {:
 	  /* check that the symbol_id is a terminal */
-	  if (symbols.get(sym.getFirst()) == null)
+	  if (symbols.get(sym_id.getFirst()) == null)
 	    {
 	      /* issue a message */
-	      ErrorManager.getManager().emit_error("Terminal \"" + sym + 
+	      ErrorManager.getManager().emit_error("Terminal \"" + sym_id.getFirst() +
 			   "\" has not been declared");
 	    }
-          RESULT = sym.getFirst();
+          RESULT = sym_id.getFirst();
          :};
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 

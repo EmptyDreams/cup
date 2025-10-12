@@ -366,32 +366,7 @@ public class AstNodeBuilder {
         }
 
         public void castToBox() {
-            switch (className) {
-                case "byte":
-                    className = "Byte";
-                    break;
-                case "short":
-                    className = "Short";
-                    break;
-                case "int":
-                    className = "Integer";
-                    break;
-                case "long":
-                    className = "Long";
-                    break;
-                case "float":
-                    className = "Float";
-                    break;
-                case "double":
-                    className = "Double";
-                    break;
-                case "char":
-                    className = "Character";
-                    break;
-                case "boolean":
-                    className = "Boolean";
-                    break;
-            }
+            className = emit.boxType(className);
         }
 
         @Override

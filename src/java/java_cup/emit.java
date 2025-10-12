@@ -967,6 +967,24 @@ public class emit {
     }
 
     /**
+     * Boxes the given type to its corresponding wrapper class.
+     * @return eg. "int" -> "Integer"
+     */
+    static String boxType(String type) {
+        switch (type) {
+            case "byte": return "Byte";
+            case "short": return "Short";
+            case "int": return "Integer";
+            case "long": return "Long";
+            case "float": return "Float";
+            case "double": return "Double";
+            case "char": return "Character";
+            case "boolean": return "Boolean";
+            default: return type;
+        }
+    }
+
+    /**
      * Get the name of the anonymous non-terminal expression.
      *
      * @param nt The parent non-terminal that contains the anonymous non-terminal
@@ -1501,13 +1519,13 @@ public class emit {
                     if (!(prod.rhs(rhsi) instanceof symbol_part))
                         continue;
                     String label = prod.rhs(rhsi).label();
-                    symbol_part sym = (symbol_part) prod.rhs(rhsi);
+                    symbol_part symPart = (symbol_part) prod.rhs(rhsi);
                     if (label == null) {
                         if (!_genericlabels)
                             continue;
-                        label = sym.the_symbol().name() + rhsi;
+                        label = symPart.the_symbol().name() + rhsi;
                     }
-                    if (sym.the_symbol().is_non_term())
+                    if (symPart.the_symbol().is_non_term())
                         nested.append(",(XMLElement)").append(label);
                     else
                         nested.append(",new XMLElement.Terminal(")

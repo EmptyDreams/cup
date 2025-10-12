@@ -79,6 +79,8 @@ public abstract class symbol {
         String type = stack_type();
         if (type.equals("IAstNode")) {
             return symbol.getNtNodeClassName(name());
+        } else if (type.startsWith("List<")) {
+            return "ArrayList<" + type.substring(5);
         }
         return type;
     }
@@ -217,12 +219,11 @@ public abstract class symbol {
         List<production_part> sepList, boolean allowTail, boolean allowEmpty
     ) throws internal_error {
         boolean isAstNode = Main.ast_format != null;
-        var type = isAstNode ? astClassName() : _stack_type;
-        var listType = emit.buildListExpr(type);
+        var typeName = stack_type();
         // convert primitive types to their wrapper (because the jvm does not support primitive generics)
-        switch (type) {
+        switch (typeName) {
             case "char":
-                type = "Character";
+                typeName = "Character";
                 break;
             case "boolean":
             case "byte":
@@ -231,10 +232,11 @@ public abstract class symbol {
             case "long":
             case "float":
             case "double":
-                type = type.substring(0, 1).toUpperCase() + type.substring(1);
+                typeName = typeName.substring(0, 1).toUpperCase() + typeName.substring(1);
                 break;
         }
-        String finalType = type;
+        var listType = emit.buildListExpr(typeName);
+        var finalType = typeName;
         var cache = _listBoxCache.computeIfAbsent(sepList, k -> {
             try {
                 var newNt = non_terminal.create_new("_EBNF_LIST_", listType);
@@ -274,18 +276,18 @@ public abstract class symbol {
             if (!allowEmpty) return cache.getFirst();
             return cache.getFirst().createOptBox(
                 symbols,
-                "RESULT = java.util.Collections.<" + type + ">emptyList();"
+                "RESULT = java.util.Collections.<" + typeName + ">emptyList();"
             );
         }
         if (cache.getSecond() == null) {
-            var tailNt = createListTailBox(cache.getFirst(), sepList, type);
+            var tailNt = createListTailBox(cache.getFirst(), sepList, typeName);
             symbols.put(tailNt.name(), new symbol_part(tailNt));
             cache = cache.modifySecond(tailNt);
         }
         if (!allowEmpty) return cache.getSecond();
         return cache.getSecond().createOptBox(
             symbols,
-            "RESULT = java.util.Collections.<" + type + ">emptyList();"
+            "RESULT = java.util.Collections.<" + typeName + ">emptyList();"
         );
     }
 

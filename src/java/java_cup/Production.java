@@ -3,7 +3,10 @@ package java_cup;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * This class represents a production in the grammar. It contains a LHS non
@@ -123,6 +126,7 @@ public class Production {
         /* count use of each rhs symbol */
         _rhs = new production_part[_rhs_length];
         for (int i = 0; i < _rhs_length; i++) {
+            //noinspection DataFlowIssue
             _rhs[i] = rhs_parts[i];
             if (!_rhs[i].is_action()) {
                 ((symbol_part) _rhs[i]).the_symbol().note_use();
@@ -152,7 +156,7 @@ public class Production {
                         .append(lhs_sym.astClassName())
                         .append("();\n");
                 } else {
-                    String className = symbol.getNtNodeClassName(lhs_sym.name());
+                    String className = lhs_sym.astClassName();
                     String nodeName = emit.pre("treeNode");
                     var partMap = getLabel2SymbolPartMap();
                     if (partMap.isEmpty()) {
@@ -170,16 +174,25 @@ public class Production {
                             var label = entry.getKey();
                             var part = entry.getValue();
                             if (part.isExistCheck()) continue;
-                            var sym = part.the_symbol();
+                            var _sym = part.the_symbol();
                             if (isFirst) isFirst = false;
                             else actionBuilder.append(",\n");
                             // (xxx) label
-                            var nt = sym.is_non_term() ? (non_terminal) sym : null;
+                            var nt = _sym.is_non_term() ? (non_terminal) _sym : null;
                             String typeName;
-                            if (nt != null && nt.isAnno()) {
-                                typeName = emit.getAnnoExprName(lhs_sym, this, annoIndex++);
+                            if (nt != null) {
+                                if (nt.isOptBox()) {
+                                    typeName = emit.boxType(nt.getOptContent().astClassName());
+                                } else if (nt.isAnno() && !nt.isListBox()) {
+                                    typeName = emit.getAnnoExprName(lhs_sym, this, annoIndex++);
+                                } else {
+                                    typeName = nt.astClassName();
+                                }
                             } else {
-                                typeName = sym.astClassName();
+                                typeName = _sym.astClassName();
+                            }
+                            if (typeName.startsWith("ArrayList<") || typeName.startsWith("List<")) {
+                                typeName = "List";
                             }
                             actionBuilder.append(indentation).append("  ")
                                 .append("(").append(typeName).append(") ").append(label);
