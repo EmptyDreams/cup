@@ -18,7 +18,7 @@ package java_cup.runtime;
  * </ul>
  *
  * @author Frank Flannery, kmar
- * @version last updated: 14/10/25
+ * @version last updated: 14/10/2025
  */
 public abstract class Symbol {
 

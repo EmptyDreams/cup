@@ -105,7 +105,7 @@ import java.util.List;
  * </dl>
  *
  * @author Frank Flannery
- * @version last updated: 7/3/96
+ * @version last updated: 14/10/2025
  * @see java_cup.runtime.Symbol
  * @see java_cup.runtime.Symbol
  * @see java_cup.runtime.virtual_parse_stack
