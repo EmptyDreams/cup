@@ -41,7 +41,7 @@ public abstract class Symbol {
     /**
      * Checks whether the symbol's value is null.
      * <p>
-     * Unless your design requires it, you should always return true for symbol classes specialized for primitive types.
+     * Unless your design requires it, you should always return false for symbol classes specialized for primitive types.
      */
     public abstract boolean isNull();
 
