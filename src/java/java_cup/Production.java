@@ -555,7 +555,7 @@ public class Production {
             .append(";\n");
 
         /* Put in the left/right value labels */
-        if (emit.lr_values()) {
+        if (emit.lr_values() && Main.ast_format == null) {
             // var xxxLeft = xxxSym.getLeft();
             ret.append(indent)
                 .append("var ")
@@ -572,7 +572,7 @@ public class Production {
                 .append("Sym.getRight();\n");
         }
 
-        if (!labelName.isEmpty()) {
+        if (!labelName.isEmpty() && (Main.ast_format == null || "start_val".equals(labelName))) {
             // xxx = xxxSym.value();
             ret.append(indent)
                 .append(stack_type)
