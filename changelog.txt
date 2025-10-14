@@ -5,7 +5,7 @@ Also added fragments of XPath 1.0 query support on parse trees
 Fixed the visibility of children and the variant attribute of XMLElement
 
 M. Petter
-Technische Universität München
+Technische UniversitÃ¤t MÃ¼nchen
 2015/10/01
 ------------------------------------------------------------------------
 CUP version 0.11b 20150326 is a bugfix release.
@@ -14,7 +14,7 @@ Fixed an issue with empty productions having non-empty location information
 Fixed an issue with deprecation of constructors
 
 M. Petter
-Technische Universität München
+Technische UniversitÃ¤t MÃ¼nchen
 2015/02/26
 ------------------------------------------------------------------------
 CUP version 0.11b 20150226 is a feature release.
@@ -22,7 +22,7 @@ CUP version 0.11b 20150226 is a feature release.
 added the means to move Locations
 
 M. Petter
-Technische Universität München
+Technische UniversitÃ¤t MÃ¼nchen
 2015/02/26
 ------------------------------------------------------------------------
 CUP version 0.11b 20140808 is a feature/bugfix release.
@@ -33,7 +33,7 @@ added parameters and code to enable automatic creation of XML parse trees
 fixed a bug in the lookahead computation
 
 M. Petter
-Technische Universität München
+Technische UniversitÃ¤t MÃ¼nchen
 2014/02/26
 ------------------------------------------------------------------------
 CUP version 0.11b beta 20140226 is a feature release.
@@ -43,7 +43,7 @@ xleft and xright in the actions section instead of left and right.
 Both are of type ComplexSymbolFactory.Location instead of plain ints.
 
 M. Petter
-Technische Universität München
+Technische UniversitÃ¤t MÃ¼nchen
 2014/02/26
 ------------------------------------------------------------------------
 CUP version 0.11b beta 20140220 is a feature release.
@@ -52,7 +52,7 @@ Main switch statement now splits the action code in bundles of 300 productions
 on several different method bodies. Should fix the 65k size boundary problem
 
 M. Petter
-Technische Universität München
+Technische UniversitÃ¤t MÃ¼nchen
 2014/02/20
 ------------------------------------------------------------------------
 CUP version 0.11a beta 20060608 is a bugfix release.
@@ -64,7 +64,7 @@ main action part. now, embedded actions have the following (new) properties:
   variables initialized with the RESULT of the previous embedded action
 
 M. Petter, A. Flexeder
-Technische Universität München
+Technische UniversitÃ¤t MÃ¼nchen
 2006/06/08
 ------------------------------------------------------------------------
 CUP version 0.11a beta 200603230 is a bugfix release.
@@ -74,7 +74,7 @@ propagating factory methods for Symbol generation. (thanks to
 Robert.Streich@ObjectFx.com )
 
 M. Petter
-Technische Universität München
+Technische UniversitÃ¤t MÃ¼nchen
 2006/03/30
 ------------------------------------------------------------------------
 CUP version 0.11a beta 20060328 is a feature release.
@@ -96,7 +96,7 @@ on the CUP runtime, leading to a mixture of runtimes, that could spoil Your
 build process. I have corrected the errors in the CUP buildfile.
 
 M. Petter
-Technische Universität München
+Technische UniversitÃ¤t MÃ¼nchen
 2006/03/28
 ------------------------------------------------------------------------
 CUP version 0.11a beta 20060102 is a bugfix release.
@@ -106,7 +106,7 @@ runtime JAR (thanks to Florian deissenb@srs.kundenserver.de ) and an
 incorrect initialized parameter (thanks to Andreas ag@ibag-edv.de)
 
 M. Petter
-Technische Universität München
+Technische UniversitÃ¤t MÃ¼nchen
 2006/01/02
 ------------------------------------------------------------------------
 CUP version 0.11a beta 20051104 is a bugfix release.
@@ -117,7 +117,7 @@ contributed to bugfixes, concerning an ant parameter as well as a more
 informative CODE_STRING Token.
 
 M. Petter
-Technische Universität München
+Technische UniversitÃ¤t MÃ¼nchen
 2005/11/04
 ------------------------------------------------------------------------
 CUP version 0.11a beta 20050921 is a combined bugfix release.
@@ -127,7 +127,7 @@ call the main() method several times instead of only one time without
 strange errors.
 
 M. Petter
-Technische Universität München
+Technische UniversitÃ¤t MÃ¼nchen
 2005/09/21
 ------------------------------------------------------------------------
 CUP version 0.11a beta 20050920 is a combined bugfix/feature release.
@@ -138,7 +138,7 @@ Completely rewrote the CUP-anttask to properly call ant even, if You use
 paths including whitespaces.
 
 M. Petter
-Technische Universität München
+Technische UniversitÃ¤t MÃ¼nchen
 2005/09/20
 ------------------------------------------------------------------------
 CUP version 0.11a beta 20050628 is a combined bugfix/feature release.
@@ -148,7 +148,7 @@ generics handling in CUP. It also introduces a new parameter
 "-typeargs" to cup, whith which one can parametrize the generated parser.
 
 M. Petter
-Technische Universität München
+Technische UniversitÃ¤t MÃ¼nchen
 2005/06/28
 ------------------------------------------------------------------------
 CUP version 0.11a beta 20050516 is a management release.
@@ -159,7 +159,7 @@ Nothing else has changed since the last bugfix release, as indicated in
 the version date.
 
 M. Petter
-Technische Universität München
+Technische UniversitÃ¤t MÃ¼nchen
 2005/05/16
 ------------------------------------------------------------------------
 CUP version 0.10k TUM Edition 20050516 is a bugfix release.
@@ -169,7 +169,7 @@ leading to wildcards like ArrayList<? extends MyClass> being
 destroyed. Meanwhile, everything should work as it is supposed to.
 
 M. Petter
-Technische Universität München
+Technische UniversitÃ¤t MÃ¼nchen
 2005/05/16
 ------------------------------------------------------------------------
 CUP version 0.10k TUM Edition 20050514 is a bugfix/enhancement release.
@@ -180,7 +180,7 @@ even better error informations like column/line and the token in plain text,
 CUP is processing, when the error occurs.
 
 M. Petter
-Technische Universität München
+Technische UniversitÃ¤t MÃ¼nchen
 2005/05/14
 ------------------------------------------------------------------------
 CUP version 0.10k TUM Edition 20050510 is a feature release.
@@ -200,7 +200,7 @@ The CUP frontend, which parses .cup-files has changed to a JFlex-generated
 scanner, which allows an easier maintainance.
 
 M. Petter
-Technische Universität München
+Technische UniversitÃ¤t MÃ¼nchen
 2005/05/10
 ------------------------------------------------------------------------
 CUP version 0.10k is a maintenance release.
