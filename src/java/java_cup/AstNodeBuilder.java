@@ -34,8 +34,6 @@ public class AstNodeBuilder {
             } else {
                 result = buildGraph(subSymbol);
             }
-            if (result == null) return null;
-            result.castToBox();
             return result;
         } else if (nt.isListBox()) {
             var subSymbol = nt.getListElementContent();
@@ -218,6 +216,7 @@ public class AstNodeBuilder {
             }
             int basicIndex = 0;
             for (VirtualField field : prod.fields) {
+                String getter = "obj." + field.label + " = " + field.label + '.' + emit.buildSymGetter(field.type.className) + ';';
                 if (field.isOptBox() && field.type.isBasic()) {
                     int index = ++basicIndex;
                     factoryExprs.add("if (" + field.label + " != null) {");
@@ -228,11 +227,14 @@ public class AstNodeBuilder {
                     } else {
                         factoryExprs.add("  mask.set(" + index + ");");
                     }
-                    factoryExprs.add("  obj." + field.label + " = " + field.label + ';');
+                    factoryExprs.add("  " + getter);
                     factoryExprs.add("}");
                 } else {
-                    factoryExprs.add("obj." + field.label + " = " + field.label + ';');
+                    factoryExprs.add(getter);
                 }
+            }
+            if (basicExistCount > 0) {
+                factoryExprs.add("obj." + emit.pre("mask") + " = mask;");
             }
             factoryExprs.add("return obj;");
             // continue build class
@@ -240,7 +242,13 @@ public class AstNodeBuilder {
                 new VirtualMethod(
                     "build" + prod.name,
                     prod.name,
-                    prod.fields,
+                    prod.fields.stream().map(
+                        it -> new VirtualField(
+                            it.label,
+                            VirtualType.ofBasic("Symbol"),
+                            0
+                        )
+                    ).collect(Collectors.toList()),
                     factoryExprs
                 ).markStatic()
             );

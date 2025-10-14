@@ -169,33 +169,13 @@ public class Production {
                             .append(className).append(' ').append(nodeName).append(" = ")
                             .append(className).append(".build").append(getProdName()).append("(\n");
                         boolean isFirst = true;
-                        int annoIndex = 0;
                         for (var entry : partMap.entrySet()) {
                             var label = entry.getKey();
                             var part = entry.getValue();
                             if (part.isExistCheck()) continue;
-                            var _sym = part.the_symbol();
                             if (isFirst) isFirst = false;
                             else actionBuilder.append(",\n");
-                            // (xxx) label
-                            var nt = _sym.is_non_term() ? (non_terminal) _sym : null;
-                            String typeName;
-                            if (nt != null) {
-                                if (nt.isOptBox()) {
-                                    typeName = emit.boxType(nt.getOptContent().astClassName());
-                                } else if (nt.isAnno() && !nt.isListBox()) {
-                                    typeName = emit.getAnnoExprName(lhs_sym, this, annoIndex++);
-                                } else {
-                                    typeName = nt.astClassName();
-                                }
-                            } else {
-                                typeName = _sym.astClassName();
-                            }
-                            if (typeName.startsWith("ArrayList<") || typeName.startsWith("List<")) {
-                                typeName = "List";
-                            }
-                            actionBuilder.append(indentation).append("  ")
-                                .append("(").append(typeName).append(") ").append(label);
+                            actionBuilder.append(indentation).append("  ").append(emit.joinName(label, "sym"));
                         }
                         actionBuilder.append('\n').append(indentation).append(");\n");
                     }

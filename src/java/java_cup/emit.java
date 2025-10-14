@@ -848,7 +848,7 @@ public class emit {
                         for (String label : labelList) {
                             if (isFirst) isFirst = false;
                             else writer.println(",");
-                            writer.print(indentation + "  " + label);
+                            writer.print(indentation + "  " + joinName(label, "sym"));
                         }
                         writer.println();
                         writer.println(indentation + ");");
