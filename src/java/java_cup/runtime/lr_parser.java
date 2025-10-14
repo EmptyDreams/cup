@@ -252,9 +252,6 @@ public abstract class lr_parser {
      */
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-    /** Indication of the index for top of stack (for use by actions). */
-    protected int tos;
-
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
     /** The current lookahead Symbol. */
@@ -596,7 +593,6 @@ public abstract class lr_parser {
         /* push dummy Symbol with start state to get us underway */
         stack.clear();
         stack.push(getSymbolFactory().startSymbol(0, start_state()));
-        tos = 0;
 
         /* continue until we are told to stop */
         for (_done_parsing = false; !_done_parsing; ) {
@@ -616,21 +612,19 @@ public abstract class lr_parser {
                 cur_token.parse_state = act - 1;
                 cur_token.used_by_parser = true;
                 stack.push(cur_token);
-                tos++;
                 /* advance to the next Symbol */
                 cur_token = scan();
             }
             /* if its less than zero, then it encodes a reduce action */
             else if (act < 0) {
                 /* perform the action for the reduce */
-                lhs_sym = do_action((-act) - 1, stack, tos);
+                lhs_sym = do_action((-act) - 1, stack, stack.size() - 1);
                 /* look up information about the production */
                 short lhs_sym_num = production_tab[(-act) - 1][0];
                 short handle_size = production_tab[(-act) - 1][1];
                 /* pop the handle off the stack */
                 for (int i = 0; i < handle_size; i++) {
                     stack.pop();
-                    tos--;
                 }
                 /* look up the state to go to from the one popped back to */
                 act = get_reduce(stack.peek().parse_state, lhs_sym_num);
@@ -638,7 +632,6 @@ public abstract class lr_parser {
                 lhs_sym.parse_state = act;
                 lhs_sym.used_by_parser = true;
                 stack.push(lhs_sym);
-                tos++;
             }
             /* finally if the entry is zero, we have an error */
             else {
@@ -756,7 +749,6 @@ public abstract class lr_parser {
         /* push dummy Symbol with start state to get us underway */
         stack.clear();
         stack.push(getSymbolFactory().startSymbol(0, start_state()));
-        tos = 0;
 
         /* continue until we are told to stop */
         for (_done_parsing = false; !_done_parsing; ) {
@@ -777,7 +769,6 @@ public abstract class lr_parser {
                 cur_token.used_by_parser = true;
                 debug_shift(cur_token);
                 stack.push(cur_token);
-                tos++;
 
                 /* advance to the next Symbol */
                 cur_token = scan();
@@ -786,7 +777,7 @@ public abstract class lr_parser {
             /* if its less than zero, then it encodes a reduce action */
             else if (act < 0) {
                 /* perform the action for the reduce */
-                lhs_sym = do_action((-act) - 1, stack, tos);
+                lhs_sym = do_action((-act) - 1, stack, stack.size() - 1);
 
                 /* look up information about the production */
                 short lhs_sym_num = production_tab[(-act) - 1][0];
@@ -797,7 +788,6 @@ public abstract class lr_parser {
                 /* pop the handle off the stack */
                 for (int i = 0; i < handle_size; i++) {
                     stack.pop();
-                    tos--;
                 }
 
                 /* look up the state to go to from the one popped back to */
@@ -809,7 +799,6 @@ public abstract class lr_parser {
                 lhs_sym.parse_state = act;
                 lhs_sym.used_by_parser = true;
                 stack.push(lhs_sym);
-                tos++;
 
                 debug_message("# Goto state #" + act);
             }
@@ -945,7 +934,6 @@ public abstract class lr_parser {
             if (debug)
                 debug_message("# Pop stack by one, state was # " + stack.peek().parse_state);
             left = stack.pop(); // TUM 20060327 removed .left
-            tos--;
 
             /* if we have hit bottom, we fail */
             if (stack.empty()) {
@@ -967,7 +955,6 @@ public abstract class lr_parser {
         error_token.parse_state = act - 1;
         error_token.used_by_parser = true;
         stack.push(error_token);
-        tos++;
 
         return true;
     }
@@ -1147,7 +1134,6 @@ public abstract class lr_parser {
                 if (debug)
                     debug_shift(cur_err_token());
                 stack.push(cur_err_token());
-                tos++;
 
                 /* advance to the next Symbol, if there is none, we are done */
                 if (!advance_lookahead()) {
@@ -1170,7 +1156,7 @@ public abstract class lr_parser {
             /* if its less than zero, then it encodes a reduce action */
             else if (act < 0) {
                 /* perform the action for the reduce */
-                lhs_sym = do_action((-act) - 1, stack, tos);
+                lhs_sym = do_action((-act) - 1, stack, stack.size() - 1);
 
                 /* look up information about the production */
                 short lhs_sym_num = production_tab[(-act) - 1][0];
@@ -1182,7 +1168,6 @@ public abstract class lr_parser {
                 /* pop the handle off the stack */
                 for (int i = 0; i < handle_size; i++) {
                     stack.pop();
-                    tos--;
                 }
 
                 /* look up the state to go to from the one popped back to */
@@ -1192,7 +1177,6 @@ public abstract class lr_parser {
                 lhs_sym.parse_state = act;
                 lhs_sym.used_by_parser = true;
                 stack.push(lhs_sym);
-                tos++;
 
                 if (debug)
                     debug_message("# Goto state #" + act);
