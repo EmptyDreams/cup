@@ -16,12 +16,6 @@ public abstract class DefaultSymbol extends Symbol {
         this(id, -1, -1);
     }
 
-    protected DefaultSymbol(int id, int state) {
-        super(id, state);
-        this.left = -1;
-        this.right = -1;
-    }
-
     public final int getLeft() {
         return left;
     }

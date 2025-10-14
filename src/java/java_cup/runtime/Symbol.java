@@ -4,56 +4,37 @@ package java_cup.runtime;
  * Defines the Symbol class, which is used to represent all terminals and
  * nonterminals while parsing. The lexer should pass CUP Symbols and CUP returns
  * a Symbol.
+ * <p>
+ * This is an abstract base class that contains only the symbol type [sym].
+ * All other attributes such as value, left/right positions and their corresponding
+ * Objects have been moved to concrete subclasses for optional implementation.
+ * </p>
+ * <p>
+ * Subclasses provide specialized implementations for different symbol types:
+ * </p>
+ * <ul>
+ *   <li>Complex symbols ([ComplexSymbol] - using [Location] objects for positions</li>
+ *   <li>Default symbols ([DefaultSymbol] and its subclasses) - using int values for positions</li>
+ * </ul>
  *
  * @author Frank Flannery, kmar
- * @version last updated: 21/6/25
+ * @version last updated: 14/10/25
  */
-
-/*
- * **************************************************************** Class Symbol
- * what the parser expects to receive from the lexer. the token is identified as
- * follows: sym: the symbol type parse_state: the parse state. value: is the
- * lexical value of type Object left : is the left position in the original
- * input file right: is the right position in the original input file xleft: is
- * the left position Object in the original input file xright: is the left
- * position Object in the original input file
- ******************************************************************/
-
 public abstract class Symbol {
 
     /**
      * Constructor for no value or l,r
      */
     public Symbol(int sym_num) {
-        this(sym_num, -1);
-    }
-
-    /**
-     * Constructor to give a start state
-     */
-    protected Symbol(int sym_num, int state) {
-        sym = sym_num;
-        parse_state = state;
+        this.sym = sym_num;
     }
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
     /** The symbol number of the terminal or non terminal being represented */
-    public int sym;
+    public final int sym;
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
-
-    /**
-     * The parse state to be recorded on the parse stack with this symbol. This
-     * field is for the convenience of the parser and shouldn't be modified except
-     * by the parser.
-     */
-    public int parse_state;
-    /**
-     * This allows us to catch some errors caused by scanners recycling symbols. For
-     * the use of the parser only. [CSA, 23-Jul-1999]
-     */
-    boolean used_by_parser = false;
 
     /* The data passed to parser */
 

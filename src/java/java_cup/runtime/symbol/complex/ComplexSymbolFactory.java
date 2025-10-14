@@ -216,10 +216,5 @@ public class ComplexSymbolFactory implements SymbolFactory {
     public Symbol newSymbol(int id) {
         return new ComplexEmptySymbol(id);
     }
-
-    @Override
-    public Symbol startSymbol(int id, int state) {
-        return new ComplexEmptySymbol(id, state);
-    }
     
 }

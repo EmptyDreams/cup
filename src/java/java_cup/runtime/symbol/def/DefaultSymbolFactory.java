@@ -209,9 +209,4 @@ public class DefaultSymbolFactory implements SymbolFactory {
         return new DefaultEmptySymbol(id);
     }
 
-    @Override
-    public Symbol startSymbol(int id, int state) {
-        return new DefaultEmptySymbol(id, state);
-    }
-
 }

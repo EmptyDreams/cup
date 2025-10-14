@@ -23,18 +23,19 @@ public class virtual_parse_stack {
     /*-----------------------------------------------------------*/
 
     /** Constructor to build a virtual stack out of a real stack. */
-    public virtual_parse_stack(ArrayStack<Symbol> shadowing_stack) throws java.lang.Exception {
+    public virtual_parse_stack(ArrayStack<Symbol> shadowing_stack, IntArrayStack state_stack) throws java.lang.Exception {
         /* sanity check */
         if (shadowing_stack == null)
             throw new Exception("Internal parser error: attempt to create null virtual stack");
 
         /* set up our internals */
         real_stack = shadowing_stack;
+        real_state_stack = state_stack;
         vstack = new IntArrayStack();
         real_next = 0;
 
         /* get one element onto the virtual portion of the stack */
-        get_from_real();
+        get_from_real(state_stack);
     }
 
     /*-----------------------------------------------------------*/
@@ -47,14 +48,18 @@ public class virtual_parse_stack {
      */
     protected ArrayStack<Symbol> real_stack;
 
-    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
-
     /**
      * Top of stack indicator for where we leave off in the real stack. This is
      * measured from top of stack, so 0 would indicate that no elements have been
      * "moved" from the real to virtual stack.
      */
     protected int real_next;
+
+    /**
+     * The state stack that corresponds to the real stack. This is passed in the constructor
+     * and needed for proper state management during error recovery.
+     */
+    protected IntArrayStack real_state_stack;
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
@@ -75,21 +80,17 @@ public class virtual_parse_stack {
      * Transfer an element from the real to the virtual stack. This assumes that the
      * virtual stack is currently empty.
      */
-    protected void get_from_real() {
-        Symbol stack_sym;
-
+    protected void get_from_real(IntArrayStack state_stack) {
         /* don't transfer if the real stack is empty */
         if (real_next >= real_stack.size())
             return;
 
-        /* get a copy of the first Symbol we have not transfered */
-        stack_sym = real_stack.elementAt(real_stack.size() - 1 - real_next);
-
+        var state = state_stack.elementAt(state_stack.size() - 1 - real_next);
         /* record the transfer */
         real_next++;
 
-        /* put the state number from the Symbol onto the virtual stack */
-        vstack.push(stack_sym.parse_state);
+        /* put the state number from the state_stack onto the virtual stack */
+        vstack.push(state);
     }
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -125,7 +126,7 @@ public class virtual_parse_stack {
 
         /* if we are now empty transfer an element (if there is one) */
         if (vstack.empty())
-            get_from_real();
+            get_from_real(real_state_stack);
     }
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */

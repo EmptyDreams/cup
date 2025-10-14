@@ -10,10 +10,6 @@ public class DefaultEmptySymbol extends DefaultSymbol {
         this(id, -1, -1);
     }
 
-    DefaultEmptySymbol(int id, int state) {
-        super(id, state);
-    }
-
     @Override
     public boolean isNull() {
         return true;

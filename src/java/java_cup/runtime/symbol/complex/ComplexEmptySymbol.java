@@ -10,10 +10,6 @@ public class ComplexEmptySymbol extends ComplexSymbol {
         this(id, Location.EMPTY, Location.EMPTY);
     }
 
-    ComplexEmptySymbol(int id, int state) {
-        super(id, state);
-    }
-
     @Override
     public boolean isNull() {
         return true;

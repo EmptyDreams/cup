@@ -17,12 +17,6 @@ public abstract class ComplexSymbol extends Symbol {
         this(id, Location.EMPTY, Location.EMPTY);
     }
 
-    protected ComplexSymbol(int id, int state) {
-        super(id, state);
-        this.left = Location.EMPTY;
-        this.right = Location.EMPTY;
-    }
-
     public final Location getLeft() {
         return left;
     }
