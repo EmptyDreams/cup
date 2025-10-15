@@ -44,11 +44,19 @@ public class ComplexSymbolFactory implements SymbolFactory {
         return new ComplexObjectSymbol(id, first.getLeft(), last.getRight(), value);
     }
 
+    public Symbol newTerminal(int id, Location left, Location right, Object value) {
+        return new ComplexObjectSymbol(id, left, right, value);
+    }
+
     @Override
     public Symbol newSymbol(int id, List<Symbol> symList, boolean value) {
         var first = (ComplexSymbol) symList.get(0);
         var last = (ComplexSymbol) symList.get(symList.size() - 1);
         return new ComplexBoolSymbol(id, first.getLeft(), last.getRight(), value);
+    }
+
+    public Symbol newTerminal(int id, Location left, Location right, boolean value) {
+        return new ComplexBoolSymbol(id, left, right, value);
     }
 
     @Override
@@ -58,11 +66,19 @@ public class ComplexSymbolFactory implements SymbolFactory {
         return new ComplexByteSymbol(id, first.getLeft(), last.getRight(), value);
     }
 
+    public Symbol newTerminal(int id, Location left, Location right, byte value) {
+        return new ComplexByteSymbol(id, left, right, value);
+    }
+
     @Override
     public Symbol newSymbol(int id, List<Symbol> symList, short value) {
         var first = (ComplexSymbol) symList.get(0);
         var last = (ComplexSymbol) symList.get(symList.size() - 1);
         return new ComplexShortSymbol(id, first.getLeft(), last.getRight(), value);
+    }
+
+    public Symbol newTerminal(int id, Location left, Location right, short value) {
+        return new ComplexShortSymbol(id, left, right, value);
     }
 
     @Override
@@ -72,11 +88,19 @@ public class ComplexSymbolFactory implements SymbolFactory {
         return new ComplexCharSymbol(id, first.getLeft(), last.getRight(), value);
     }
 
+    public Symbol newTerminal(int id, Location left, Location right, char value) {
+        return new ComplexCharSymbol(id, left, right, value);
+    }
+
     @Override
     public Symbol newSymbol(int id, List<Symbol> symList, int value) {
         var first = (ComplexSymbol) symList.get(0);
         var last = (ComplexSymbol) symList.get(symList.size() - 1);
         return new ComplexIntSymbol(id, first.getLeft(), last.getRight(), value);
+    }
+
+    public Symbol newTerminal(int id, Location left, Location right, int value) {
+        return new ComplexIntSymbol(id, left, right, value);
     }
 
     @Override
@@ -86,11 +110,19 @@ public class ComplexSymbolFactory implements SymbolFactory {
         return new ComplexLongSymbol(id, first.getLeft(), last.getRight(), value);
     }
 
+    public Symbol newTerminal(int id, Location left, Location right, long value) {
+        return new ComplexLongSymbol(id, left, right, value);
+    }
+
     @Override
     public Symbol newSymbol(int id, List<Symbol> symList, float value) {
         var first = (ComplexSymbol) symList.get(0);
         var last = (ComplexSymbol) symList.get(symList.size() - 1);
         return new ComplexFloatSymbol(id, first.getLeft(), last.getRight(), value);
+    }
+
+    public Symbol newTerminal(int id, Location left, Location right, float value) {
+        return new ComplexFloatSymbol(id, left, right, value);
     }
 
     @Override
@@ -100,11 +132,19 @@ public class ComplexSymbolFactory implements SymbolFactory {
         return new ComplexDoubleSymbol(id, first.getLeft(), last.getRight(), value);
     }
 
+    public Symbol newTerminal(int id, Location left, Location right, double value) {
+        return new ComplexDoubleSymbol(id, left, right, value);
+    }
+
     @Override
     public Symbol newSymbol(int id, List<Symbol> symList) {
         var first = (ComplexSymbol) symList.get(0);
         var last = (ComplexSymbol) symList.get(symList.size() - 1);
         return new ComplexEmptySymbol(id, first.getLeft(), last.getRight());
+    }
+
+    public Symbol newTerminal(int id, Location left, Location right) {
+        return new ComplexEmptySymbol(id, left, right);
     }
 
     @Override
@@ -113,10 +153,18 @@ public class ComplexSymbolFactory implements SymbolFactory {
         return new ComplexObjectSymbol(id, def.getLeft(), def.getRight(), value);
     }
 
+    public Symbol newTerminal(int id, Location location, Object value) {
+        return new ComplexObjectSymbol(id, location, location, value);
+    }
+
     @Override
     public Symbol newSymbol(int id, Symbol left, boolean value) {
         var def = (ComplexSymbol) left;
         return new ComplexBoolSymbol(id, def.getLeft(), def.getRight(), value);
+    }
+
+    public Symbol newTerminal(int id, Location location, boolean value) {
+        return new ComplexBoolSymbol(id, location, location, value);
     }
 
     @Override
@@ -125,10 +173,18 @@ public class ComplexSymbolFactory implements SymbolFactory {
         return new ComplexByteSymbol(id, def.getLeft(), def.getRight(), value);
     }
 
+    public Symbol newTerminal(int id, Location location, byte value) {
+        return new ComplexByteSymbol(id, location, location, value);
+    }
+
     @Override
     public Symbol newSymbol(int id, Symbol left, short value) {
         var def = (ComplexSymbol) left;
         return new ComplexShortSymbol(id, def.getLeft(), def.getRight(), value);
+    }
+
+    public Symbol newTerminal(int id, Location location, short value) {
+        return new ComplexShortSymbol(id, location, location, value);
     }
 
     @Override
@@ -137,10 +193,18 @@ public class ComplexSymbolFactory implements SymbolFactory {
         return new ComplexCharSymbol(id, def.getLeft(), def.getRight(), value);
     }
 
+    public Symbol newTerminal(int id, Location location, char value) {
+        return new ComplexCharSymbol(id, location, location, value);
+    }
+
     @Override
     public Symbol newSymbol(int id, Symbol left, int value) {
         var def = (ComplexSymbol) left;
         return new ComplexIntSymbol(id, def.getLeft(), def.getRight(), value);
+    }
+
+    public Symbol newTerminal(int id, Location location, int value) {
+        return new ComplexIntSymbol(id, location, location, value);
     }
 
     @Override
@@ -149,10 +213,18 @@ public class ComplexSymbolFactory implements SymbolFactory {
         return new ComplexLongSymbol(id, def.getLeft(), def.getRight(), value);
     }
 
+    public Symbol newTerminal(int id, Location location, long value) {
+        return new ComplexLongSymbol(id, location, location, value);
+    }
+
     @Override
     public Symbol newSymbol(int id, Symbol left, float value) {
         var def = (ComplexSymbol) left;
         return new ComplexFloatSymbol(id, def.getLeft(), def.getRight(), value);
+    }
+
+    public Symbol newTerminal(int id, Location location, float value) {
+        return new ComplexFloatSymbol(id, location, location, value);
     }
 
     @Override
@@ -161,10 +233,18 @@ public class ComplexSymbolFactory implements SymbolFactory {
         return new ComplexDoubleSymbol(id, def.getLeft(), def.getRight(), value);
     }
 
+    public Symbol newTerminal(int id, Location location, double value) {
+        return new ComplexDoubleSymbol(id, location, location, value);
+    }
+
     @Override
     public Symbol newSymbol(int id, Symbol left) {
         var def = (ComplexSymbol) left;
         return new ComplexEmptySymbol(id, def.getLeft(), def.getRight());
+    }
+
+    public Symbol newTerminal(int id, Location location) {
+        return new ComplexEmptySymbol(id, location, location);
     }
 
     @Override
