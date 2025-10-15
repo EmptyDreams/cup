@@ -538,17 +538,17 @@ public class Production {
      *
      * @param labelName  the label name
      * @param stack_type the stack type of label?
-     * @author frankf
+     * @param offset symbol's stack offset (from the end).
+     * @author frankf, kmar
      */
     protected static String make_declaration(String labelName, String stack_type, int offset) {
         StringBuilder ret = new StringBuilder(256);
         String indent = "              ";
-        var symbolName = Main.locations ? "complex.ComplexSymbol" : "def.DefaultSymbol";
+        var symbolName = Main.customSymbolClass;
         ret.append(indent)
             .append("var ")
             .append(labelName)
-            .append("Sym = ")
-            .append("(java_cup.runtime.symbol.")
+            .append("Sym = (")
             .append(symbolName)
             .append(") ")
             .append(emit.buildStackSymReader(offset))

@@ -1,9 +1,6 @@
 
 package java_cup.runtime;
 
-import java_cup.runtime.symbol.complex.ComplexSymbol;
-import java_cup.runtime.symbol.def.DefaultSymbol;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -389,21 +386,12 @@ public abstract class lr_parser {
      * @param info    an extra object reserved for use by specialized subclasses.
      */
     public void report_error(String message, Object info) {
-        if (info instanceof ComplexSymbol) {
-            ComplexSymbol cs = (ComplexSymbol) info;
-            System.err.println(message + " for input symbol \"" + symbolFactory.getTerminalName(cs.sym) + "\" spanning from " + cs.getLeft() + " to "
-                + cs.getRight());
-            return;
+        if (info instanceof Symbol) {
+            Symbol sym = (Symbol) info;
+            sym.reportError(message);
+        } else {
+            System.err.println(message);
         }
-
-        System.err.print(message);
-        if (info instanceof DefaultSymbol) {
-            var ds = (DefaultSymbol) info;
-            if (ds.getLeft() != -1) {
-                System.err.print(" at character " + ds.getLeft() + " of input");
-            }
-        }
-        System.err.println();
     }
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */

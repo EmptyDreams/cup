@@ -126,7 +126,7 @@ public class Main {
     /* frankf added this 6/18/96 */
     /** User option -- should generator generate code for left/right values? */
     protected static boolean lr_values = true;
-    protected static boolean locations = false;
+    protected static String customSymbolClass = "java_cup.runtime.symbol.complex.ComplexSymbol";
     protected static boolean xmlactions = false;
     protected static boolean genericlabels = false;
 
@@ -203,7 +203,6 @@ public class Main {
          * frankf 6/18/96 hackish, yes, but works
          */
         emit.set_lr_values(lr_values);
-        emit.set_locations(locations);
         emit.set_xmlactions(xmlactions);
         emit.set_genericlabels(genericlabels);
         /* open output set_xmlactionsfiles */
@@ -419,6 +418,14 @@ public class Main {
                 } else {
                     ast_format = "Node%s";
                 }
+            } else if (argv[i].equals("-symbol")) {
+                int nextIndex = i + 1;
+                if (nextIndex < len && !argv[nextIndex].startsWith("-")) {
+                    ++i;
+                    customSymbolClass = argv[nextIndex];
+                } else {
+                    usage("-symbol must be followed by a class name");
+                }
             } else if (argv[i].equals("-compact_red"))
                 opt_compact_red = true;
             else if (argv[i].equals("-nosummary"))
@@ -444,8 +451,6 @@ public class Main {
                 /* frankf 6/18/96 */
             else if (argv[i].equals("-nopositions"))
                 lr_values = false;
-            else if (argv[i].equals("-locations"))
-                locations = true;
             else if (argv[i].equals("-xmlactions"))
                 xmlactions = true;
             else if (argv[i].equals("-genericlabels"))

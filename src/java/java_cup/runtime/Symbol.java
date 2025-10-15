@@ -14,7 +14,6 @@ package java_cup.runtime;
  * </p>
  * <ul>
  *   <li>Complex symbols ([ComplexSymbol] - using [Location] objects for positions</li>
- *   <li>Default symbols ([DefaultSymbol] and its subclasses) - using int values for positions</li>
  * </ul>
  *
  * @author Frank Flannery, kmar
@@ -140,6 +139,18 @@ public abstract class Symbol {
      */
     public char getAsChar() {
         throw new ClassCastException(getClass().getSimpleName() + " value can not cast to char");
+    }
+
+    /**
+     * Report a non fatal error (or warning). This method takes a message string and
+     * an additional object (to be used by specializations implemented in
+     * subclasses). Here in the base class a very simple implementation is provided
+     * which simply prints the message to System.err.
+     *
+     * @param message an error message.
+     */
+    public void reportError(String message) {
+        System.err.println(message);
     }
 
     /*****************************
