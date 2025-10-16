@@ -1,6 +1,7 @@
 package java_cup.runtime.symbol.complex;
 
 import java_cup.runtime.Symbol;
+import java_cup.runtime.SymbolFactory;
 
 public abstract class ComplexSymbol extends Symbol {
 
@@ -30,6 +31,15 @@ public abstract class ComplexSymbol extends Symbol {
         int result = left.hashCode();
         result = 31 * result + right.hashCode();
         return result;
+    }
+
+    @Override
+    public void reportError(SymbolFactory factory, String message) {
+        System.err.println(
+            message +
+                " for input symbol \"" + factory.getTerminalName(sym) +
+                "\" spanning from " + getLeft() + " to " + getRight()
+        );
     }
 
 }

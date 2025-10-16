@@ -388,7 +388,7 @@ public abstract class lr_parser {
     public void report_error(String message, Object info) {
         if (info instanceof Symbol) {
             Symbol sym = (Symbol) info;
-            sym.reportError(message);
+            sym.reportError(symbolFactory, message);
         } else {
             System.err.println(message);
         }

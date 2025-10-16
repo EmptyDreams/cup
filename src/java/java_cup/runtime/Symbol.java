@@ -147,9 +147,10 @@ public abstract class Symbol {
      * subclasses). Here in the base class a very simple implementation is provided
      * which simply prints the message to System.err.
      *
+     * @param factory the symbol factory used to create this symbol
      * @param message an error message.
      */
-    public void reportError(String message) {
+    public void reportError(SymbolFactory factory, String message) {
         System.err.println(message);
     }
 
