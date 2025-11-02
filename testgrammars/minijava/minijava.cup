@@ -1,6 +1,6 @@
 /* Minijava Grammar */
 import java_cup.runtime.*;
-import java_cup.runtime.ComplexSymbolFactory;
+import java_cup.runtime.symbol.complex.ComplexSymbolFactory;
 import java_cup.runtime.ScannerBuffer;
 import java_cup.runtime.XMLElement;
 import javax.xml.stream.XMLOutputFactory;
@@ -11,16 +11,16 @@ import javax.xml.transform.*;
 import javax.xml.transform.stream.*;
 
 parser code {: 
-  public Parser(Lexer lex, ComplexSymbolFactory sf) {
+  public MiniJavaParser(Lexer lex, ComplexSymbolFactory sf) {
     super(lex,sf);
   }
   public static void main(String[] args) throws Exception {
       // initialize the symbol factory
-      ComplexSymbolFactory csf = new ComplexSymbolFactory();
+      ComplexSymbolFactory csf = new ComplexSymbolFactory(MiniJavaSymbols.TERMINAL_NAMES, MiniJavaSymbols.NON_TERMINAL_NAMES);
       // create a buffering scanner wrapper
       ScannerBuffer lexer = new ScannerBuffer(new Lexer(new BufferedReader(new FileReader(args[0])),csf));
       // start parsing
-      Parser p = new Parser(lexer,csf);
+      MiniJavaParser p = new MiniJavaParser(lexer,csf);
       XMLElement e = (XMLElement)p.parse().value;
 
       for (XMLElement el: SyntaxTreeXPath.query(args[2],e)){
@@ -54,7 +54,7 @@ terminal TYPE, BINOP, UNOP, COMP, BBINOP, INTCONST;
 terminal IDENT,STRINGCONST;
 terminal BOOLCONST;
 
-non terminal program, decllist,decl,stmtlist,identlist,stmt,expr,cond;
+non terminal IAstNode program, decllist,decl,stmtlist,identlist,stmt,expr,cond;
 
 precedence left ELSE, UNOP, BINOP, BUNOP, BBINOP;
 
@@ -75,11 +75,11 @@ stmt ::= SEMICOLON
     | BEGIN stmtlist:sl END
     | IDENT:lhs ASSIGN expr:rhs SEMICOLON
     | IDENT:lhs ASSIGN READ LPAR RPAR SEMICOLON
-    | IDENT:lhs ASSIGN READ LPAR STRINGCONST:s RPAR SEMICOLON
+    | IDENT:lhs ASSIGN READ LPAR STRINGCONST:sc RPAR SEMICOLON
     | WRITE LPAR expr:e RPAR SEMICOLON
     | WRITE LPAR STRINGCONST:s RPAR SEMICOLON
     | IF LPAR cond:c RPAR stmt:s
-    | IF LPAR cond:c RPAR stmt:t ELSE stmt:e
+    | IF LPAR cond:c RPAR stmt:t ELSE stmt:s
     | WHILE LPAR cond:c RPAR stmt:s
     ;
 cond ::= BOOLCONST:c
@@ -94,4 +94,3 @@ expr ::= IDENT:identifier
     | BINOP expr:e
     | expr:e1 BINOP:op expr:e2
     ;
-
