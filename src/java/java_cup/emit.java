@@ -330,8 +330,8 @@ public class emit {
     }
 
     private static final Pattern _stPattern = Pattern.compile(
-        "[A-Z]{2,}(?=[A-Z][a-z]|\\b)|" +
-            "[A-Z]?[a-z]+|" +
+        "[A-Z]{2,}(?=[A-Z][a-z]|\\b|[^A-Za-z])|" +
+            "[A-Z]?[^A-Z]+|" +
             "[A-Z]+"
     );
 
@@ -344,6 +344,7 @@ public class emit {
         String[] parts = name.split("_");
         List<String> words = new ArrayList<>();
         for (String part : parts) {
+            if (part.isEmpty()) continue;
             var matcher = _stPattern.matcher(part);
             while (matcher.find()) {
                 words.add(matcher.group());
