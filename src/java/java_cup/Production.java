@@ -3,10 +3,7 @@ package java_cup;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This class represents a production in the grammar. It contains a LHS non
@@ -747,20 +744,34 @@ public class Production {
      * Check if the current expression is an empty expression
      */
     public boolean isNull() throws internal_error {
-        for (int pos = 0; pos < rhs_length(); pos++) {
-            var part = rhs(pos);
-            if (part.is_action()) continue;
-            var sym = ((symbol_part) part).the_symbol();
-            if (sym.is_non_term()) {
-                var nt = (non_terminal) sym;
-                for (Production prod : nt.productions()) {
-                    if (!prod.isNull()) return false;
-                }
-            } else {
-                return false;
-            }
+        return isNull(new HashSet<>());
+    }
+
+    /**
+     * Check if the current expression is an empty expression
+     */
+    private boolean isNull(Set<Production> visited) throws internal_error {
+        if (!visited.add(this)) {
+            return false;
         }
-        return true;
+        try {
+            for (int pos = 0; pos < rhs_length(); pos++) {
+                var part = rhs(pos);
+                if (part.is_action()) continue;
+                var sym = ((symbol_part) part).the_symbol();
+                if (sym.is_non_term()) {
+                    var nt = (non_terminal) sym;
+                    for (Production prod : nt.productions()) {
+                        if (!prod.isNull(visited)) return false;
+                    }
+                } else {
+                    return false;
+                }
+            }
+            return true;
+        } finally {
+            visited.remove(this);
+        }
     }
 
     /**
