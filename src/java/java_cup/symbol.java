@@ -218,7 +218,6 @@ public abstract class symbol {
         Map<String, production_part> symbols,
         List<production_part> sepList, boolean allowTail, boolean allowEmpty
     ) throws internal_error {
-        boolean isAstNode = Main.ast_format != null;
         var typeName = stack_type();
         // convert primitive types to their wrapper (because the jvm does not support primitive generics)
         switch (typeName) {
@@ -246,7 +245,7 @@ public abstract class symbol {
                     newNt,
                     new production_part[]{new symbol_part(this)},
                     1,
-                    isAstNode ? null : "var list = new ArrayList<" + finalType + ">();\n"
+                    "var list = new ArrayList<" + finalType + ">();\n"
                         + "list.add(" + emit.buildStackValueReader(finalType, 0) + ");\n"
                         + "RESULT = list;"
                 );
