@@ -24,6 +24,11 @@ public class AstNodeBuilder {
         if (nt.isAnno() && fromProd == null) return null;
         if (typeCache.containsKey(nt)) return typeCache.get(nt);
         var type = new VirtualType(true);
+        if (type.isAnno) {
+            type.className = emit.getAnnoExprName((non_terminal) fromProd.lhs().the_symbol(), fromProd, index);
+        } else {
+            type.className = nt.astClassName();
+        }
         if (!nt.isAnno()) typeCache.put(nt, type);
         Map<String, VirtualProduction> prods = new HashMap<>();
         if (nt.isOptBox()) {
@@ -87,11 +92,6 @@ public class AstNodeBuilder {
         if (!nt.isLaAnno() && nt.isAnno()) return null;
         type.prods = List.copyOf(prods.values());
         type.isAnno = fromProd != null;
-        if (type.isAnno) {
-            type.className = emit.getAnnoExprName((non_terminal) fromProd.lhs().the_symbol(), fromProd, index);
-        } else {
-            type.className = nt.astClassName();
-        }
         return type;
     }
 
