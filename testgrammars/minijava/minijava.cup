@@ -54,43 +54,36 @@ terminal TYPE, BINOP, UNOP, COMP, BBINOP, INTCONST;
 terminal IDENT,STRINGCONST;
 terminal BOOLCONST;
 
-non terminal IAstNode program, decllist,decl,stmtlist,identlist,stmt,expr,cond;
+non terminal IAstNode program,decl,stmt,expr,cond;
 
 precedence left ELSE, UNOP, BINOP, BUNOP, BBINOP;
 
-program   ::=  decllist:d stmtlist:s
-    ;
-decllist  ::=  decl:d decllist:dl
-    | /* empty */
-    ;
-stmtlist  ::= stmtlist:sl stmt:s
-    | /* empty */
-        ;
-decl ::= TYPE IDENT:identifier identlist:il  SEMICOLON
-    ;
-identlist  ::= identlist:il COMMA IDENT:identifier
-    | /* empty */
-    ;
+program   ::=  decl*:declList stmt*:stmtList;
+
+decl ::= TYPE IDENT[COMMA !]+:idList SEMICOLON;
+
 stmt ::= SEMICOLON
-    | BEGIN stmtlist:sl END
+    | BEGIN stmt*:stmtList END
     | IDENT:lhs ASSIGN expr:rhs SEMICOLON
     | IDENT:lhs ASSIGN READ LPAR RPAR SEMICOLON
-    | IDENT:lhs ASSIGN READ LPAR STRINGCONST:sc RPAR SEMICOLON
-    | WRITE LPAR expr:e RPAR SEMICOLON
-    | WRITE LPAR STRINGCONST:s RPAR SEMICOLON
-    | IF LPAR cond:c RPAR stmt:s
-    | IF LPAR cond:c RPAR stmt:t ELSE stmt:s
-    | WHILE LPAR cond:c RPAR stmt:s
+    | IDENT:lhs ASSIGN READ LPAR STRINGCONST:stringConst RPAR SEMICOLON
+    | WRITE LPAR expr:expr RPAR SEMICOLON
+    | WRITE LPAR STRINGCONST:stringConst RPAR SEMICOLON
+    | IF LPAR cond:cond RPAR stmt:stmt
+    | IF LPAR cond:cond RPAR stmt:stmt ELSE stmt:elseStmt
+    | WHILE LPAR cond:cond RPAR stmt:stmt
     ;
+
 cond ::= BOOLCONST:c
-    | LPAR cond:c RPAR
-    | expr:e1 COMP:op expr:e2
-    | BUNOP cond:c
-    | cond:c1 BBINOP:op cond:c2
+    | LPAR cond:cond RPAR
+    | expr:leftExpr COMP:op expr:rightExpr
+    | BUNOP cond:cond
+    | cond:leftCond BBINOP:op cond:rightCond
     ;
+
 expr ::= IDENT:identifier
     | INTCONST:constant
-    | LPAR expr:e RPAR
-    | BINOP expr:e
-    | expr:e1 BINOP:op expr:e2
+    | LPAR expr:expr RPAR
+    | BINOP expr:expr
+    | expr:leftExpr BINOP:op expr:rightExpr
     ;
