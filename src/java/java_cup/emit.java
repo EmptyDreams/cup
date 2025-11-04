@@ -260,8 +260,6 @@ public class emit {
     /* frankf 6/18/96 */
     protected static boolean _lr_values;
     protected static boolean _locations;
-    protected static boolean _xmlactions;
-    protected static boolean _genericlabels;
 
     static boolean hasAnnoCode = false;
 
@@ -280,25 +278,9 @@ public class emit {
         _lr_values = b;
     }
 
-    protected static void set_locations(boolean b) {
-        _locations = b;
-    }
-
-    protected static void set_genericlabels(boolean b) {
-        _genericlabels = b;
-    }
-
-    protected static void set_xmlactions(boolean b) {
-        _xmlactions = b;
-        if (!b) return;
-        _locations = true;
-        _lr_values = true;
-    }
 
     // Hm Added clear to clear all static fields
     public static void clear() {
-        _genericlabels = false;
-        _xmlactions = false;
         _locations = false;
         _lr_values = true;
         action_code = null;
@@ -1294,7 +1276,6 @@ public class emit {
         }
         if (locations())
             out.println("import java_cup.runtime.symbol.complex.Location;");
-        out.println("import java_cup.runtime.XMLElement;");
 
         /* class header */
         out.println();
@@ -1409,10 +1390,7 @@ public class emit {
         }
 
         /* put out the action code class */
-        if (!_xmlactions)
-            emit_action_code(out, start_prod);
-        else
-            emit_xmlaction_code(out, start_prod);
+        emit_action_code(out, start_prod);
 
         if (hasAnnoCode)
             emit_inline_action_code(out);
@@ -1456,208 +1434,6 @@ public class emit {
                 printer.println(clazz.toCodeString(0));
             }
         }
-    }
-
-    /**
-     * Emit code for generic XML parsetree output.
-     *
-     * @param out        stream to produce output on.
-     * @param start_prod the start production of the grammar.
-     */
-    protected static void emit_xmlaction_code(PrintWriter out, Production start_prod) throws internal_error {
-        Production prod;
-
-        long start_time = System.currentTimeMillis();
-
-        /* class header */
-        out.println();
-        out.println("/** Cup generated class to encapsulate user supplied action code.*/");
-        out.println("class " + pre("actions") + typeArgument() + " {");
-        /* user supplied code */
-        if (action_code != null) {
-            out.println();
-            out.println(action_code);
-        }
-
-        /* field for parser object */
-        out.println("  private final " + parser_class_name + typeArgument() + " parser;");
-
-        out.println();
-        for (int instancecounter = 0; instancecounter <= Production.number() / UPPER_LIMIT; instancecounter++) {
-            out.println("  /** Method " + instancecounter + " with the actual generated action code for actions "
-                + (instancecounter * UPPER_LIMIT) + " to " + ((instancecounter + 1) * UPPER_LIMIT) + ". */");
-            out.println("  public final java_cup.runtime.Symbol " + pre("do_action_part")
-                + String.format("%08d", instancecounter) + "(");
-            out.println("    int                        " + pre("act_num,"));
-            out.println("    java_cup.runtime.ArrayStack<java_cup.runtime.Symbol>    " + pre("stack,"));
-            out.println("    int                        " + pre("top)"));
-            out.println("    throws java.lang.Exception");
-            out.println("    {");
-            out.println("      /* Symbol object for return from actions */");
-            out.println("      java_cup.runtime.Symbol " + pre("result") + ";");
-            out.println();
-            out.println("      /* select the action based on the action number */");
-            out.println("      switch (" + pre("act_num") + ")");
-            out.println("        {");
-            // START Switch
-            /* emit action code for each production as a separate case */
-            int proditeration = instancecounter * UPPER_LIMIT;
-            prod = Production.find(proditeration);
-            for (; proditeration < Math.min((instancecounter + 1) * UPPER_LIMIT,
-                Production.number()); prod = Production.find(++proditeration)) {
-                /* case label */
-                out.println("          /*. . . . . . . . . . . . . . . . . . . .*/");
-                out.println("          case " + prod.index() + ": // " + prod.to_simple_string());
-
-                /* give them their own block to work in */
-                out.println("            {");
-
-                out.println("                XMLElement RESULT;");
-
-                // Generate the XML Output
-                StringBuilder nested = new StringBuilder();
-                for (int rhsi = 0; rhsi < prod.rhs_length(); rhsi++) {
-                    if (!(prod.rhs(rhsi) instanceof symbol_part))
-                        continue;
-                    String label = prod.rhs(rhsi).label();
-                    symbol_part symPart = (symbol_part) prod.rhs(rhsi);
-                    if (label == null) {
-                        if (!_genericlabels)
-                            continue;
-                        label = symPart.the_symbol().name() + rhsi;
-                    }
-                    if (symPart.the_symbol().is_non_term())
-                        nested.append(",(XMLElement)").append(label);
-                    else
-                        nested.append(",new XMLElement.Terminal(")
-                            .append(label)
-                            .append("xleft,\"")
-                            .append(label)
-                            .append("\",")
-                            .append(label)
-                            .append(",")
-                            .append(label)
-                            .append("xright)");
-                }
-
-                if (prod.action() != null && prod.action().code_string() != null)
-                    out.println(prod.action().code_string());
-
-                // determine the variant:
-                int variant = 0;
-                for (int i = 0; i < proditeration; i++) {
-                    if (Production.find(i).lhs().equals(prod.lhs()))
-                        variant++;
-                }
-
-                String lhsname = prod.lhs().the_symbol().name().replace('$', '_');
-                out.println(
-                    "                RESULT = new XMLElement.NonTerminal(\"" + lhsname + "\"," + variant + nested + ");");
-
-                /*
-                 * Create the code that assigns the left and right values of the new Symbol that
-                 * the production is reducing to
-                 */
-                if (emit.lr_values()) {
-                    int loffset;
-                    String leftstring, rightstring;
-                    rightstring = buildStackSymReader(0);
-                    if (prod.rhs_length() == 0)
-                        leftstring = rightstring;
-                    else {
-                        loffset = prod.rhs_length() - 1;
-                        leftstring = buildStackSymReader(loffset);
-                    }
-                    out.println("              " + pre("result") + " = getSymbolFactory().newSymbol(" + "\""
-                        + prod.lhs().the_symbol().name() + "\"," + prod.lhs().the_symbol().index() + ", " + leftstring + ", "
-                        + rightstring + ", RESULT);");
-                } else {
-                    out.println("              " + pre("result") + " = getSymbolFactory().newSymbol(" + "\""
-                        + prod.lhs().the_symbol().name() + "\"," + prod.lhs().the_symbol().index() + ", RESULT);");
-                }
-
-                /* end of their block */
-                out.println("            }");
-
-                /* if this was the start production, do action for accept */
-                if (prod == start_prod) {
-                    out.println("          /* ACCEPT */");
-                    out.println("          done_parsing();");
-                }
-
-                /* code to return lhs symbol */
-                out.println("          return " + pre("result") + ";");
-                out.println();
-            }
-
-            // END Switch
-            out.println("          /* . . . . . .*/");
-            out.println("          default:");
-            out.println("            throw new Exception(");
-            out.println(
-                "               \"Invalid action number \"+" + pre("act_num") + "+\"found in " + "internal parse table\");");
-            out.println();
-            out.println("        }");
-            out.println("    } /* end of method */");
-        }
-
-        /* action method head */
-        out.println();
-        out.println("  /** Method splitting the generated action code into several parts. */");
-        out.println("  public final java_cup.runtime.Symbol " + pre("do_action") + "(");
-        out.println("    int                        " + pre("act_num,"));
-        out.println("    java_cup.runtime.ArrayStack<java_cup.runtime.Symbol>    " + pre("stack,"));
-        out.println("    int                        " + pre("top)"));
-        out.println("    throws java.lang.Exception");
-        out.println("    {");
-
-        if (Production.number() < UPPER_LIMIT) { // Make it simple for the optimizer to inline!
-            out.println("              return " + pre("do_action_part") + String.format("%08d", 0) + "(");
-            out.println("                               " + pre("act_num,"));
-            out.println("                               " + pre("stack,"));
-            out.println("                               " + pre("top);"));
-            out.println("    }");
-
-            /* end of class */
-            out.println("}");
-            out.println();
-
-            action_code_time = System.currentTimeMillis() - start_time;
-            return;
-        }
-
-        /* switch top */
-        out.println("      /* select the action handler based on the action number */");
-        out.println("      switch (" + pre("act_num") + "/" + UPPER_LIMIT + ")");
-        out.println("        {");
-
-        /* emit action code for each production as a separate case */
-        for (int instancecounter = 0; instancecounter <= Production.number() / UPPER_LIMIT; instancecounter++) {
-            /* case label */
-            out.println("          /*. . . . . . . . " + (instancecounter * UPPER_LIMIT) + " < #action < "
-                + ((instancecounter + 1) * UPPER_LIMIT) + ". . . . . . . . . . . .*/");
-            out.println("          case " + instancecounter + ": ");
-            out.println("              return " + pre("do_action_part")
-                + String.format("%08d", instancecounter) + "(");
-            out.println("                               " + pre("act_num,"));
-            out.println("                               " + pre("stack,"));
-            out.println("                               " + pre("top);"));
-        }
-
-        out.println("          /* . . . no valid action number: . . .*/");
-        out.println("          default:");
-        out.println("            throw new Exception(\"Invalid action number found in internal parse table\");");
-        out.println();
-        out.println("        }      /* end of switch */");
-
-        /* end of method */
-        out.println("    }");
-
-        /* end of class */
-        out.println("}");
-        out.println();
-
-        action_code_time = System.currentTimeMillis() - start_time;
     }
 
     /*-----------------------------------------------------------*/

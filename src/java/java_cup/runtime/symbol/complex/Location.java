@@ -1,8 +1,5 @@
 package java_cup.runtime.symbol.complex;
 
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
-
 /**
  * Store the location of the symbol in the source file, you can inherit this class for more precise positioning.
  *
@@ -68,22 +65,6 @@ public class Location {
     @Override
     public String toString() {
         return "line=" + getLine() + ", column=" + getColumn();
-    }
-
-    /**
-     * Writes the location information directly into an XML document
-     *
-     * @param writer      the destination XML Document
-     * @param orientation adds details about the orientation of this location as an
-     *                    attribute; often used with the strings "left" or "right"
-     */
-    @SuppressWarnings("SpellCheckingInspection")
-    public void toXML(XMLStreamWriter writer, String orientation) throws XMLStreamException {
-        writer.writeStartElement("location");
-        writer.writeAttribute("orientation", orientation);
-        writer.writeAttribute("linenumber", line + "");
-        writer.writeAttribute("columnnumber", column + "");
-        writer.writeEndElement();
     }
 
     @Override

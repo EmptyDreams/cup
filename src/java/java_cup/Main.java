@@ -7,68 +7,7 @@ import java.io.*;
 
 /**
  * This class serves as the main driver for the JavaCup system. It accepts user
- * options and coordinates overall control flow. The main flow of control
- * includes the following activities:
- * <ul>
- * <li>Parse user supplied arguments and options.
- * <li>Open output files.
- * <li>Parse the specification from standard input.
- * <li>Check for unused terminals, non-terminals, and productions.
- * <li>Build the state machine, tables, etc.
- * <li>Output the generated code.
- * <li>Close output files.
- * <li>Print a summary if requested.
- * </ul>
- * Options to the main program include:
- * <dl>
- * <dt>-package name
- * <dd>specify package generated classes go in [default none]
- * <dt>-parser name
- * <dd>specify parser class name [default "parser"]
- * <dt>-symbols name
- * <dd>specify name for symbol constant class [default "sym"]
- * <dt>-interface
- * <dd>emit symbol constant <i>interface</i>, rather than class
- * <dt>-nonterms
- * <dd>put non terminals in symbol constant class
- * <dt>-ast
- * <dd>auto generates AST. The format param defines node class naming,
- *     where %s is after the first underscore and %p is before,
- *     defaulting to "Node%s".
- * <dt>-expect #
- * <dd>number of conflicts expected/allowed [default 0]
- * <dt>-compact_red
- * <dd>compact tables by defaulting to most frequent reduce
- * <dt>-nowarn
- * <dd>don't warn about useless productions, etc.
- * <dt>-nosummary
- * <dd>don't print the usual summary of parse states, etc.
- * <dt>-progress
- * <dd>print messages to indicate progress of the system
- * <dt>-time
- * <dd>print time usage summary
- * <dt>-dump_grammar
- * <dd>produce a dump of the symbols and grammar
- * <dt>-dump_states
- * <dd>produce a dump of parse state machine
- * <dt>-dump_tables
- * <dd>produce a dump of the parse tables
- * <dt>-dump
- * <dd>produce a dump of all of the above
- * <dt>-debug
- * <dd>turn on debugging messages within JavaCup
- * <dt>-nopositions
- * <dd>don't generate the positions code
- * <dt>-locations
- * <dd>generate handles xleft/xright for symbol positions in actions
- * <dt>-noscanner
- * <dd>don't refer to java_cup.runtime.Scanner in the parser (for compatibility
- * with old runtimes)
- * <dt>-version
- * <dd>print version information for JavaCUP and halt.
- * <dt>-auto_clear
- * <dd>automatically empty the target folder before generating output, do not delete subfolders and their contents
- * </dl>
+ * options and coordinates overall control flow.
  *
  * @author Frank Flannery
  * @version last updated: 7/3/96
@@ -127,8 +66,6 @@ public class Main {
     /** User option -- should generator generate code for left/right values? */
     protected static boolean lr_values = true;
     protected static String customSymbolClass = "java_cup.runtime.symbol.complex.ComplexSymbol";
-    protected static boolean xmlactions = false;
-    protected static boolean genericlabels = false;
 
     /** User option -- should symbols be put in a class or an interface? [CSA] */
     protected static boolean sym_interface = false;
@@ -203,9 +140,6 @@ public class Main {
          * frankf 6/18/96 hackish, yes, but works
          */
         emit.set_lr_values(lr_values);
-        emit.set_xmlactions(xmlactions);
-        emit.set_genericlabels(genericlabels);
-        /* open output set_xmlactionsfiles */
         if (print_progress)
             System.err.println("Opening files...");
         /* use a buffered version of standard input */
@@ -334,8 +268,6 @@ public class Main {
             + "    -nosummary          don't print the usual summary of parse states, etc.\n"
             + "    -nopositions        don't propagate the left and right token position values\n"
             + "    -locations          generate handles xleft/xright for symbol positions in actions\n"
-            + "    -xmlactions         make the generated parser yield its parse tree as XML\n"
-            + "    -genericlabels      automatically generate labels to all symbols in XML mode\n"
             + "    -noscanner          don't refer to java_cup.runtime.Scanner\n"
             + "    -progress           print messages to indicate progress of the system\n"
             + "    -time               print time usage summary\n"
@@ -461,10 +393,6 @@ public class Main {
                 /* frankf 6/18/96 */
             else if (argv[i].equals("-nopositions"))
                 lr_values = false;
-            else if (argv[i].equals("-xmlactions"))
-                xmlactions = true;
-            else if (argv[i].equals("-genericlabels"))
-                genericlabels = true;
                 /* CSA 12/21/97 */
             else if (argv[i].equals("-interface"))
                 sym_interface = true;

@@ -602,7 +602,7 @@ public class Production {
                 symbol_part part = (symbol_part) rhs[pos];
                 String label;
                 /* if it has a label, make declaration! */
-                if ((label = part.label()) != null || emit._xmlactions) {
+                if ((label = part.label()) != null) {
                     if (part.isExistCheck() && !part.the_symbol().isOptBox()) continue;
                     if (label == null)
                         label = part.the_symbol().name() + pos;
