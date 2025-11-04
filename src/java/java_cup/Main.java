@@ -219,10 +219,20 @@ public class Main {
             File[] files = dest_dir.listFiles();
             if (files != null) {
                 for (File file : files) {
-                    if (file.isFile()) {
-                        //noinspection ResultOfMethodCallIgnored
-                        file.delete();
+                    if (file.isDirectory()) {
+                        throw new internal_error(
+                            "Directory should only contain java files when autoClear is enabled, but found a directory: " + file.getName()
+                        );
                     }
+                    if (!file.getName().endsWith(".java")) {
+                        throw new internal_error(
+                            "Directory should only contain java files when autoClear is enabled, but found: " + file.getName()
+                        );
+                    }
+                }
+                for (File file : files) {
+                    //noinspection ResultOfMethodCallIgnored
+                    file.delete();
                 }
             }
         }
