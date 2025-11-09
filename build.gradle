@@ -1,0 +1,86 @@
+plugins {
+    id 'java'
+}
+
+group = 'java-cup'
+version = '11b'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    jflex
+    cup
+}
+
+dependencies {
+    jflex files('bin/JFlex.jar')
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/java', 'build/generated']
+        }
+    }
+}
+
+compileJava {
+    options.compilerArgs << '-parameters'
+}
+
+tasks.register('generateCupParser', JavaExec) {
+    mainClass = 'java_cup.Main'
+    classpath = files('bin/java-cup-11.jar')
+    args = [
+            '-parser', 'parser',
+            '-symbols', 'sym',
+            '-interface',
+            '-nonterms',
+            '-destdir', 'build/generated/java_cup',
+            'src/cup/parser.cup'
+    ]
+    workingDir = project.projectDir
+}
+
+tasks.register('generateJFlexLexer', JavaExec) {
+    mainClass = 'JFlex.Main'
+    classpath = configurations.jflex
+    args = ['-d', 'build/generated/java_cup', 'src/jflex/Lexer.jflex']
+    workingDir = project.projectDir
+}
+
+compileJava.dependsOn generateCupParser
+generateJFlexLexer.dependsOn generateCupParser
+compileJava.dependsOn generateJFlexLexer
+
+jar {
+    archiveBaseName = 'java-cup-' + project.version
+    manifest {
+        attributes(
+                'Main-Class': 'java_cup.Main'
+        )
+    }
+}
+
+tasks.register('runtimeJar', Jar) {
+    archiveBaseName = 'java-cup-' + project.version + '-runtime'
+    dependsOn classes
+    from sourceSets.main.output
+    include 'java_cup/runtime/**'
+}
+
+// 配置 jar 任务，使其在执行完成后自动执行 runtimeJar 任务
+// 这样只需运行 jar 任务就能同时得到两个版本的 JAR 文件
+jar.finalizedBy runtimeJar
+
+artifacts {
+    archives jar
+    archives runtimeJar
+}
