@@ -3,9 +3,6 @@ package java_cup;
 
 import java_cup.runtime.Symbol;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-
 public class ErrorManager {
 
     private static ErrorManager errorManager;
@@ -74,20 +71,6 @@ public class ErrorManager {
 //        System.err.println("Error at ("+sym.left+"/"+sym.right+")@"+convSymbol(sym)+" : "+message);
         System.err.println("Error: " + message + " @ " + sym);
         errors++;
-    }
-
-    private static String convSymbol(Symbol symbol) {
-        Object value = symbol.value();
-        String result = (value == null) ? "" : " (\"" + value + "\")";
-        Field[] fields = sym.class.getFields();
-        for (Field field : fields) {
-            if (!Modifier.isPublic(field.getModifiers())) continue;
-            try {
-                if (field.getInt(null) == symbol.sym) return field.getName() + result;
-            } catch (Exception ignored) {
-            }
-        }
-        return symbol + result;
     }
 
 }
