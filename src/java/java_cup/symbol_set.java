@@ -11,9 +11,9 @@ import java.util.Map;
  *
  * @author Scott Hudson
  * @version last updated: 11/25/95
- * @see java_cup.symbol
+ * @see GrammarSymbol
  */
-public class symbol_set implements Iterable<symbol> {
+public class symbol_set implements Iterable<GrammarSymbol> {
 
     /*-----------------------------------------------------------*/
     /*--- Constructor(s) ----------------------------------------*/
@@ -41,11 +41,11 @@ public class symbol_set implements Iterable<symbol> {
     /**
      * A hash table to hold the set. Symbols are keyed using their name string.
      */
-    protected Map<String, symbol> _all = new HashMap<>(11);
+    protected Map<String, GrammarSymbol> _all = new HashMap<>(11);
 
     /** Access to all elements of the set. */
     @Override
-    public Iterator<symbol> iterator() {
+    public Iterator<GrammarSymbol> iterator() {
         return _all.values().iterator();
     }
 
@@ -76,7 +76,7 @@ public class symbol_set implements Iterable<symbol> {
      *
      * @param sym the symbol we are looking for.
      */
-    public boolean contains(symbol sym) {
+    public boolean contains(GrammarSymbol sym) {
         return _all.containsKey(sym.name());
     }
 
@@ -119,7 +119,7 @@ public class symbol_set implements Iterable<symbol> {
      * @param sym the symbol we are adding.
      * @return true if this changes the set.
      */
-    public boolean add(symbol sym) throws internal_error {
+    public boolean add(GrammarSymbol sym) throws internal_error {
         not_null(sym);
         /* if we had a previous, this is no change */
         return _all.put(sym.name(), sym) == null;
@@ -132,7 +132,7 @@ public class symbol_set implements Iterable<symbol> {
      *
      * @param sym the symbol we are removing.
      */
-    public void remove(symbol sym) throws internal_error {
+    public void remove(GrammarSymbol sym) throws internal_error {
         not_null(sym);
         _all.remove(sym.name());
     }

@@ -18,7 +18,7 @@ import java.util.Map;
  * @see java_cup.terminal
  * @see java_cup.non_terminal
  */
-public abstract class symbol {
+public abstract class GrammarSymbol {
 
     /*-----------------------------------------------------------*/
     /*--- Constructor(s) ----------------------------------------*/
@@ -30,7 +30,7 @@ public abstract class symbol {
      * @param nm the name of the symbol.
      * @param tp a string with the type name.
      */
-    public symbol(String nm, String tp) {
+    public GrammarSymbol(String nm, String tp) {
         /* sanity check */
         if (nm == null)
             nm = "";
@@ -49,7 +49,7 @@ public abstract class symbol {
      *
      * @param nm the name of the symbol.
      */
-    public symbol(String nm) {
+    public GrammarSymbol(String nm) {
         this(nm, null);
     }
 
@@ -78,7 +78,7 @@ public abstract class symbol {
     public String astClassName() {
         String type = stack_type();
         if (type.equals("IAstNode")) {
-            return symbol.getNtNodeClassName(name());
+            return GrammarSymbol.getNtNodeClassName(name());
         } else if (type.startsWith("List<")) {
             return "ArrayList<" + type.substring(5);
         }
@@ -137,7 +137,7 @@ public abstract class symbol {
     /*-----------------------------------------------------------*/
 
     private non_terminal _optBox = null;
-    private symbol _optContent = null;
+    private GrammarSymbol _optContent = null;
 
     /**
      * Check if the current symbol is {@code ?} The nullable symbol produced by the operator.
@@ -149,7 +149,7 @@ public abstract class symbol {
     /**
      * If this symbol is an OptBox or ListBox, returns the symbol it wraps, otherwise returns null.
      */
-    public symbol getOptContent() {
+    public GrammarSymbol getOptContent() {
         return _optContent;
     }
 
@@ -178,14 +178,14 @@ public abstract class symbol {
         }
         new Production(newNt, new production_part[0], 0, emptyAction);
         _optBox = newNt;
-        ((symbol) newNt)._optBox = newNt;
-        ((symbol) newNt)._optContent = this;
+        ((GrammarSymbol) newNt)._optBox = newNt;
+        ((GrammarSymbol) newNt)._optContent = this;
         symbols.put(newNt.name(), new symbol_part(newNt));
         return newNt;
     }
 
     private final Map<List<production_part>, ObjectPair<non_terminal, non_terminal>> _listBoxCache = new HashMap<>();
-    private symbol _listElementSymbol = null;
+    private GrammarSymbol _listElementSymbol = null;
 
     public boolean isListBox() {
         return _listElementSymbol != null;
@@ -196,7 +196,7 @@ public abstract class symbol {
      *
      * @return the element type, or null if not a list box or element type is not set
      */
-    public symbol getListElementContent() {
+    public GrammarSymbol getListElementContent() {
         return _listElementSymbol;
     }
 
@@ -240,7 +240,7 @@ public abstract class symbol {
             try {
                 var newNt = non_terminal.create_new("_EBNF_LIST_", listType);
                 newNt._isAnno = true;
-                ((symbol) newNt)._listElementSymbol = this;
+                ((GrammarSymbol) newNt)._listElementSymbol = this;
                 new Production(
                     newNt,
                     new production_part[]{new symbol_part(this)},
@@ -296,7 +296,7 @@ public abstract class symbol {
         var listType = emit.buildListExpr(type);
         var newNt = non_terminal.create_new("_EBNF_LIST_TAIL_", listType);
         newNt._isAnno = true;
-        ((symbol) newNt)._listElementSymbol = nt.getListElementContent();
+        ((GrammarSymbol) newNt)._listElementSymbol = nt.getListElementContent();
         new Production(
             newNt,
             new production_part[]{new symbol_part(nt)},

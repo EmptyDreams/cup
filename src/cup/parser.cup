@@ -236,7 +236,7 @@ action code {:
       if (sp == null) {
 	System.err.println("Could find terminal " + term + " while declaring precedence");
       } else {
-	java_cup.symbol sym = sp.the_symbol();
+	java_cup.GrammarSymbol sym = sp.the_symbol();
 	if (sym instanceof terminal) 
 	  ((terminal)sym).set_precedence(_cur_side, _cur_prec);
 	else System.err.println("Precedence declaration: Can't find terminal " + term);
@@ -258,7 +258,7 @@ action code {:
   private void handle_rhs_expr(
     boolean is_prec, String term_name, boolean is_namer, String prod_name, boolean isSubList
   ) throws Exception {
-    java_cup.symbol sym = null;
+    java_cup.GrammarSymbol sym = null;
     if (lhs_nt != null) {
       non_terminal subNt = null;
       if (!rhsPartsCache.isEmpty() && isSubList) {

@@ -575,7 +575,7 @@ public class emit {
                     // only interested in non-terminal symbols.
                     if (!(prod.rhs(i) instanceof symbol_part))
                         continue;
-                    symbol s = ((symbol_part) prod.rhs(i)).the_symbol();
+                    GrammarSymbol s = ((symbol_part) prod.rhs(i)).the_symbol();
                     if (!(s instanceof non_terminal))
                         continue;
                     // skip this non-terminal unless it corresponds to

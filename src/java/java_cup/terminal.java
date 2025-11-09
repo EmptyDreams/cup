@@ -12,7 +12,7 @@ import java.util.Map;
  * @author Frank Flannery
  * @version last updated: 7/3/96
  */
-public class terminal extends symbol {
+public class terminal extends GrammarSymbol {
 
     /*-----------------------------------------------------------*/
     /*--- Constructor(s) ----------------------------------------*/

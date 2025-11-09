@@ -181,7 +181,7 @@ public class lalr_item extends lr_item_core {
         terminal_set result;
         int pos;
         production_part part;
-        symbol sym;
+        GrammarSymbol sym;
 
         /* sanity check */
         if (dot_at_end())
@@ -233,7 +233,7 @@ public class lalr_item extends lr_item_core {
      */
     public boolean lookahead_visible() throws internal_error {
         production_part part;
-        symbol sym;
+        GrammarSymbol sym;
 
         /*
          * if the dot is at the end, we have a problem, but the cleanest thing to do is

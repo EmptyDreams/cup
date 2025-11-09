@@ -12,7 +12,7 @@ public class AstNodeBuilder {
 
     private static final Map<non_terminal, VirtualType> typeCache = new HashMap<>();
 
-    public static VirtualType buildGraph(symbol sym) throws internal_error {
+    public static VirtualType buildGraph(GrammarSymbol sym) throws internal_error {
         if (sym.is_non_term() && ("IAstNode".equals(sym.stack_type()))) {
             return buildGraph((non_terminal) sym, null, -1);
         } else {

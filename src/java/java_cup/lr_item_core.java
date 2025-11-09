@@ -101,7 +101,7 @@ public class lr_item_core {
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
     /** Cache of symbol after the dot. */
-    protected symbol _symbol_after_dot = null;
+    protected GrammarSymbol _symbol_after_dot = null;
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
@@ -116,7 +116,7 @@ public class lr_item_core {
      * Return the symbol after the dot. If there is no symbol after the dot we
      * return null.
      */
-    public symbol symbol_after_dot() {
+    public GrammarSymbol symbol_after_dot() {
         /* use the cached symbol */
         return _symbol_after_dot;
     }
@@ -129,7 +129,7 @@ public class lr_item_core {
      */
     public non_terminal dot_before_nt() {
         /* get the symbol after the dot */
-        symbol sym = symbol_after_dot();
+        GrammarSymbol sym = symbol_after_dot();
 
         /* if it exists and is a non terminal, return it */
         if (sym != null && sym.is_non_term())

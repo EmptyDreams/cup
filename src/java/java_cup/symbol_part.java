@@ -20,11 +20,11 @@ public class symbol_part extends production_part {
      * @param sym the symbol that this part is made up of.
      * @param lab an optional label string for the part.
      */
-    public symbol_part(symbol sym, String lab) throws internal_error {
+    public symbol_part(GrammarSymbol sym, String lab) throws internal_error {
         this(sym, lab, null);
     }
 
-    public symbol_part(symbol sym, String lab, String type) throws internal_error {
+    public symbol_part(GrammarSymbol sym, String lab, String type) throws internal_error {
         super(lab, type);
         if (sym == null)
             throw new internal_error("Attempt to construct a symbol_part with a null symbol");
@@ -38,7 +38,7 @@ public class symbol_part extends production_part {
      *
      * @param sym the symbol that this part is made up of.
      */
-    public symbol_part(symbol sym) throws internal_error {
+    public symbol_part(GrammarSymbol sym) throws internal_error {
         this(sym, null);
     }
 
@@ -47,10 +47,10 @@ public class symbol_part extends production_part {
     /*-----------------------------------------------------------*/
 
     /** The symbol that this part is made up of. */
-    protected symbol _the_symbol;
+    protected GrammarSymbol _the_symbol;
 
     /** The symbol that this part is made up of. */
-    public symbol the_symbol() {
+    public GrammarSymbol the_symbol() {
         return _the_symbol;
     }
 

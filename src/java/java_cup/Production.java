@@ -793,7 +793,7 @@ public class Production {
             production_part part = rhs(pos);
             /* only look at non-actions */
             if (!part.is_action()) {
-                symbol sym = ((symbol_part) part).the_symbol();
+                GrammarSymbol sym = ((symbol_part) part).the_symbol();
                 /* if its a terminal we are definitely not nullable */
                 if (!sym.is_non_term()) {
                     return set_nullable(false);
@@ -827,7 +827,7 @@ public class Production {
         for (int part = 0; part < rhs_length(); part++) {
             /* only look at non-actions */
             if (!rhs(part).is_action()) {
-                symbol sym = ((symbol_part) rhs(part)).the_symbol();
+                GrammarSymbol sym = ((symbol_part) rhs(part)).the_symbol();
                 /* is it a non-terminal? */
                 if (sym.is_non_term()) {
                     /* add in current firsts from that NT */
@@ -865,7 +865,7 @@ public class Production {
         int thisLen = rhs_length(), thatLen = other.rhs_length();
         while (true) {
             String thisLabel = null, thatLabel = null;
-            symbol thisSym = null, thatSym = null;
+            GrammarSymbol thisSym = null, thatSym = null;
             while (thisIndex != thisLen) {
                 var part = _rhs[thisIndex++];
                 var label = part.label();

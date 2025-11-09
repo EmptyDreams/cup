@@ -227,7 +227,7 @@ public class lalr_state {
      * @param on_sym the symbol the transition is under.
      * @param to_st  the state the transition goes to.
      */
-    public void add_transition(symbol on_sym, lalr_state to_st) throws internal_error {
+    public void add_transition(GrammarSymbol on_sym, lalr_state to_st) throws internal_error {
         /* create a new transition object and put it in our list */
         _transitions = new lalr_transition(on_sym, to_st, _transitions);
     }
@@ -684,7 +684,7 @@ public class lalr_state {
      * @param conflict_sym the index of the symbol conflict occurs under.
      */
     protected void report_shift_reduce(lalr_item red_itm, int conflict_sym) throws internal_error {
-        symbol shift_sym;
+        GrammarSymbol shift_sym;
 
         /* emit top part of message including the reduce item */
         StringBuilder message = new StringBuilder("*** Shift/Reduce conflict found in state #" + index() + "\n" + "  between "

@@ -13,7 +13,7 @@ import java.util.*;
  * @author Scott Hudson
  * @version last updated: 11/25/95
  */
-public class non_terminal extends symbol {
+public class non_terminal extends GrammarSymbol {
 
     /*-----------------------------------------------------------*/
     /*--- Constructor(s) ----------------------------------------*/

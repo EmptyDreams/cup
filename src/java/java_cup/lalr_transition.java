@@ -23,7 +23,7 @@ public class lalr_transition {
      * @param to_st  state we transition to.
      * @param nxt    next transition in linked list.
      */
-    public lalr_transition(symbol on_sym, lalr_state to_st, lalr_transition nxt) throws internal_error {
+    public lalr_transition(GrammarSymbol on_sym, lalr_state to_st, lalr_transition nxt) throws internal_error {
         /* sanity checks */
         if (on_sym == null)
             throw new internal_error("Attempt to create transition on null symbol");
@@ -44,7 +44,7 @@ public class lalr_transition {
      * @param on_sym symbol we are transitioning on.
      * @param to_st  state we transition to.
      */
-    public lalr_transition(symbol on_sym, lalr_state to_st) throws internal_error {
+    public lalr_transition(GrammarSymbol on_sym, lalr_state to_st) throws internal_error {
         this(on_sym, to_st, null);
     }
 
@@ -53,10 +53,10 @@ public class lalr_transition {
     /*-----------------------------------------------------------*/
 
     /** The symbol we make the transition on. */
-    protected symbol _on_symbol;
+    protected GrammarSymbol _on_symbol;
 
     /** The symbol we make the transition on. */
-    public symbol on_symbol() {
+    public GrammarSymbol on_symbol() {
         return _on_symbol;
     }
 
