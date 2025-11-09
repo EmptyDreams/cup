@@ -306,7 +306,6 @@ action code {:
           // insert the action to the first position
           System.arraycopy(rhs_parts, 0, rhs_parts, 1, rhs_pos++);
           rhs_parts[0] = new action_part("_pushInlineProd(" + (Production.number() + count) + ");", true);
-          emit.hasAnnoCode = true;
         }
       } else if (subNt.num_productions() != 0) {
         new_rhs();
