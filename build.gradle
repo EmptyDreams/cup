@@ -39,7 +39,7 @@ tasks.register('generateCupParser', JavaExec) {
     mainClass = 'java_cup.Main'
     classpath = files('bin/java-cup-11.jar')
     args = [
-            '-parser', 'parser',
+            '-parser', 'CupParser',
             '-symbols', 'GrammarSymConstants',
             '-interface',
             '-nonterms',

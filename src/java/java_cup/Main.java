@@ -499,7 +499,7 @@ public class Main {
     protected static void parse_grammar_spec() throws java.lang.Exception {
         /* create a parser and parse with it */
         ComplexSymbolFactory csf = new ComplexSymbolFactory(GrammarSymConstants.TERMINAL_NAMES, GrammarSymConstants.NON_TERMINAL_NAMES);
-        parser parser_obj = new parser(new Lexer(csf), csf);
+        CupParser parser_obj = new CupParser(new Lexer(csf), csf);
         parser_obj.setDebugSymbols(opt_do_debugsymbols);
         try {
             if (opt_do_debug)
