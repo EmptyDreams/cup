@@ -21,31 +21,8 @@ parser code {:
       ScannerBuffer lexer = new ScannerBuffer(new Lexer(new BufferedReader(new FileReader(args[0])),csf));
       // start parsing
       MiniJavaParser p = new MiniJavaParser(lexer,csf);
-      XMLElement e = (XMLElement)p.parse().value;
-
-      for (XMLElement el: SyntaxTreeXPath.query(args[2],e)){
-      	  System.out.println(el.getTagname());
-      }
-
-
-      TestVisitor t = new TestVisitor();
-      SyntaxTreeDFS.dfs(e,t);
-
-      // create XML output file 
-      XMLOutputFactory outFactory = XMLOutputFactory.newInstance();
-      XMLStreamWriter sw = outFactory.createXMLStreamWriter(new FileOutputStream(args[1]));
-      // dump XML output to the file
-      XMLElement.dump(lexer,sw,e,"expr","stmt");
-      
-       // transform the parse tree into an AST and a rendered HTML version
-      Transformer transformer = TransformerFactory.newInstance()
-	    .newTransformer(new StreamSource(new File("tree.xsl")));
-      Source text = new StreamSource(new File(args[1]));
-      transformer.transform(text, new StreamResult(new File("output.xml")));
-      transformer = TransformerFactory.newInstance()
-	    .newTransformer(new StreamSource(new File("tree-view.xsl")));
-      text = new StreamSource(new File("output.xml"));
-      transformer.transform(text, new StreamResult(new File("ast.html")));
+      var parsed = p.parse();
+      System.out.println(parsed);
   }
 :}; 
 
@@ -74,7 +51,7 @@ stmt ::= SEMICOLON
     | WHILE LPAR cond:cond RPAR stmt:stmt
     ;
 
-cond ::= BOOLCONST:c
+cond ::= BOOLCONST:boolConst
     | LPAR cond:cond RPAR
     | expr:leftExpr COMP:op expr:rightExpr
     | BUNOP cond:cond

@@ -43,7 +43,7 @@ import java_cup.runtime.symbol.complex.Location;
 %} 
 
 %eofval{
-     return symbolFactory.newSymbol("EOF", EOF, new Location(yyline+1,yycolumn+1), new Location(yyline+1,yycolumn+1));
+     return symbolFactory.newSymbol(EOF, new Location(yyline+1,yycolumn+1), new Location(yyline+1,yycolumn+1));
 %eofval}
 
 
