@@ -78,8 +78,6 @@ tasks.register('runtimeJar', Jar) {
     include 'java_cup/runtime/**'
 }
 
-// 配置 jar 任务，使其在执行完成后自动执行 runtimeJar 任务
-// 这样只需运行 jar 任务就能同时得到两个版本的 JAR 文件
 jar.finalizedBy runtimeJar
 
 artifacts {
