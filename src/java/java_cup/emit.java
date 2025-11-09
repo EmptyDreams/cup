@@ -129,14 +129,14 @@ public class emit {
     /**
      * Name of the generated class for symbol constants.
      */
-    public static String symbol_const_class_name = "sym";
+    public static String symbol_const_class_name = "MySymbols";
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
     /**
      * Name of the generated parser class.
      */
-    public static String parser_class_name = "parser";
+    public static String parser_class_name = "MyParser";
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
@@ -289,11 +289,11 @@ public class emit {
         not_reduced = 0;
         num_conflicts = 0;
         package_name = null;
-        parser_class_name = "parser";
+        parser_class_name = "MyParser";
         parser_code = null;
         scan_code = null;
         start_production = null;
-        symbol_const_class_name = "sym";
+        symbol_const_class_name = "MySymbols";
         unused_non_term = 0;
         unused_term = 0;
     }

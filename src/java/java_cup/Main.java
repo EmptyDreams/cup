@@ -255,9 +255,9 @@ public class Main {
             + "  Legal options include:\n"
             + "    -package name       specify package generated classes go in [default none]\n"
             + "    -destdir name       specify the destination directory, to store the generated files in\n"
-            + "    -parser name        specify parser class name [default \"parser\"]\n"
+            + "    -parser name        specify parser class name [default \"MyParser\"]\n"
             + "    -typearg args       specify type arguments for parser class\n"
-            + "    -symbols name       specify name for symbol constant class [default \"sym\"]\n"
+            + "    -symbols name       specify name for symbol constant class [default \"MySymbols\"]\n"
             + "    -interface          put symbols in an interface, rather than a class\n"
             + "    -nonterms           put non terminals in symbol constant class\n"
             + "    -ast format         auto generates AST. The format param defines node class naming, " +
