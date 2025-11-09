@@ -2,9 +2,6 @@
 import java_cup.runtime.*;
 import java_cup.runtime.symbol.complex.ComplexSymbolFactory;
 import java_cup.runtime.ScannerBuffer;
-import java_cup.runtime.XMLElement;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamWriter;
 import java.io.*;
 
 import javax.xml.transform.*;
