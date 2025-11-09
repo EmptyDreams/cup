@@ -5,7 +5,7 @@ package java_cup.runtime;
  * nonterminals while parsing. The lexer should pass CUP Symbols and CUP returns
  * a Symbol.
  * <p>
- * This is an abstract base class that contains only the symbol type [sym].
+ * This is an abstract base class that contains only the symbol type [GrammarSymConstants].
  * All other attributes such as value, left/right positions and their corresponding
  * Objects have been moved to concrete subclasses for optional implementation.
  * </p>

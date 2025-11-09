@@ -398,7 +398,10 @@ parser code {:
 /*---------------------------------------------------------------- */
 
 init with {: 
-    ComplexSymbolFactory f = new ComplexSymbolFactory(sym.TERMINAL_NAMES, sym.NON_TERMINAL_NAMES);
+    ComplexSymbolFactory f = new ComplexSymbolFactory(
+      GrammarSymConstants.TERMINAL_NAMES,
+      GrammarSymConstants.NON_TERMINAL_NAMES
+    );
     symbolFactory = f;
     lexer = new Lexer(f); 
 :}

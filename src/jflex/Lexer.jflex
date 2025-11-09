@@ -8,7 +8,7 @@ import java.io.InputStreamReader;
 %%
 
 %class Lexer
-%implements sym
+%implements GrammarSymConstants
 %public
 %unicode
 %line
@@ -51,7 +51,7 @@ ident = ([:jletter:] | "_" ) ([:jletterdigit:] | [:jletter:] | "_" )*
 
 
 %eofval{
-    return symbolFactory.newSymbol(sym.EOF);
+    return symbolFactory.newSymbol(GrammarSymConstants.EOF);
 %eofval}
 
 %state CODESEG
