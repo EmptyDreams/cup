@@ -62,6 +62,7 @@ compileJava.dependsOn generateJFlexLexer
 
 jar {
     archiveBaseName = 'java-cup-' + project.version
+    archiveVersion = ''
     manifest {
         attributes(
                 'Main-Class': 'java_cup.Main'
@@ -71,6 +72,7 @@ jar {
 
 tasks.register('runtimeJar', Jar) {
     archiveBaseName = 'java-cup-' + project.version + '-runtime'
+    archiveVersion = ''
     dependsOn classes
     from sourceSets.main.output
     include 'java_cup/runtime/**'
