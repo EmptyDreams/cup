@@ -586,7 +586,6 @@ public class Production {
      *
      * @param rhs          array of RHS parts.
      * @param rhs_len      how much of rhs to consider valid.
-     * @param final_action the final action string of the production.
      */
     protected static String declare_labels(production_part[] rhs, int rhs_len) {
         StringBuilder declaration = new StringBuilder();
