@@ -1,16 +1,14 @@
 package java_cup.runtime.symbol.complex;
 
+import java_cup.runtime.symbol.Location;
+
 public class ComplexShortSymbol extends ComplexSymbol {
 
     private final short value;
 
-    public ComplexShortSymbol(int id, Location left, Location right, short value) {
-        super(id, left, right);
+    public ComplexShortSymbol(int id, Location location, short value) {
+        super(id, location);
         this.value = value;
-    }
-
-    public ComplexShortSymbol(int id, short value) {
-        this(id, Location.EMPTY, Location.EMPTY, value);
     }
 
     @Override
@@ -36,7 +34,7 @@ public class ComplexShortSymbol extends ComplexSymbol {
 
     @Override
     public String toString() {
-        return "complex short #" + sym + ", value=[" + value + "], pos=[" + getLeft() + " / " + getRight() + "]";
+        return "complex short #" + sym + ", value=[" + value + "], pos=[" + getLocation() + "]";
     }
 
 }

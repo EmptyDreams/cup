@@ -1,16 +1,14 @@
 package java_cup.runtime.symbol.complex;
 
+import java_cup.runtime.symbol.Location;
+
 public class ComplexCharSymbol extends ComplexSymbol {
 
     private final char value;
 
-    public ComplexCharSymbol(int id, Location left, Location right, char value) {
-        super(id, left, right);
+    public ComplexCharSymbol(int id, Location location, char value) {
+        super(id, location);
         this.value = value;
-    }
-
-    public ComplexCharSymbol(int id, char value) {
-        this(id, Location.EMPTY, Location.EMPTY, value);
     }
 
     @Override
@@ -36,7 +34,7 @@ public class ComplexCharSymbol extends ComplexSymbol {
 
     @Override
     public String toString() {
-        return "complex char #" + sym + ", value=[" + value + "], pos=[" + getLeft() + " / " + getRight() + "]";
+        return "complex char #" + sym + ", value=[" + value + "], pos=[" + getLocation() + "]";
     }
 
 }

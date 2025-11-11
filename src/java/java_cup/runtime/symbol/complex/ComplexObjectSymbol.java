@@ -1,18 +1,15 @@
 package java_cup.runtime.symbol.complex;
 
+import java_cup.runtime.symbol.Location;
+
 import java.util.Objects;
 
 public class ComplexObjectSymbol extends ComplexSymbol {
 
     private final Object value;
 
-    public ComplexObjectSymbol(int id, Location left, Location right, Object value) {
-        super(id, left, right);
-        this.value = value;
-    }
-
-    public ComplexObjectSymbol(int id, Object value) {
-        super(id);
+    public ComplexObjectSymbol(int id, Location location, Object value) {
+        super(id, location);
         this.value = value;
     }
 
@@ -98,6 +95,6 @@ public class ComplexObjectSymbol extends ComplexSymbol {
 
     @Override
     public String toString() {
-        return "complex object #" + sym + ", value=[" + value() + "], pos=[" + getLeft() + " / " + getRight() + "]";
+        return "complex object #" + sym + ", value=[" + value() + "], pos=[" + getLocation() + "]";
     }
 }

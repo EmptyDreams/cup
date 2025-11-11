@@ -1,6 +1,7 @@
 package java_cup;
 import java_cup.runtime.symbol.complex.*;
 import java_cup.runtime.Symbol;
+import java_cup.runtime.symbol.Location;
 import java.lang.Error;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -25,10 +26,12 @@ import java.io.InputStreamReader;
     private int csline,cscolumn;
 
     public Symbol symbol(int code){
-	    return symbolFactory.newSymbol(code,new Location(yyline+1,yycolumn+1-yylength()),new Location(yyline+1,yycolumn+1));
+        var location = ComplexLocation.of(yyline + 1, yycolumn - yylength() + 1, yyline + 1, yycolumn + 1);
+	    return symbolFactory.newSymbol(code, location);
     }
     public Symbol symbol(int code, String lexem){
-	    return symbolFactory.newSymbol(code, new Location(yyline+1, yycolumn +1), new Location(yyline+1,yycolumn+yylength()), lexem);
+        var location = ComplexLocation.of(yyline + 1, yycolumn + 1, yyline + 1, yycolumn + yylength());
+	    return symbolFactory.newSymbol(code, location, lexem);
     }
     protected void emit_warning(String message){
 	    ErrorManager.getManager().emit_warning("Scanner at " + (yyline+1) + "(" + (yycolumn+1) + "): " + message);
@@ -51,7 +54,7 @@ ident = ([:jletter:] | "_" ) ([:jletterdigit:] | [:jletter:] | "_" )*
 
 
 %eofval{
-    return symbolFactory.newSymbol(GrammarSymConstants.EOF);
+    return symbolFactory.newSymbol(GrammarSymConstants.EOF, Location.NO_LOCATION);
 %eofval}
 
 %state CODESEG
@@ -108,7 +111,10 @@ ident = ([:jletter:] | "_" ) ([:jletterdigit:] | [:jletter:] | "_" )*
 }
 
 <CODESEG> {
-  ":}"         { yybegin(YYINITIAL); return symbolFactory.newSymbol(CODE_STRING, new Location(csline, cscolumn),new Location(yyline+1,yycolumn+1+yylength()), sb.toString()); }
+  ":}"         {
+    var location = ComplexLocation.of(csline, cscolumn, yyline + 1, yycolumn + 1 + yylength());
+    yybegin(YYINITIAL); return symbolFactory.newSymbol(CODE_STRING, location, sb.toString());
+  }
   .|\n            { sb.append(yytext()); }
 }
 

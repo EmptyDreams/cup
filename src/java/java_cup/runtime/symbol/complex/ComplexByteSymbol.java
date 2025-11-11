@@ -1,16 +1,14 @@
 package java_cup.runtime.symbol.complex;
 
+import java_cup.runtime.symbol.Location;
+
 public class ComplexByteSymbol extends ComplexSymbol {
 
     private final byte value;
 
-    public ComplexByteSymbol(int id, Location left, Location right, byte value) {
-        super(id, left, right);
+    public ComplexByteSymbol(int id, Location location, byte value) {
+        super(id, location);
         this.value = value;
-    }
-
-    public ComplexByteSymbol(int id, byte value) {
-        this(id, Location.EMPTY, Location.EMPTY, value);
     }
 
     @Override
@@ -36,7 +34,7 @@ public class ComplexByteSymbol extends ComplexSymbol {
 
     @Override
     public String toString() {
-        return "complex byte #" + sym + ", value=[" + value + "], pos=[" + getLeft() + " / " + getRight() + "]";
+        return "complex byte #" + sym + ", value=[" + value + "], pos=[" + getLocation() + "]";
     }
 
 }

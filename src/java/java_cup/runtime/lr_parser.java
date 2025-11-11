@@ -1,6 +1,8 @@
 
 package java_cup.runtime;
 
+import java_cup.runtime.symbol.Location;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -351,7 +353,7 @@ public abstract class lr_parser {
      */
     public Symbol scan() throws java.lang.Exception {
         Symbol sym = getScanner().next_token();
-        return (sym != null) ? sym : getSymbolFactory().newSymbol(EOF_sym());
+        return (sym != null) ? sym : getSymbolFactory().newSymbol(EOF_sym(), Location.NO_LOCATION);
     }
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
@@ -586,7 +588,7 @@ public abstract class lr_parser {
         /* push dummy Symbol with start state to get us underway */
         stack.clear();
         state_stack.clear();
-        stack.push(getSymbolFactory().newSymbol(0));
+        stack.push(getSymbolFactory().newSymbol(0, Location.NO_LOCATION));
         state_stack.push(start_state());
 
         /* continue until we are told to stop */
@@ -739,7 +741,7 @@ public abstract class lr_parser {
         /* push dummy Symbol with start state to get us underway */
         stack.clear();
         state_stack.clear();
-        stack.push(getSymbolFactory().newSymbol(0));
+        stack.push(getSymbolFactory().newSymbol(0, Location.NO_LOCATION));
         state_stack.push(start_state());
 
         /* continue until we are told to stop */

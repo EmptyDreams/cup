@@ -97,7 +97,7 @@ public class Production {
         }
 
         /* get the generated declaration code for the necessary labels. */
-        String declare_str = declare_labels(rhs_parts, rightlen, action_str);
+        String declare_str = declare_labels(rhs_parts, rightlen);
         actionBuilder.insert(0, declare_str);
 
         /* count use of lhs */
@@ -553,20 +553,15 @@ public class Production {
 
         /* Put in the left/right value labels */
         if (emit.lr_values() && Main.ast_format == null) {
-            // var xxxLeft = xxxSym.getLeft();
+            // var xxxLoc = xxxSym.getLocation();
             ret.append(indent)
                 .append("var ")
                 .append(labelName)
-                .append("Left = ")
+                .append("Loc = (")
+                .append(Main.customPositionClass)
+                .append(") ")
                 .append(labelName)
-                .append("Sym.getLeft();\n")
-                // var xxxRight = xxxSym.getRight();
-                .append(indent)
-                .append("var ")
-                .append(labelName)
-                .append("Right = ")
-                .append(labelName)
-                .append("Sym.getRight();\n");
+                .append("Sym.getLocation();\n");
         }
 
         if (!labelName.isEmpty() && (Main.ast_format == null || "start_val".equals(labelName))) {
@@ -593,7 +588,7 @@ public class Production {
      * @param rhs_len      how much of rhs to consider valid.
      * @param final_action the final action string of the production.
      */
-    protected static String declare_labels(production_part[] rhs, int rhs_len, String final_action) {
+    protected static String declare_labels(production_part[] rhs, int rhs_len) {
         StringBuilder declaration = new StringBuilder();
 
         /* walk down the parts and extract the labels */
@@ -603,9 +598,8 @@ public class Production {
                 String label;
                 /* if it has a label, make declaration! */
                 if ((label = part.label()) != null) {
-                    if (part.isExistCheck() && !part.the_symbol().isOptBox()) continue;
-                    if (label == null)
-                        label = part.the_symbol().name() + pos;
+                    var sym = part.the_symbol();
+                    if (part.isExistCheck() && !sym.isOptBox()) continue;
                     var type = part.getType();
                     if (type == null) type = part.the_symbol().stack_type();
                     declaration.append(make_declaration(label, type, rhs_len - pos - 1));
@@ -721,7 +715,7 @@ public class Production {
             var part = rhs(act_loc);
             if (part.is_action()) {
                 var actionPart = (action_part) part;
-                declare_str = declare_labels(_rhs, act_loc, "");
+                declare_str = declare_labels(_rhs, act_loc);
                 /* create a new non terminal for the action production */
                 new_nt = non_terminal.create_new(null, lhs().the_symbol().stack_type()); // TUM 20060608 embedded actions patch
                 new_nt.is_embedded_action = !actionPart.isVirtual(); /* 24-Mar-1998, CSA */

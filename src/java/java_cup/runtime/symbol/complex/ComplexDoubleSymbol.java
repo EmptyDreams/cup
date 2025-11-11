@@ -1,15 +1,14 @@
 package java_cup.runtime.symbol.complex;
 
+import java_cup.runtime.symbol.Location;
+
 public class ComplexDoubleSymbol extends ComplexSymbol {
 
     private final double value;
 
-    public ComplexDoubleSymbol(int id, Location left, Location right, double value) {
-        super(id, left, right);
+    public ComplexDoubleSymbol(int id, Location location, double value) {
+        super(id, location);
         this.value = value;
-    }
-    public ComplexDoubleSymbol(int id, double value) {
-        this(id, Location.EMPTY, Location.EMPTY, value);
     }
 
     @Override
@@ -34,7 +33,7 @@ public class ComplexDoubleSymbol extends ComplexSymbol {
 
     @Override
     public String toString() {
-        return "complex double #" + sym + ", value=[" + value + "], pos=[" + getLeft() + " / " + getRight() + "]";
+        return "complex double #" + sym + ", value=[" + value + "], pos=[" + getLocation() + "]";
     }
 
 }

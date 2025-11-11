@@ -1,16 +1,14 @@
 package java_cup.runtime.symbol.complex;
 
+import java_cup.runtime.symbol.Location;
+
 public class ComplexFloatSymbol extends ComplexSymbol {
 
     private final float value;
 
-    public ComplexFloatSymbol(int id, Location left, Location right, float value) {
-        super(id, left, right);
+    public ComplexFloatSymbol(int id, Location location, float value) {
+        super(id, location);
         this.value = value;
-    }
-
-    public ComplexFloatSymbol(int id, float value) {
-        this(id, Location.EMPTY, Location.EMPTY, value);
     }
 
     @Override
@@ -36,7 +34,7 @@ public class ComplexFloatSymbol extends ComplexSymbol {
 
     @Override
     public String toString() {
-        return "complex float #" + sym + ", value=[" + value + "], pos=[" + getLeft() + " / " + getRight() + "]";
+        return "complex float #" + sym + ", value=[" + value + "], pos=[" + getLocation() + "]";
     }
 
 }

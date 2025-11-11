@@ -66,6 +66,7 @@ public class Main {
     /** User option -- should generator generate code for left/right values? */
     protected static boolean lr_values = true;
     protected static String customSymbolClass = "java_cup.runtime.symbol.complex.ComplexSymbol";
+    protected static String customPositionClass = "java_cup.runtime.symbol.complex.ComplexLocation";
 
     /** User option -- should symbols be put in a class or an interface? [CSA] */
     protected static boolean sym_interface = false;
@@ -260,6 +261,7 @@ public class Main {
             + "    -symbols name       specify name for symbol constant class [default \"MySymbols\"]\n"
             + "    -interface          put symbols in an interface, rather than a class\n"
             + "    -nonterms           put non terminals in symbol constant class\n"
+            + "    -location           specify the full class name of the custom location class to be used\n"
             + "    -ast format         auto generates AST. The format param defines node class naming, " +
                                       "where %s is after the first underscore and %p is before, " +
                                       "defaulting to \"Node%s\".\n"
@@ -367,6 +369,14 @@ public class Main {
                     customSymbolClass = argv[nextIndex];
                 } else {
                     usage("-symbol must be followed by a class name");
+                }
+            } else if (argv[i].equals("-location")) {
+                int nextIndex = i + 1;
+                if (nextIndex < len && !argv[nextIndex].startsWith("-")) {
+                    ++i;
+                    customPositionClass = argv[nextIndex];
+                } else {
+                    usage("-location must be followed by a class name");
                 }
             } else if (argv[i].equals("-compact_red"))
                 opt_compact_red = true;

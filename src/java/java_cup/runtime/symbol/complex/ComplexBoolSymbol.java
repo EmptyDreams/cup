@@ -1,16 +1,14 @@
 package java_cup.runtime.symbol.complex;
 
+import java_cup.runtime.symbol.Location;
+
 public class ComplexBoolSymbol extends ComplexSymbol {
 
     private final boolean value;
 
-    public ComplexBoolSymbol(int id, Location left, Location right, boolean value) {
-        super(id, left, right);
+    public ComplexBoolSymbol(int id, Location location, boolean value) {
+        super(id, location);
         this.value = value;
-    }
-
-    public ComplexBoolSymbol(int id, boolean value) {
-        this(id, Location.EMPTY, Location.EMPTY, value);
     }
 
     @Override
@@ -36,7 +34,7 @@ public class ComplexBoolSymbol extends ComplexSymbol {
 
     @Override
     public String toString() {
-        return "complex boolean #" + sym + ", value=[" + value + "], pos=[" + getLeft() + " / " + getRight() + "]";
+        return "complex boolean #" + sym + ", value=[" + value + "], pos=[" + getLocation() + "]";
     }
 
 }

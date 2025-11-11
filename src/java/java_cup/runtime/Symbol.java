@@ -1,5 +1,7 @@
 package java_cup.runtime;
 
+import java_cup.runtime.symbol.Location;
+
 /**
  * Defines the Symbol class, which is used to represent all terminals and
  * nonterminals while parsing. The lexer should pass CUP Symbols and CUP returns
@@ -21,17 +23,21 @@ package java_cup.runtime;
  */
 public abstract class Symbol {
 
-    /**
-     * Constructor for no value or l,r
-     */
-    public Symbol(int sym_num) {
-        this.sym = sym_num;
-    }
-
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
     /** The symbol number of the terminal or non terminal being represented */
     public final int sym;
+
+    private final Location location;
+
+    /**
+     * Constructor for no value or l,r
+     */
+    public Symbol(int sym_num, Location location) {
+        assert location != null;
+        this.sym = sym_num;
+        this.location = location;
+    }
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
@@ -43,6 +49,10 @@ public abstract class Symbol {
      * Unless your design requires it, you should always return false for symbol classes specialized for primitive types.
      */
     public abstract boolean isNull();
+
+    public final Location getLocation() {
+        return location;
+    }
 
     /**
      * Equivalent of just retrieving the value directly, but does the typecast here;

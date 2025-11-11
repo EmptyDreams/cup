@@ -259,7 +259,6 @@ public class emit {
 
     /* frankf 6/18/96 */
     protected static boolean _lr_values;
-    protected static boolean _locations;
 
     static boolean hasAnnoCode = false;
 
@@ -270,10 +269,6 @@ public class emit {
         return _lr_values;
     }
 
-    public static boolean locations() {
-        return _locations;
-    }
-
     protected static void set_lr_values(boolean b) {
         _lr_values = b;
     }
@@ -281,7 +276,6 @@ public class emit {
 
     // Hm Added clear to clear all static fields
     public static void clear() {
-        _locations = false;
         _lr_values = true;
         action_code = null;
         import_list = new ArrayStack<>();
@@ -1274,8 +1268,7 @@ public class emit {
         for (String s : import_list) {
             out.println("import " + s + ";");
         }
-        if (locations())
-            out.println("import java_cup.runtime.symbol.complex.Location;");
+        out.println("import " + Main.customPositionClass + ';');
 
         /* class header */
         out.println();
