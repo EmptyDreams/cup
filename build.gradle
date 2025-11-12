@@ -56,10 +56,6 @@ tasks.register('generateJFlexLexer', JavaExec) {
     workingDir = project.projectDir
 }
 
-compileJava.dependsOn generateCupParser
-generateJFlexLexer.dependsOn generateCupParser
-compileJava.dependsOn generateJFlexLexer
-
 jar {
     archiveBaseName = 'java-cup-' + project.version
     archiveVersion = ''

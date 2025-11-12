@@ -4,6 +4,7 @@ build/
 
 # IDE
 .idea/
+out/
 *.iml
 *.iws
 
