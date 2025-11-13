@@ -9,6 +9,8 @@ import java_cup.runtime.symbol.Location;
  */
 public class ComplexLocation implements Location {
 
+    public static final ComplexLocation NO_LOCATION = new ComplexLocation(0, 0, 0, 0);
+
     /**
      * Creates a {@code ComplexLocation} representing a half-open interval:
      * the start position is <em>inclusive</em>, and the end position is <em>exclusive</em>.
@@ -85,7 +87,7 @@ public class ComplexLocation implements Location {
 
     @Override
     public ComplexLocation span(Location o) {
-        if (o == Location.NO_LOCATION) {
+        if (o.isNoLocation()) {
             return this;
         }
         var other = (ComplexLocation) o;
@@ -99,6 +101,11 @@ public class ComplexLocation implements Location {
     @Override
     public boolean isEmpty() {
         return startLine == endLine && startColumn == endColumn;
+    }
+
+    @Override
+    public boolean isNoLocation() {
+        return this == NO_LOCATION;
     }
 
     @Override

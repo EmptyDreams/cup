@@ -1423,6 +1423,7 @@ public class emit {
                 emit.emit_package(printer);
                 printer.println("import java.util.*;");
                 printer.println("import java_cup.runtime.*;");
+                printer.println("import java_cup.runtime.symbol.Location;");
                 printer.println("import " + Main.customPositionClass + ';');
                 printer.println();
                 printer.println(clazz.toCodeString(0));

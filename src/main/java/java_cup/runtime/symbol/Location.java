@@ -63,8 +63,8 @@ public interface Location {
      * with another {@code FileLocation}. Passing a location of a different subclass will
      * result in an {@link ClassCastException}.
      *
-     * <p><b>Special case:</b> If {@code other} is {@link #NO_LOCATION}, this method
-     * returns {@code this} location directly without throwing any exception.
+     * <p><b>Special case:</b> If {@code other} represents "no location" (i.e., {@code other.isNoLocation()} returns {@code true}),
+     * this method returns {@code this} location directly without throwing any exception.
      *
      * @param other the other location to span with (must not be {@code null})
      * @return a new location representing the minimal covering interval, of the same type as {@code this}
@@ -88,11 +88,22 @@ public interface Location {
     boolean isSynthetic();
 
     /**
+     * Returns {@code true} if this location is the canonical {@code NO_LOCATION}
+     * sentinel for its concrete type.
+     *
+     * <p>This method allows clients to distinguish between a meaningful empty location
+     * (e.g., {@code [5,5)}) and the absence of any location information.
+     *
+     * @return {@code true} if this instance is the {@code NO_LOCATION} constant of its runtime type
+     */
+    boolean isNoLocation();
+
+    /**
      * Represents a location that is not associated with any source artifact.
      *
      * <p>This location is always empty and synthetic.</p>
      */
-    class NoLocation implements Location {
+    final class NoLocation implements Location {
 
         private NoLocation() {}
 
@@ -103,11 +114,16 @@ public interface Location {
 
         @Override
         public Location span(Location other) {
-            return other == null ? this : other;
+            return other.isNoLocation() ? this : other;
         }
 
         @Override
         public boolean isSynthetic() {
+            return true;
+        }
+
+        @Override
+        public boolean isNoLocation() {
             return true;
         }
 

@@ -78,6 +78,10 @@ public class VirtualType {
             .distinct()
             .flatMap(VirtualField::allSubFields)
             .collect(Collectors.toList());
+        clazz.addMethod(new VirtualMethod(
+            "getLocation", Main.customPositionClass, Collections.emptyList(),
+            List.of("return " + Main.customPositionClass + ".NO_LOCATION;")
+        ).withAnnotation("@Override"));
         for (VirtualField field : allMethodField) {
             var method = new VirtualMethod(
                 emit.joinName("has", field.joinLabel()),
@@ -241,11 +245,11 @@ public class VirtualType {
                 .map(it -> it.withAnnotation("@Override"))
                 .forEachOrdered(innerClass::addMethod);
             var positionGetter = new VirtualMethod(
-                "getPosition",
+                "getLocation",
                 Main.customPositionClass,
                 Collections.emptyList(),
                 List.of("return location;")
-            );
+            ).withAnnotation("@Override");
             innerClass.addMethod(positionGetter);
             // build checker
             allSubFields.stream()
