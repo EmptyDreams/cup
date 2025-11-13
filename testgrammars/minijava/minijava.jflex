@@ -3,7 +3,7 @@
 
 import java_cup.runtime.Symbol;
 import java_cup.runtime.symbol.complex.ComplexSymbolFactory;
-import java_cup.runtime.symbol.complex.Location;
+import java_cup.runtime.symbol.complex.ComplexLocation;
 
 %%
 
@@ -24,18 +24,19 @@ import java_cup.runtime.symbol.complex.Location;
     ComplexSymbolFactory symbolFactory;
 
   private Symbol symbol(String name, int sym) {
-      return symbolFactory.newSymbol(sym, new Location(yyline+1,yycolumn+1), new Location(yyline+1,yycolumn+yylength()));
+      return symbolFactory.newSymbol(sym, ComplexLocation.of(yyline + 1, yycolumn + 1, yyline + 1, yycolumn + yylength()));
   }
   
   private Symbol symbol(String name, int sym, Object val) {
-      Location left = new Location(yyline+1,yycolumn+1);
-      Location right= new Location(yyline+1,yycolumn+yylength());
-      return symbolFactory.newSymbol(sym, left, right,val);
+      return symbolFactory.newSymbol(sym, ComplexLocation.of(yyline + 1, yycolumn + 1, yyline + 1, yycolumn + yylength()),val);
   } 
   private Symbol symbol(String name, int sym, Object val,int buflength) {
-      Location left = new Location(yyline+1,yycolumn+yylength()-buflength);
-      Location right= new Location(yyline+1,yycolumn+yylength());
-      return symbolFactory.newSymbol(sym, left, right,val);
+      return symbolFactory.newSymbol(
+          sym, ComplexLocation.of(
+              yyline + 1, yycolumn + yylength() - buflength,
+              yyline + 1, yycolumn + yylength()),
+              val
+          );
   }       
   private void error(String message) {
     System.out.println("Error at line "+(yyline+1)+", column "+(yycolumn+1)+" : "+message);
@@ -43,7 +44,7 @@ import java_cup.runtime.symbol.complex.Location;
 %} 
 
 %eofval{
-     return symbolFactory.newSymbol(EOF, new Location(yyline+1,yycolumn+1), new Location(yyline+1,yycolumn+1));
+     return symbolFactory.newSymbol(EOF, ComplexLocation.of(yyline + 1, yycolumn + 1, yyline + 1, yycolumn + 1));
 %eofval}
 
 
