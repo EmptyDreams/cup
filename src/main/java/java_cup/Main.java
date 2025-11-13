@@ -66,7 +66,7 @@ public class Main {
     /** User option -- should generator generate code for left/right values? */
     protected static boolean lr_values = true;
     protected static String customSymbolClass = "java_cup.runtime.symbol.complex.ComplexSymbol";
-    protected static String customPositionClass = "java_cup.runtime.symbol.complex.ComplexLocation";
+    public static String customPositionClass = "java_cup.runtime.symbol.complex.ComplexLocation";
 
     /** User option -- should symbols be put in a class or an interface? [CSA] */
     protected static boolean sym_interface = false;

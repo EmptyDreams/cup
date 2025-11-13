@@ -1,10 +1,10 @@
 package java_cup;
 
+import java_cup.ast.AstNodeBuilder;
+import java_cup.ast.VirtualType;
 import java_cup.runtime.ArrayStack;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -301,7 +301,7 @@ public class emit {
      *
      * @param str string to prefix.
      */
-    protected static String pre(String str) {
+    public static String pre(String str) {
         return prefix + parser_class_name + "$" + str;
     }
 
@@ -338,7 +338,7 @@ public class emit {
         return result.toString();
     }
 
-    protected static String joinName(String prefix, String name) {
+    public static String joinName(String prefix, String name) {
         if (prefix == null || prefix.isEmpty()) return name;
         return prefix + castToStName(name);
     }
@@ -890,7 +890,7 @@ public class emit {
      * @param type The type of the value to read.
      * @return eg. "int" -> "getAsInt()"
      */
-    static String buildSymGetter(String type) {
+    public static String buildSymGetter(String type) {
         switch (type) {
             case "byte":
                 return "getAsByte()";
@@ -947,7 +947,7 @@ public class emit {
      * Boxes the given type to its corresponding wrapper class.
      * @return eg. "int" -> "Integer"
      */
-    static String boxType(String type) {
+    public static String boxType(String type) {
         switch (type) {
             case "byte": return "Byte";
             case "short": return "Short";
@@ -968,7 +968,7 @@ public class emit {
      * @param prod The production in which the anonymous non-terminal is located
      * @param index The index of the anonymous non-terminal within the production
      */
-    static String getAnnoExprName(non_terminal nt, Production prod, int index) {
+    public static String getAnnoExprName(non_terminal nt, Production prod, int index) {
         return nt.astClassName() + '_' + prod.index() + '_' + index;
     }
 
@@ -1399,15 +1399,15 @@ public class emit {
         assert non_terminal.START_nt.num_productions() == 1;
         var prod = non_terminal.START_nt.productions().iterator().next();
         var root = AstNodeBuilder.buildGraph(((symbol_part) prod.rhs(0)).the_symbol());
-        var typeList = new ArrayList<AstNodeBuilder.VirtualType>();
-        var typeRecord = new HashSet<AstNodeBuilder.VirtualType>();
+        var typeList = new ArrayList<VirtualType>();
+        var typeRecord = new HashSet<VirtualType>();
         typeList.add(root);
         typeRecord.add(root);
         for (int i = 0; i < typeList.size(); ++i) {
             var type = typeList.get(i);
             type.allFields().stream()
                 .map(it -> it.type)
-                .flatMap(AstNodeBuilder.VirtualType::types)
+                .flatMap(VirtualType::types)
                 .filter(it -> it.isAstNode)
                 .filter(typeRecord::add)
                 .forEach(typeList::add);
@@ -1415,7 +1415,7 @@ public class emit {
         for (var type : typeList) {
             var fileName = type.className + ".java";
             var file = new File(dir, fileName);
-            var clazz = AstNodeBuilder.buildClass(type);
+            var clazz = type.toVirtualClass();
             try (
                 var writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8);
                 var printer = new PrintWriter(writer)
@@ -1423,9 +1423,50 @@ public class emit {
                 emit.emit_package(printer);
                 printer.println("import java.util.*;");
                 printer.println("import java_cup.runtime.*;");
+                printer.println("import " + Main.customPositionClass + ';');
                 printer.println();
                 printer.println(clazz.toCodeString(0));
             }
+        }
+        String templateText = null;
+        for (VirtualType type : VirtualType.basicTypeIterable()) {
+            if (templateText == null) {
+                templateText = loadBaseAstNodeTemplate();
+            }
+            var typeName = type.getRealName();
+            var firstUpperTypeName = Character.toUpperCase(typeName.charAt(0)) + typeName.substring(1);
+            var className = GrammarSymbol.getNtNodeClassName(typeName);
+            var fileName = className + ".java";
+            var file = new File(dir, fileName);
+            try (
+                var writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)
+            ) {
+                writer.write(
+                    templateText.replace("$ClassName$", className)
+                        .replace("$type$", typeName)
+                        .replace("$Type$", firstUpperTypeName)
+                        .replace("java_cup.runtime.symbol.Location", Main.customPositionClass)
+                );
+            }
+        }
+    }
+
+    private static String loadBaseAstNodeTemplate() throws IOException {
+        try (
+            InputStream is = emit.class.getClassLoader().getResourceAsStream("BaseAstNodeTemplate.java")
+        ) {
+            if (is == null) {
+                throw new IOException("Not found: BaseAstNodeTemplate.java");
+            }
+            StringBuilder content = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(is, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    content.append(line).append(System.lineSeparator());
+                }
+            }
+            return content.toString();
         }
     }
 

@@ -60,6 +60,7 @@ public class ComplexLocation implements Location {
      * @return a new {@code ComplexLocation} covering the closed interval for real source code
      * @throws IllegalArgumentException if any coordinate is less than 1
      */
+    @SuppressWarnings("unused")
     public static ComplexLocation ofInclusive(
         int startLine, int startColumn, int endLineInclude, int endColumnInclude
     ) {
@@ -83,7 +84,7 @@ public class ComplexLocation implements Location {
     }
 
     @Override
-    public Location span(Location o) {
+    public ComplexLocation span(Location o) {
         if (o == Location.NO_LOCATION) {
             return this;
         }
