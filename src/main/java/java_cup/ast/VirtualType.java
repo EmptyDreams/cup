@@ -17,8 +17,9 @@ public class VirtualType {
     public static VirtualType ofBasic(String name) {
         return basicTypeCache.computeIfAbsent(name, k -> {
             var type = new VirtualType(false, k);
-            var classNamePrefix = k.contains("<") ? k.substring(0, k.indexOf('<')) : k;
-            type.className = GrammarSymbol.getNtNodeClassName(classNamePrefix);
+            var className = k.replaceAll("[<, ]+", "_")
+                .replace(">", "");
+            type.className = GrammarSymbol.getNtNodeClassName(className);
             type.prods = Collections.emptyList();
             return type;
         });
