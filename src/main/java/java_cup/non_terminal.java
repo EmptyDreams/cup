@@ -254,7 +254,7 @@ public class non_terminal extends GrammarSymbol {
             cacheKey,
             k -> non_terminal.create_new(
                 "_EBNF_",
-                Main.ast_format == null ? "Object" : "IAstNode"
+                Main.ast_format == null ? "Object" : "AstNode"
             )
         );
         subNt._isAnno = true;
@@ -289,7 +289,7 @@ public class non_terminal extends GrammarSymbol {
             cacheKey,
             k -> non_terminal.create_new(
                 "_EBNF_",
-                Main.ast_format == null ? "Object" : "IAstNode"
+                Main.ast_format == null ? "Object" : "AstNode"
             )
         );
         subNt._isAnno = true;

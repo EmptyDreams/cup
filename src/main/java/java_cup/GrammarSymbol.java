@@ -77,7 +77,7 @@ public abstract class GrammarSymbol {
 
     public String astClassName() {
         String type = stack_type();
-        if (type.equals("IAstNode")) {
+        if (type.equals("AstNode")) {
             return GrammarSymbol.getNtNodeClassName(name());
         } else if (type.startsWith("List<")) {
             return "ArrayList<" + type.substring(5);

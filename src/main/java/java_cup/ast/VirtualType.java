@@ -11,8 +11,9 @@ import java.util.stream.Stream;
 public class VirtualType {
 
     private static final Map<String, VirtualType> basicTypeCache = new HashMap<>();
-    private static final VirtualType SYMBOL = ofName("Symbol");
-    private static final VirtualType POSITION = ofName(Main.customPositionClass);
+    private static final VirtualType TYPE_SYMBOL = ofName("Symbol");
+    private static final VirtualType TYPE_POSITION = ofName(Main.customPositionClass);
+    private static final VirtualType TYPE_INT = ofName("int");
 
     public static VirtualType ofBasic(String name) {
         return basicTypeCache.computeIfAbsent(name, k -> {
@@ -73,7 +74,7 @@ public class VirtualType {
 
     public VirtualClass toVirtualClass() {
         var clazz = new VirtualClass(className);
-        clazz.markSuper("IAstNode");
+        clazz.markParent("AstNode");
         var allMethodField = prods.stream()
             .flatMap(it -> it.fields.stream())
             .distinct()
@@ -157,7 +158,7 @@ public class VirtualType {
             case 0: {
                 var method = new VirtualMethod(
                     "getByLabel",
-                    "IAstNode",
+                    "AstNode",
                     List.of(new VirtualField("label", VirtualType.ofName("String"), 0)),
                     List.of("return null;")
                 ).withAnnotation("@Override")
@@ -169,7 +170,7 @@ public class VirtualType {
                 var field = allMethodField.get(0);
                 var method = new VirtualMethod(
                     "getByLabel",
-                    "IAstNode",
+                    "AstNode",
                     List.of(new VirtualField("label", VirtualType.ofName("String"), 0)),
                     List.of(
                         "return \"" + field.joinLabel() + "\".equals(label) ? "
@@ -193,7 +194,7 @@ public class VirtualType {
                 exprs.add("}");
                 var method = new VirtualMethod(
                     "getByLabel",
-                    "IAstNode",
+                    "AstNode",
                     List.of(new VirtualField("label", VirtualType.ofName("String"), 0)),
                     exprs
                 ).withAnnotation("@Override")
@@ -213,7 +214,7 @@ public class VirtualType {
                 "build" + prod.name,
                 prod.name,
                 prod.fields.stream().map(
-                    it -> new VirtualField(it.label, SYMBOL, 0)
+                    it -> new VirtualField(it.label, TYPE_SYMBOL, 0)
                 ).collect(Collectors.toList()),
                 prod.buildFactoryExprs()
             ).markStatic();
@@ -227,10 +228,10 @@ public class VirtualType {
             prod.fields.stream()
                 .map(VirtualField::toFinal)
                 .forEachOrdered(innerClass::addField);
-            innerClass.addField(new VirtualField("location", POSITION, 0b1000));
+            innerClass.addField(new VirtualField("location", TYPE_POSITION, 0b1000));
             // build constructor
             var constructorParams = new ArrayList<>(prod.fields);
-            constructorParams.add(new VirtualField("location", POSITION, 0));
+            constructorParams.add(new VirtualField("location", TYPE_POSITION, 0));
             var constructorExprs = prod.fields.stream()
                 .map(it -> "this." + it.label + " = " + it.label + ';')
                 .collect(Collectors.toList());
@@ -257,6 +258,21 @@ public class VirtualType {
                 .map(VirtualField::buildChecker)
                 .map(it -> it.withAnnotation("@Override"))
                 .forEachOrdered(innerClass::addMethod);
+            // build getByIndex
+            var getByIndexExprs = new ArrayList<String>();
+            getByIndexExprs.add("switch (index) {");
+            for (int i = 0; i < allSubFields.size(); i++) {
+                var field = allSubFields.get(i);
+                getByIndexExprs.add("  case " + i + ": return " + emit.joinName("get", field.joinLabel()) + "();");
+            }
+            getByIndexExprs.add("  default: new IndexOutOfBoundsException(index);");
+            getByIndexExprs.add("}");
+            var getByIndexMethod = new VirtualMethod(
+                "getByIndex", "AstNode",
+                List.of(new VirtualField("index", TYPE_INT, 0)),
+                getByIndexExprs
+            ).withAnnotation("@Override");
+            innerClass.addMethod(getByIndexMethod);
             clazz.addClass(innerClass);
         }
         return clazz;

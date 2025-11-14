@@ -1,6 +1,6 @@
-import java_cup.runtime.IAstNode;
+import java_cup.runtime.AstNode;
 
-public final class $ClassName$ extends IAstNode {
+public final class $ClassName$ extends AstNode {
 
     private final $type$ value;
     private final java_cup.runtime.symbol.Location location;
@@ -25,7 +25,7 @@ public final class $ClassName$ extends IAstNode {
     }
 
     @Override
-    public IAstNode getByLabel(String label) {
+    public AstNode getByLabel(String label) {
         return null;
     }
 
