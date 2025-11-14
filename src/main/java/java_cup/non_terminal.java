@@ -129,23 +129,6 @@ public class non_terminal extends GrammarSymbol {
     /*-----------------------------------------------------------*/
 
     /**
-     * Method for creating a new uniquely named hidden non-terminal using the given
-     * string as a base for the name (or "NT$" if null is passed).
-     *
-     * @param prefix base name to construct unique name from.
-     */
-    static non_terminal create_new(String prefix) throws internal_error {
-        return create_new(prefix, null); // TUM 20060608 embedded actions patch
-    }
-
-    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
-
-    /** static routine for creating a new uniquely named hidden non-terminal */
-    static non_terminal create_new() throws internal_error {
-        return create_new(null);
-    }
-
-    /**
      * TUM 20060608 bugfix for embedded action codes
      */
     static non_terminal create_new(String prefix, String type) {
