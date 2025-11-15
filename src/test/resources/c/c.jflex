@@ -1,8 +1,7 @@
 import java.io.*;
-import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
-import java_cup.runtime.ComplexSymbolFactory.Location;
-import java_cup.runtime.ComplexSymbolFactory;
-import java_cup.runtime.Symbol;
+import java_cup.runtime.*;
+import java_cup.runtime.symbol.*;
+import java_cup.runtime.symbol.complex.*;
 import java.util.*;
 
 %%
@@ -12,29 +11,33 @@ import java.util.*;
 %line
 %char
 %column
-%implements sym
+%implements CSymbols
 
 %{
 
     ComplexSymbolFactory symbolFactory;
     public Lexer(java.io.Reader in, ComplexSymbolFactory sf){
-	this(in);
-	symbolFactory = sf;
+	    this(in);
+	    symbolFactory = sf;
     }
   
     private Symbol symbol(int sym) {
-      return symbolFactory.newSymbol("sym", sym, new Location(yyline+1,yycolumn+1,yychar), new Location(yyline+1,yycolumn+yylength(),yychar+yylength()));
-  }
-  private Symbol symbol(int sym, Object val) {
-      Location left = new Location(yyline+1,yycolumn+1,yychar);
-      Location right= new Location(yyline+1,yycolumn+yylength(), yychar+yylength());
-      return symbolFactory.newSymbol("sym", sym, left, right,val);
-  } 
-  private Symbol symbol(int sym, Object val,int buflength) {
-      Location left = new Location(yyline+1,yycolumn+yylength()-buflength,yychar+yylength()-buflength);
-      Location right= new Location(yyline+1,yycolumn+yylength(), yychar+yylength());
-      return symbolFactory.newSymbol("sym", sym, left, right,val);
-  }       
+        var location = ComplexLocation.of(yyline + 1, yycolumn + 1, yyline + 1, yycolumn + yylength());
+        return symbolFactory.newSymbol(sym, location);
+    }
+
+    private Symbol symbol(int sym, Object val) {
+        var location = ComplexLocation.of(yyline + 1, yycolumn + 1, yyline + 1, yycolumn + yylength());
+        return symbolFactory.newSymbol(sym, location, val);
+    }
+
+    private Symbol symbol(int sym, Object val,int buflength) {
+        var location = ComplexLocation.of(
+            yyline + 1, yycolumn + yylength() - buflength,
+            yyline + 1, yycolumn + yylength()
+        );
+        return symbolFactory.newSymbol(sym, location, val);
+    }
     
   //    static TreeSet typeset = new TreeSet();
     
@@ -53,7 +56,8 @@ import java.util.*;
 %}
 
 %eofval{
-     return symbolFactory.newSymbol("EOF", EOF, new Location(yyline+1,yycolumn+1,yychar), new Location(yyline+1,yycolumn+1,yychar+1));
+    var location = ComplexLocation.of(yyline + 1, yycolumn + 1, yyline + 1, yycolumn + 1);
+    return symbolFactory.newSymbol(EOF, location);
 %eofval}
 
 D		=	[0-9]
@@ -166,4 +170,3 @@ L?\"(\\.|[^\\\"])*\"	{ return symbol(STRING_LITERAL,yytext()); }
 
 {white_space}		{ /* ignore bad characters */ }
 .|\n			{ System.err.println("Fehler: unbekanntes Zeichen:"+yytext()+" "+(yyline+1)+"/"+(yycolumn+1)); }
-

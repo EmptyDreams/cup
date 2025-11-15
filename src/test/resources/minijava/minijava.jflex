@@ -130,6 +130,7 @@ white_space = {new_line} | [ \t\f]
 
 
 /* error fallback */
-.|\n              {  /* throw new Error("Illegal character <"+ yytext()+">");*/
-		    error("Illegal character <"+ yytext()+">");
-                  }
+[^] {
+    /* throw new Error("Illegal character <"+ yytext()+">");*/
+    error("Illegal character <"+ yytext()+">");
+}

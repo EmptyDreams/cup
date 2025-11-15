@@ -12,53 +12,48 @@ import javax.xml.transform.*;
 import javax.xml.transform.stream.*;    
 
 parser code {:
-    public void syntax_error(Symbol cur_token){
-	System.err.println("Syntax error at "+cur_token);
+    public void syntax_error(Symbol cur_token) {
+	    System.err.println("Syntax error at "+cur_token);
     }
-    public static void newScope(){
-	typenames.push(new HashSet<String>());
+
+    public static void newScope() {
+	    typenames.push(new HashSet<String>());
     }
-    public static void deleteScope(){
-	typenames.pop();
+
+    public static void deleteScope() {
+	    typenames.pop();
     }
-    public static boolean lookupType(String name){
-	for (HashSet<String> scope: typenames)
-	    if (scope.contains(name)) return true;
-	return false;
+
+    public static boolean lookupType(String name) {
+	    for (HashSet<String> scope: typenames) {
+	        if (scope.contains(name)) return true;
+	    }
+        return false;
     }
+
     public static void addType(String name){
-	typenames.peek().add(name);
+	    typenames.peek().add(name);
     }
+
     public static LinkedList<HashSet<String>> typenames = new LinkedList<HashSet<String>>();
-    public Parser(Lexer lex, ComplexSymbolFactory sf) {
-	super(lex,sf);
+
+    public CParser(Lexer lex, ComplexSymbolFactory sf) {
+	    super(lex,sf);
     }
 
     public static void main(String args[]) {
-	try {
-	    ComplexSymbolFactory csf = new ComplexSymbolFactory();
-	    // create a buffering scanner wrapper
-	    ScannerBuffer lexer = new ScannerBuffer(new Lexer(new BufferedReader(new FileReader(args[0])),csf));
-	    // start parsing
-	    Parser p = new Parser(lexer,csf);
-	    System.out.println("Parser runs: ");
-	    newScope();
-	    XMLElement e = (XMLElement)p.parse().value;
-	    // create XML output file 
-	    XMLOutputFactory outFactory = XMLOutputFactory.newInstance();
-	    XMLStreamWriter sw = outFactory.createXMLStreamWriter(new FileOutputStream(args[1]));
-	    // dump XML output to the file
-	    XMLElement.dump(lexer,sw,e); //,"expr","stmt");
-	    // transform the parse tree into an AST and a rendered HTML version
-	    Transformer transformer = TransformerFactory.newInstance()
-		.newTransformer(new StreamSource(new File("tree.xsl")));
-	    Source text = new StreamSource(new File(args[1]));
-	    transformer.transform(text, new StreamResult(new File("output.html")));
-
-	    System.out.println("Parsing finished!");
-	} catch (Exception e) {
-	    e.printStackTrace();
-	} 
+        try {
+            ComplexSymbolFactory csf = new ComplexSymbolFactory();
+            // create a buffering scanner wrapper
+            ScannerBuffer lexer = new ScannerBuffer(new Lexer(new BufferedReader(new FileReader(args[0])),csf));
+            // start parsing
+            CParser p = new CParser(lexer,csf);
+            newScope();
+            AstNode root = p.parse().value;
+            System.out.print(root.getTreeString(false));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 :};
 
@@ -266,7 +261,7 @@ declaration
     | declaration_specifiers:ds init_declarator_list:idl {: 
 							  if (ds.toString().indexOf(">typedef<")>0) {
 							      for (XMLElement e: ((XMLElement)idl).selectById("identifier"))
-								Parser.addType(((Terminal)e).value().toString());
+								CParser.addType(((Terminal)e).value().toString());
 							  }
 							  :} SEMI
         ;
@@ -455,7 +450,7 @@ initializer_list
 
 statement
 	::=labeled_statement:ls
-	| {: Parser.newScope(); :}  compound_statement:cs {: Parser.deleteScope(); :} 
+	| {: CParser.newScope(); :}  compound_statement:cs {: CParser.deleteScope(); :}
 	| expression_statement:es
 	| selection_statement:ss 
 	| iteration_statement:is 
@@ -522,8 +517,8 @@ external_declaration
 	;
 
 function_definition
-	::=declaration_specifiers:ds declarator:d declaration_list:dl {: Parser.newScope(); :} compound_statement:cs {: Parser.deleteScope(); :} 
-	| declaration_specifiers:ds declarator:d {: Parser.newScope(); :}  compound_statement:cs {: Parser.deleteScope(); :} 
-	| declarator:d declaration_list:dl {: Parser.newScope(); :} compound_statement:cs {: Parser.deleteScope(); :} 
-	| declarator:d {: Parser.newScope(); :}  compound_statement:cs {: Parser.deleteScope(); :} 
+	::=declaration_specifiers:ds declarator:d declaration_list:dl {: CParser.newScope(); :} compound_statement:cs {: CParser.deleteScope(); :}
+	| declaration_specifiers:ds declarator:d {: CParser.newScope(); :}  compound_statement:cs {: CParser.deleteScope(); :}
+	| declarator:d declaration_list:dl {: CParser.newScope(); :} compound_statement:cs {: CParser.deleteScope(); :}
+	| declarator:d {: CParser.newScope(); :}  compound_statement:cs {: CParser.deleteScope(); :}
 	;

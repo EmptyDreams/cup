@@ -20,7 +20,7 @@ configurations {
 }
 
 dependencies {
-    jflex files('bin/JFlex.jar')
+    jflex 'de.jflex:jflex:1.9.1'
 }
 
 sourceSets {
@@ -50,7 +50,7 @@ tasks.register('generateCupParser', JavaExec) {
 }
 
 tasks.register('generateJFlexLexer', JavaExec) {
-    mainClass = 'JFlex.Main'
+    mainClass = 'jflex.Main'
     classpath = configurations.jflex
     args = ['-d', 'build/generated/java_cup', 'src/jflex/Lexer.jflex']
     workingDir = project.projectDir
@@ -74,7 +74,137 @@ tasks.register('runtimeJar', Jar) {
     include 'java_cup/runtime/**'
 }
 
+tasks.register('testMiniJava') {
+    dependsOn(jar)
+
+    doFirst {
+        // Create directories
+        mkdir 'testgrammars/minijava'
+        mkdir 'testgrammars/minijava/classes'
+
+        // Clean previous class files
+        delete fileTree(dir: 'testgrammars/minijava/classes', include: '*.class')
+        delete fileTree(dir: 'testgrammars/minijava', include: '*.java')
+
+        println 'Running minijava test...'
+    }
+
+    doLast {
+        // Generate lexer using JFlex from Gradle configuration
+        exec {
+            commandLine 'java', '-cp', configurations.jflex.asPath, 'jflex.Main',
+                        '-d', 'testgrammars/minijava', 'src/test/resources/minijava/minijava.jflex'
+            workingDir '.'
+        }
+
+        // Generate parser using current project's CUP code
+        exec {
+            commandLine 'java', '-cp', files(jar.archiveFile).asPath, 'java_cup.Main',
+                        '-interface',
+                        '-parser', 'MiniJavaParser',
+                        '-symbols', 'MiniJavaSymbols',
+                        '-nonterms',
+                        '-destdir', 'testgrammars/minijava',
+                        '-ast', 'Node%s',
+                        'src/test/resources/minijava/minijava.cup'
+            workingDir '.'
+        }
+
+        // Compile generated Java files
+        exec {
+            commandLine 'javac', '-cp', files(runtimeJar.archiveFile, 'testgrammars/minijava').asPath,
+                        '-d', 'testgrammars/minijava/classes',
+                        'testgrammars/minijava/*.java'
+            workingDir '.'
+        }
+
+        // Run the parser and capture output
+        def actualOutput
+        try {
+            def proc = [
+                    "java", "-cp", files(runtimeJar.archiveFile, "testgrammars/minijava/classes").asPath,
+                    "MiniJavaParser",
+                    "src/test/resources/minijava/simple.minijava"
+            ].execute()
+            proc.waitFor()
+            actualOutput = proc.in.text.trim()
+        } catch (Exception e) {
+            actualOutput = e.getMessage()
+        }
+
+        // Read expected output
+        def expectedOutput = new File('src/test/resources/minijava/simple.output').text.trim()
+
+        // Normalize outputs for comparison
+        def normalize = { String text ->
+            return text.replaceAll("\\r\\n", "\n")
+        }
+
+        def normalizedActual = normalize(actualOutput)
+        def normalizedExpected = normalize(expectedOutput)
+
+        // Compare outputs
+        if (normalizedActual.equals(normalizedExpected)) {
+            println '\nTEST RESULT: PASS'
+        } else {
+            println '\nTEST RESULT: FAIL'
+            println 'Expected:\n' + normalizedExpected
+            println 'Actual:\n' + normalizedActual
+        }
+    }
+}
+
 jar.finalizedBy runtimeJar
+
+tasks.register('testCalc') {
+    dependsOn(jar)
+
+    doFirst {
+        // Create directories
+        mkdir 'testgrammars/calc'
+        mkdir 'testgrammars/calc/classes'
+
+        // Clean previous class files
+        delete fileTree(dir: 'testgrammars/calc/classes', include: '*.class')
+        delete fileTree(dir: 'testgrammars/calc', include: '*.java')
+
+        println 'Running calc test...'
+    }
+
+    doLast {
+        // Copy scanner to test directory
+        copy {
+            from 'src/test/resources/calc/scanner.java'
+            into 'testgrammars/calc'
+        }
+
+        // Generate parser using current project's CUP code
+        exec {
+            commandLine 'java', '-cp', files(jar.archiveFile).asPath, 'java_cup.Main',
+                        '-interface',
+                        '-parser', 'CalcParser',
+                        '-symbols', 'CalcSymbols',
+                        '-destdir', 'testgrammars/calc',
+                        'src/test/resources/calc/calc.cup'
+            workingDir '.'
+        }
+
+        // Compile generated Java files
+        exec {
+            commandLine 'javac', '-cp', files(runtimeJar.archiveFile, 'testgrammars/calc').asPath,
+                        '-d', 'testgrammars/calc/classes',
+                        'testgrammars/calc/*.java'
+            workingDir '.'
+        }
+
+        println 'Calc example compiled successfully. To run:'
+        exec {
+            commandLine 'java', '-cp', files(runtimeJar.archiveFile, 'testgrammars/calc/classes').asPath, 'Main'
+            workingDir '.'
+            standardInput = System.in
+        }
+    }
+}
 
 artifacts {
     archives jar

@@ -3,19 +3,19 @@
 mkdir -p ./java/classes
 rm ./java/classes/*.class
 
-java -jar ../../bin/JFlex.jar minijava.jflex -d ./java
+java -jar ../../bin/JFlex.jar c.jflex -d ./java
 java -jar ../../build/libs/java-cup-11b.jar \
   -interface \
-  -parser MiniJavaParser \
-  -symbols MiniJavaSymbols \
+  -parser CParser \
+  -symbols CSymbols \
   -nonterms \
   -destdir ./java \
   -ast Node%s \
-  minijava.cup
+  c.cup
 
 javac -cp "../../build/libs/java-cup-11b.jar" -d ./java/classes ./java/*.java
 
-ACTUAL=$(java -cp "../../build/libs/java-cup-11b-runtime.jar;./java/classes/" MiniJavaParser simple.minijava)
+ACTUAL=$(java -cp "../../build/libs/java-cup-11b-runtime.jar;./java/classes/" CParser complicated.c)
 EXPECTED=$(cat simple.output)
 
 normalize() {
