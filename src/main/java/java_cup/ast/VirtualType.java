@@ -263,12 +263,15 @@ public class VirtualType {
             getByIndexExprs.add("switch (index) {");
             for (int i = 0; i < allSubFields.size(); i++) {
                 var field = allSubFields.get(i);
-                getByIndexExprs.add("  case " + i + ": return " + emit.joinName("get", field.joinLabel()) + "();");
+                getByIndexExprs.add(
+                    "  case " + i + ": return new AbstractMap.SimpleEntry<>(\"" + field.joinLabel() + "\", "
+                        + emit.joinName("get", field.joinLabel()) + "());"
+                );
             }
             getByIndexExprs.add("  default: new IndexOutOfBoundsException(index);");
             getByIndexExprs.add("}");
             var getByIndexMethod = new VirtualMethod(
-                "getByIndex", "AstNode",
+                "getByIndex", "Map.Entry<String, AstNode>",
                 List.of(new VirtualField("index", TYPE_INT, 0)),
                 getByIndexExprs
             ).withAnnotation("@Override");

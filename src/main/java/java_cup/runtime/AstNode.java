@@ -2,9 +2,7 @@ package java_cup.runtime;
 
 import java_cup.runtime.symbol.Location;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -13,7 +11,7 @@ import java.util.function.Consumer;
  * @author kmar
  */
 @SuppressWarnings("unused")
-public abstract class AstNode implements Iterable<AstNode> {
+public abstract class AstNode implements Iterable<Map.Entry<String, AstNode>> {
 
     /**
      * Returns the location of the node.
@@ -47,22 +45,22 @@ public abstract class AstNode implements Iterable<AstNode> {
      * @return the child node at the given index, or {@code null} if the slot is empty
      * @throws IndexOutOfBoundsException if the index is invalid for this node type
      */
-    protected abstract AstNode getByIndex(int index);
+    protected abstract Map.Entry<String, AstNode> getByIndex(int index);
 
     @SuppressWarnings("NullableProblems")
     @Override
-    public Iterator<AstNode> iterator() {
+    public Iterator<Map.Entry<String, AstNode>> iterator() {
         return AstNodeIterator.EMPTY;
     }
 
-    protected final static class AstNodeIterator implements Iterator<AstNode> {
+    protected final static class AstNodeIterator implements Iterator<Map.Entry<String, AstNode>> {
 
         static final AstNodeIterator EMPTY = new AstNodeIterator(null, 0);
 
         private final AstNode node;
         private final int size;
         private int index = 0;
-        private AstNode next = null;
+        private Map.Entry<String, AstNode> next = null;
 
         public AstNodeIterator(AstNode node, int size) {
             this.node = node;
@@ -74,7 +72,7 @@ public abstract class AstNode implements Iterable<AstNode> {
             if (this.next != null) {
                 return true;
             }
-            AstNode next = null;
+            Map.Entry<String, AstNode> next = null;
             int index = this.index;
             while (index != size) {
                 next = node.getByIndex(index++);
@@ -88,7 +86,7 @@ public abstract class AstNode implements Iterable<AstNode> {
         }
 
         @Override
-        public AstNode next() {
+        public Map.Entry<String, AstNode> next() {
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
@@ -98,13 +96,13 @@ public abstract class AstNode implements Iterable<AstNode> {
         }
 
         @Override
-        public void forEachRemaining(Consumer<? super AstNode> action) {
+        public void forEachRemaining(Consumer<? super Map.Entry<String, AstNode>> action) {
             Objects.requireNonNull(action);
             if (this.next != null) {
                 action.accept(this.next);
             }
             for (int i = index; i != size; ++i) {
-                AstNode next = node.getByIndex(i);
+                var next = node.getByIndex(i);
                 if (next != null) {
                     action.accept(next);
                 }
