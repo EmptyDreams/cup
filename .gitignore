@@ -10,3 +10,4 @@ out/
 
 # Compiled files
 *.class
+testgrammars/*/java
