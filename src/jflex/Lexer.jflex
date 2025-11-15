@@ -111,12 +111,12 @@ ident = ([:jletter:] | "_" ) ([:jletterdigit:] | [:jletter:] | "_" )*
 }
 
 <CODESEG> {
-  ":}"         {
+  ":}"          {
     var location = ComplexLocation.of(csline, cscolumn, yyline + 1, yycolumn + 1 + yylength());
     yybegin(YYINITIAL); return symbolFactory.newSymbol(CODE_STRING, location, sb.toString());
   }
-  .|\n            { sb.append(yytext()); }
+  [^]           { sb.append(yytext()); }
 }
 
 // error fallback
-.|\n          { emit_warning("Unrecognized character '" +yytext()+"' -- ignored"); }
+[^]             { emit_warning("Unrecognized character '" +yytext()+"' -- ignored"); }
