@@ -82,7 +82,7 @@ white_space = {new_line} | [ \t\f]
 {BoolLiteral} { return symbol("Boolconst",BOOLCONST, new Boolean(Boolean.parseBool(yytext()))); }
 
 /* literals */
-{IntLiteral} { return symbol("Intconst",INTCONST, new Integer(Integer.parseInt(yytext()))); }
+{IntLiteral} { return symbol("Intconst",INTCONST, Integer.parseInt(yytext())); }
 
 
 

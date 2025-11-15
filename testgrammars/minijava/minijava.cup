@@ -16,7 +16,8 @@ parser code {:
       // start parsing
       MiniJavaParser p = new MiniJavaParser(lexer,csf);
       var parsed = p.parse();
-      System.out.println(parsed);
+      AstNode root = parsed.value();
+      System.out.print(root.toTreeString(false));
   }
 :}; 
 
