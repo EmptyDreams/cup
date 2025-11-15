@@ -1,4 +1,8 @@
 import java_cup.runtime.AstNode;
+import java_cup.runtime.SymbolFactory;
+
+import java.util.Iterator;
+import java.util.Map;
 
 public final class $ClassName$ extends AstNode {
 
@@ -27,6 +31,21 @@ public final class $ClassName$ extends AstNode {
     @Override
     public AstNode getByLabel(String label) {
         return null;
+    }
+
+    @Override
+    public String getNodeName(SymbolFactory factory) {
+        return $nodeName$;
+    }
+
+    @Override
+    protected Map.Entry<String, AstNode> getByIndex(int index) {
+        $getByIndex$
+    }
+
+    @Override
+    public Iterator<Map.Entry<String, AstNode>> iterator() {
+        return $iterator$;
     }
 
     @Override

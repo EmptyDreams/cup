@@ -14,20 +14,21 @@ public class VirtualType {
     private static final VirtualType TYPE_SYMBOL = ofName("Symbol");
     private static final VirtualType TYPE_POSITION = ofName(Main.customPositionClass);
     private static final VirtualType TYPE_INT = ofName("int");
+    private static final VirtualType TYPE_FACTORY = ofName("SymbolFactory");
 
-    public static VirtualType ofBasic(String name) {
+    public static VirtualType ofBasic(String name, int symId) {
         return basicTypeCache.computeIfAbsent(name, k -> {
-            var type = new VirtualType(false, k);
+            var type = new VirtualType(symId, false, k);
             var className = k.replaceAll("[<, ]+", "_")
                 .replace(">", "");
-            type.className = GrammarSymbol.getNtNodeClassName(className);
+            type.className = GrammarSymbol.getNtNodeClassName(className, true);
             type.prods = Collections.emptyList();
             return type;
         });
     }
 
     private static VirtualType ofName(String name) {
-        var type = new VirtualType(false, "");
+        var type = new VirtualType(-1, false, "");
         type.className = name;
         type.prods = Collections.emptyList();
         return type;
@@ -37,6 +38,7 @@ public class VirtualType {
         return basicTypeCache.values();
     }
 
+    private final int symId;
     public final boolean isAstNode;
     private final String basicName;
 
@@ -44,7 +46,8 @@ public class VirtualType {
     public List<VirtualProduction> prods;
     public boolean isAnno = false;
 
-    public VirtualType(boolean isAstNode, String basicName) {
+    public VirtualType(int symId, boolean isAstNode, String basicName) {
+        this.symId = symId;
         this.isAstNode = isAstNode;
         this.basicName = basicName;
     }
@@ -68,10 +71,6 @@ public class VirtualType {
         return allFields;
     }
 
-    public void castToBox() {
-        className = emit.boxType(className);
-    }
-
     public VirtualClass toVirtualClass() {
         var clazz = new VirtualClass(className);
         clazz.markParent("AstNode");
@@ -84,6 +83,23 @@ public class VirtualType {
             "getLocation", Main.customPositionClass, Collections.emptyList(),
             List.of("return " + Main.customPositionClass + ".NO_LOCATION;")
         ).withAnnotation("@Override"));
+        if (symId == -1) {
+            clazz.addMethod(
+                new VirtualMethod(
+                    "getNodeName", "String",
+                    List.of(new VirtualField("factory", TYPE_FACTORY, 0)),
+                    List.of("return null;")
+                ).markFinal().withAnnotation("@Override")
+            );
+        } else {
+            clazz.addMethod(
+                new VirtualMethod(
+                    "getNodeName", "String",
+                    List.of(new VirtualField("factory", TYPE_FACTORY, 0)),
+                    List.of("return factory.getNonTerminalName(" + symId + ");")
+                ).markFinal().withAnnotation("@Override")
+            );
+        }
         for (VirtualField field : allMethodField) {
             var method = new VirtualMethod(
                 emit.joinName("has", field.joinLabel()),
@@ -288,13 +304,10 @@ public class VirtualType {
 
     private VirtualType _innerType;
 
-    public VirtualType toList() {
-        var name = "List<" + className + '>';
-        var type = new VirtualType(false, name);
-        type.className = name;
-        type.prods = Collections.emptyList();
-        type._innerType = this;
-        return type;
+    public VirtualType toList(int symId) {
+        var result = ofBasic("List<" + className + '>', symId);
+        result._innerType = this;
+        return result;
     }
 
     public Stream<VirtualType> types() {

@@ -36,6 +36,14 @@ public abstract class AstNode implements Iterable<Map.Entry<String, AstNode>> {
     public abstract AstNode getByLabel(String label);
 
     /**
+     * Returns the name of the node.
+     *
+     * @param factory The symbol factory to use for creating symbols.
+     * @return null if {@link SymbolFactory#getNonTerminalName(int)} returns null
+     */
+    public abstract String getNodeName(SymbolFactory factory);
+
+    /**
      * Returns the child AST node at the specified index.
      * <p>
      * This method may return {@code null} if the child at the given index is optional

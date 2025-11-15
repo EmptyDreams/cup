@@ -944,24 +944,6 @@ public class emit {
     }
 
     /**
-     * Boxes the given type to its corresponding wrapper class.
-     * @return eg. "int" -> "Integer"
-     */
-    public static String boxType(String type) {
-        switch (type) {
-            case "byte": return "Byte";
-            case "short": return "Short";
-            case "int": return "Integer";
-            case "long": return "Long";
-            case "float": return "Float";
-            case "double": return "Double";
-            case "char": return "Character";
-            case "boolean": return "Boolean";
-            default: return type;
-        }
-    }
-
-    /**
      * Get the name of the anonymous non-terminal expression.
      *
      * @param nt The parent non-terminal that contains the anonymous non-terminal
@@ -1435,19 +1417,29 @@ public class emit {
                 templateText = loadBaseAstNodeTemplate();
             }
             var typeName = type.getRealName();
+            String listType = null;
+            if (typeName.startsWith("List<") && typeName.endsWith(">")) {
+                listType = typeName.substring(5, typeName.length() - 1);
+            }
             var firstUpperTypeName = Character.toUpperCase(typeName.charAt(0)) + typeName.substring(1);
-            var className = GrammarSymbol.getNtNodeClassName(typeName);
-            var fileName = className + ".java";
+            var fileName = type.className + ".java";
             var file = new File(dir, fileName);
             try (
                 var writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)
             ) {
-                writer.write(
-                    templateText.replace("$ClassName$", className)
-                        .replace("$type$", typeName)
-                        .replace("$Type$", firstUpperTypeName)
-                        .replace("java_cup.runtime.symbol.Location", Main.customPositionClass)
-                );
+                var code = templateText.replace("$ClassName$", type.className)
+                    .replace("$type$", typeName)
+                    .replace("$Type$", firstUpperTypeName)
+                    .replace("java_cup.runtime.symbol.Location", Main.customPositionClass)
+                    .replace("$nodeName$", '"' + typeName + '"');
+                if (listType == null || !AstNodeBuilder.isNodeClass(listType)) {
+                    code = code.replace("$getByIndex$", "throw new IndexOutOfBoundsException(0);")
+                        .replace("$iterator$", "super.iterator()");
+                } else {
+                    code = code.replace("$getByIndex$", "return value.get(index);")
+                        .replace("$iterator$", "value.iterator()");
+                }
+                writer.write(code);
             }
         }
     }

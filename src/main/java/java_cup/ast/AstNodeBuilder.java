@@ -12,25 +12,31 @@ public class AstNodeBuilder {
     private AstNodeBuilder() {}
 
     private static final Map<non_terminal, VirtualType> typeCache = new HashMap<>();
+    private static final Map<String, VirtualType> classNameToType = new HashMap<>();
+
+    public static boolean isNodeClass(String className) {
+        return classNameToType.containsKey(className) || "AstNode".equals(className);
+    }
 
     public static VirtualType buildGraph(GrammarSymbol sym) throws internal_error {
         if (sym.is_non_term() && ("AstNode".equals(sym.stack_type()))) {
             return buildGraph((non_terminal) sym, null, -1);
         } else {
-            return VirtualType.ofBasic(sym.stack_type());
+            return VirtualType.ofBasic(sym.stack_type(), -1);
         }
     }
 
     private static VirtualType buildGraph(non_terminal nt, Production fromProd, int index) throws internal_error {
         if (nt.isAnno() && fromProd == null) return null;
         if (typeCache.containsKey(nt)) return typeCache.get(nt);
-        var type = new VirtualType(true, "");
+        var type = new VirtualType(nt.index(), true, "");
         if (type.isAnno) {
             type.className = emit.getAnnoExprName((non_terminal) fromProd.lhs().the_symbol(), fromProd, index);
         } else {
             type.className = nt.astClassName();
         }
         if (!nt.isAnno()) typeCache.put(nt, type);
+        classNameToType.put(type.className, type);
         Map<String, VirtualProduction> prods = new HashMap<>();
         if (nt.isOptBox()) {
             var subSymbol = nt.getOptContent();
@@ -50,8 +56,7 @@ public class AstNodeBuilder {
                 result = buildGraph(subSymbol);
             }
             if (result == null) return null;
-            result.castToBox();
-            return result.toList();
+            return result.toList(nt.index());
         }
         var annoItor = nt.isAnno() ? non_terminal.getAnnoLabelAndAction(fromProd).iterator() : null;
         for (Production prod : nt.productions()) {

@@ -78,7 +78,7 @@ public abstract class GrammarSymbol {
     public String astClassName() {
         String type = stack_type();
         if (type.equals("AstNode")) {
-            return GrammarSymbol.getNtNodeClassName(name());
+            return GrammarSymbol.getNtNodeClassName(name(), false);
         } else if (type.startsWith("List<")) {
             return "ArrayList<" + type.substring(5);
         }
@@ -319,17 +319,22 @@ public abstract class GrammarSymbol {
 
     /*-----------------------------------------------------------*/
 
-    public static String getNtNodeClassName(String name) {
+    public static String getNtNodeClassName(String name, boolean forceP) {
         String format = Main.ast_format;
         StringBuilder sb = new StringBuilder(name.length() + format.length());
         for (int i = 0; i < format.length(); i++) {
             char fc = format.charAt(i);
             if (fc == '%') {
                 char nextChar = format.charAt(++i);
-                if (nextChar == 's') {
-                    writeNameS(sb, name);
-                } else if (nextChar == 'p') {
-                    writeNameP(sb, name);
+                if (nextChar == 's' && !forceP) {
+                    int index = name.indexOf('_');
+                    if (index == -1 || name.length() == index + 1) {
+                        sb.append(emit.castToStName(name));
+                    } else {
+                        sb.append(emit.castToStName(name.substring(index + 1)));
+                    }
+                } else if (nextChar == 'p' || nextChar == 's') {
+                    sb.append(emit.castToStName(name));
                 } else {
                     throw new AssertionError();
                 }
@@ -338,29 +343,6 @@ public abstract class GrammarSymbol {
             }
         }
         return sb.toString();
-    }
-
-    private static void writeNameS(StringBuilder sb, String name) {
-        boolean toUpper = true;
-        for (int i = name.indexOf('_') + 1; i < name.length(); i++) {
-            char c = name.charAt(i);
-            if (c == '_') {
-                toUpper = true;
-            } else if (toUpper) {
-                sb.append(Character.toUpperCase(c));
-                toUpper = false;
-            } else {
-                sb.append(Character.toLowerCase(c));
-            }
-        }
-    }
-
-    private static void writeNameP(StringBuilder sb, String name) {
-        int endIndex = name.indexOf('_');
-        for (int i = 0; i < endIndex; i++) {
-            char c = name.charAt(i);
-            sb.append(i == 0 ? Character.toUpperCase(c) : Character.toLowerCase(c));
-        }
     }
 
 }
