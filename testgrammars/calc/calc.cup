@@ -1,21 +1,14 @@
 /* Simple +/-/* expression language; parser evaluates constant expressions on the fly*/
 import java_cup.runtime.*;
 
-parser code {:
-    scanner s;
-    Parser(scanner s){
-	this.s=s;
-    }
-    :}
-init with {: s.init(); :};
-scan with {: return s.next_token(); :};
+init with {: ((scanner) getScanner()).init(); :};
 /* Terminals (tokens returned by the scanner). */
 terminal            SEMI, PLUS, MINUS, TIMES, UMINUS, LPAREN, RPAREN;
-terminal Integer    NUMBER;        // our scanner provides numbers as integers
+terminal int        NUMBER;        // our scanner provides numbers as integers
 
 /* Non terminals */
 non terminal            expr_list;
-non terminal Integer    expr;      // used to store evaluated subexpressions
+non terminal int        expr;      // used to store evaluated subexpressions
 
 /* Precedences */
 precedence left PLUS, MINUS;
