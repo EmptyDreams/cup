@@ -18,6 +18,12 @@ public class AstNodeBuilder {
         return classNameToType.containsKey(className) || "AstNode".equals(className);
     }
 
+    public static String getNtName(String className) {
+        var type = classNameToType.get(className);
+        if (type == null || type.getSymId() == -1) return className;
+        return non_terminal.find(type.getSymId()).name();
+    }
+
     public static VirtualType buildGraph(GrammarSymbol sym) throws internal_error {
         if (sym.is_non_term() && ("AstNode".equals(sym.stack_type()))) {
             return buildGraph((non_terminal) sym, null, -1);

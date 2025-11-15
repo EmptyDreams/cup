@@ -1,8 +1,7 @@
 import java_cup.runtime.AstNode;
 import java_cup.runtime.SymbolFactory;
 
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 public final class $ClassName$ extends AstNode {
 
@@ -14,7 +13,7 @@ public final class $ClassName$ extends AstNode {
         this.location = location;
     }
 
-    public $type$ get$Type$() {
+    public $type$ getValue() {
         return value;
     }
 
@@ -34,8 +33,13 @@ public final class $ClassName$ extends AstNode {
     }
 
     @Override
-    public String getNodeName(SymbolFactory factory) {
-        return $nodeName$;
+    public boolean isTerminal() {
+        return $terminal$;
+    }
+
+    @Override
+    public String getNodeName() {
+        return "$nodeName$";
     }
 
     @Override
@@ -49,21 +53,8 @@ public final class $ClassName$ extends AstNode {
     }
 
     @Override
-    public int hashCode() {
-        return value + location.hashCode() * 31;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-
-        var that = ($ClassName$) o;
-        return value == that.value && location.equals(that.location);
-    }
-
-    @Override
     public String toString() {
-        return "$Type$(" + value + ")@" + location;
+        return "$nodeName$" + $value$ + location;
     }
 
 }

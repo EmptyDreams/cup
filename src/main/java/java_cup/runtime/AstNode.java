@@ -36,12 +36,16 @@ public abstract class AstNode implements Iterable<Map.Entry<String, AstNode>> {
     public abstract AstNode getByLabel(String label);
 
     /**
-     * Returns the name of the node.
-     *
-     * @param factory The symbol factory to use for creating symbols.
-     * @return null if {@link SymbolFactory#getNonTerminalName(int)} returns null
+     * Returns whether this node is a terminal node.
      */
-    public abstract String getNodeName(SymbolFactory factory);
+    public boolean isTerminal() {
+        return false;
+    }
+
+    /**
+     * Returns the name of the node.
+     */
+    public abstract String getNodeName();
 
     /**
      * Returns the child AST node at the specified index.
@@ -53,13 +57,66 @@ public abstract class AstNode implements Iterable<Map.Entry<String, AstNode>> {
      * @return the child node at the given index, or {@code null} if the slot is empty
      * @throws IndexOutOfBoundsException if the index is invalid for this node type
      */
-    protected abstract Map.Entry<String, AstNode> getByIndex(int index);
+    protected Map.Entry<String, AstNode> getByIndex(int index) {
+        throw new IndexOutOfBoundsException(index);
+    }
 
     @SuppressWarnings("NullableProblems")
     @Override
     public Iterator<Map.Entry<String, AstNode>> iterator() {
         return AstNodeIterator.EMPTY;
     }
+
+    /**
+     * Returns a string representation of this AST node and its subtree in tree format.
+     *
+     * @param withHighlight whether to add console color highlighting to different parts of the output
+     * @return a string representation of the AST subtree rooted at this node
+     */
+    public String toTreeString(boolean withHighlight) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(this).append('\n');
+        buildTreeString(sb, "", withHighlight);
+        if (withHighlight) {
+            sb.append(ANSI_RESET);
+        }
+        return sb.toString();
+    }
+
+    private void buildTreeString(StringBuilder sb, String prefix, boolean withHighlight) {
+        for (var entry : this) {
+            var label = entry.getKey();
+            var child = entry.getValue();
+
+            if (withHighlight) {
+                sb.append(ANSI_CYAN).append(prefix).append("+-- ");
+                if (!Character.isDigit(label.charAt(0))) {
+                    if (child.isTerminal()) {
+                        sb.append(ANSI_BOLD).append(ANSI_YELLOW);
+                    } else {
+                        sb.append(ANSI_GREEN);
+                    }
+                    sb.append(label).append(ANSI_PURPLE).append("@");
+                }
+                sb.append(ANSI_RESET).append(child).append('\n');
+            } else {
+                sb.append(prefix).append("+-- ");
+                if (!Character.isDigit(label.charAt(0))) {
+                    sb.append(label).append("@");
+                }
+                sb.append(child).append('\n');
+            }
+            child.buildTreeString(sb, prefix + "|   ", withHighlight);
+        }
+    }
+    
+    // ANSI color codes for console highlighting
+    private static final String ANSI_RESET = "\u001B[0m";
+    private static final String ANSI_CYAN = "\u001B[36m";
+    private static final String ANSI_YELLOW = "\u001B[33m";
+    private static final String ANSI_GREEN = "\u001B[32m";
+    private static final String ANSI_PURPLE = "\u001B[35m";
+    private static final String ANSI_BOLD = "\u001B[1m";
 
     protected final static class AstNodeIterator implements Iterator<Map.Entry<String, AstNode>> {
 

@@ -43,6 +43,25 @@ public class VirtualProduction {
                     break;
                 }
             }
+            boolean isMaybeNull = rightPositionIndex[0] && leftPositionIndex[1];
+            if (leftPositionIndex[1]) {
+                var base = Main.customPositionClass + ' ' + emit.pre("left");
+                if (isMaybeNull) {
+                    base += " = " + Main.customPositionClass + ".NO_LOCATION;";
+                } else {
+                    base += ';';
+                }
+                factoryExprs.add(base);
+            }
+            if (rightPositionIndex[fields.size() - 2]) {
+                var base = Main.customPositionClass + ' ' + emit.pre("right");
+                if (isMaybeNull) {
+                    base += " = " + Main.customPositionClass + ".NO_LOCATION;";
+                } else {
+                    base += ';';
+                }
+                factoryExprs.add(base);
+            }
         }
         for (int i = 0; i < fields.size(); i++) {
             VirtualField field = fields.get(i);
@@ -74,7 +93,7 @@ public class VirtualProduction {
                     // so we need to check whether the left boundary has already been assigned
                     factoryExprs.add(prefix + "if (" + emit.pre("left") + " == null)");
                     prefix += "  ";
-                } else {
+                } else if (!field.isOptBox()) {
                     prefix += "var ";
                 }
                 factoryExprs.add(prefix + emit.pre("left") + positionAssignment);
@@ -83,7 +102,7 @@ public class VirtualProduction {
                 // This differs from the left-boundary logic because we process fields left-to-right;
                 // thus, always assigning to the right boundary ensures it ends up as the position of the last non-null field
                 String prefix = field.isOptBox() ? "  " : "";
-                if (i == 0 || !rightPositionIndex[i - 1]) {
+                if ((i == 0 || !rightPositionIndex[i - 1]) && !field.isOptBox()) {
                     prefix += "var ";
                 }
                 factoryExprs.add(prefix + emit.pre("right") +  positionAssignment);

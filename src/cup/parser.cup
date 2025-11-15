@@ -284,9 +284,13 @@ action code {:
       if (subNt == null) {
         boolean exists = java.util.Arrays.stream(rhs_parts, 0, rhs_pos)
           .anyMatch(
-            part -> !part.is_action() &&
-              ((symbol_part) part).the_symbol().is_non_term() &&
-              ((non_terminal) ((symbol_part) part).the_symbol()).isAnno()
+            part -> {
+              if (part.is_action()) return false;
+              GrammarSymbol symbol = ((symbol_part) part).the_symbol();
+              if (!symbol.is_non_term()) return false;
+              non_terminal partNt = (non_terminal) symbol;
+              return partNt.isAnno() && !partNt.isListBox() && !partNt.isOptBox();
+            }
           );
         if (exists) {
           // The logic here is to determine the index of the production,

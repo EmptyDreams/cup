@@ -3,6 +3,7 @@ package java_cup.ast;
 import java_cup.GrammarSymbol;
 import java_cup.Main;
 import java_cup.emit;
+import java_cup.non_terminal;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -60,6 +61,10 @@ public class VirtualType {
         return basicName != null && !basicName.isEmpty();
     }
 
+    public int getSymId() {
+        return symId;
+    }
+
     private List<VirtualField> allFields;
 
     public List<VirtualField> allFields() {
@@ -87,16 +92,31 @@ public class VirtualType {
             clazz.addMethod(
                 new VirtualMethod(
                     "getNodeName", "String",
-                    List.of(new VirtualField("factory", TYPE_FACTORY, 0)),
+                    Collections.emptyList(),
                     List.of("return null;")
                 ).markFinal().withAnnotation("@Override")
             );
+            clazz.addMethod(
+                new VirtualMethod(
+                    "toString", "String",
+                    Collections.emptyList(),
+                    List.of("return \"" + className + "\" + getLocation();")
+                ).markFinal().withAnnotation("@Override")
+            );
         } else {
+            var nodeName = non_terminal.find(symId).name();
             clazz.addMethod(
                 new VirtualMethod(
                     "getNodeName", "String",
-                    List.of(new VirtualField("factory", TYPE_FACTORY, 0)),
-                    List.of("return factory.getNonTerminalName(" + symId + ");")
+                    Collections.emptyList(),
+                    List.of("return \"" + nodeName + "\";")
+                ).markFinal().withAnnotation("@Override")
+            );
+            clazz.addMethod(
+                new VirtualMethod(
+                    "toString", "String",
+                    Collections.emptyList(),
+                    List.of("return \"" + nodeName + "\" + getLocation();")
                 ).markFinal().withAnnotation("@Override")
             );
         }
@@ -284,7 +304,7 @@ public class VirtualType {
                         + emit.joinName("get", field.joinLabel()) + "());"
                 );
             }
-            getByIndexExprs.add("  default: new IndexOutOfBoundsException(index);");
+            getByIndexExprs.add("  default: throw new IndexOutOfBoundsException(index);");
             getByIndexExprs.add("}");
             var getByIndexMethod = new VirtualMethod(
                 "getByIndex", "Map.Entry<String, AstNode>",
@@ -292,6 +312,12 @@ public class VirtualType {
                 getByIndexExprs
             ).withAnnotation("@Override");
             innerClass.addMethod(getByIndexMethod);
+            var iteratorMethod = new VirtualMethod(
+                "iterator", "Iterator<Map.Entry<String, AstNode>>",
+                Collections.emptyList(),
+                List.of("return new AstNodeIterator(this, " + allSubFields.size() + ");")
+            ).withAnnotation("@Override");
+            innerClass.addMethod(iteratorMethod);
             clazz.addClass(innerClass);
         }
         return clazz;

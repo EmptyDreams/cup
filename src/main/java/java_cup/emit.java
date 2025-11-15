@@ -1412,44 +1412,66 @@ public class emit {
             }
         }
         String templateText = null;
+        boolean hasList = false;
         for (VirtualType type : VirtualType.basicTypeIterable()) {
             if (templateText == null) {
-                templateText = loadBaseAstNodeTemplate();
+                templateText = loadTemplate("BaseAstNodeTemplate.java");
             }
             var typeName = type.getRealName();
             String listType = null;
             if (typeName.startsWith("List<") && typeName.endsWith(">")) {
                 listType = typeName.substring(5, typeName.length() - 1);
+                hasList = true;
             }
+            var nodeName = listType == null ? typeName : "List<" + AstNodeBuilder.getNtName(listType) + '>';
             var firstUpperTypeName = Character.toUpperCase(typeName.charAt(0)) + typeName.substring(1);
             var fileName = type.className + ".java";
             var file = new File(dir, fileName);
             try (
-                var writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)
+                var writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8);
+                var printer = new PrintWriter(writer)
             ) {
                 var code = templateText.replace("$ClassName$", type.className)
                     .replace("$type$", typeName)
                     .replace("$Type$", firstUpperTypeName)
                     .replace("java_cup.runtime.symbol.Location", Main.customPositionClass)
-                    .replace("$nodeName$", '"' + typeName + '"');
+                    .replace("$nodeName$", nodeName);
                 if (listType == null || !AstNodeBuilder.isNodeClass(listType)) {
-                    code = code.replace("$getByIndex$", "throw new IndexOutOfBoundsException(0);")
-                        .replace("$iterator$", "super.iterator()");
+                    code = code.replace("$getByIndex$", "return super.getByIndex(index);")
+                        .replace("$iterator$", "super.iterator()")
+                        .replace("$value$", "'(' + value + ')'")
+                        .replace("$terminal$", "true");
                 } else {
-                    code = code.replace("$getByIndex$", "return value.get(index);")
-                        .replace("$iterator$", "value.iterator()");
+                    code = code.replace(
+                        "$getByIndex$",
+                        "return new AbstractMap.SimpleEntry<>(String.valueOf(index), value.get(index));"
+                    ).replace("$iterator$", "new NodeListIterator(value)")
+                        .replace("$value$", "'{' + value.size() + '}'")
+                        .replace("$terminal$", "false");
                 }
-                writer.write(code);
+                emit.emit_package(printer);
+                printer.print(code);
+            }
+        }
+        if (hasList) {
+            var code = loadTemplate("ListIterator.java");
+            var file = new File(dir, "NodeListIterator.java");
+            try (
+                var writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8);
+                var printer = new PrintWriter(writer)
+            ) {
+                emit.emit_package(printer);
+                printer.print(code);
             }
         }
     }
 
-    private static String loadBaseAstNodeTemplate() throws IOException {
+    private static String loadTemplate(String fileName) throws IOException {
         try (
-            InputStream is = emit.class.getClassLoader().getResourceAsStream("BaseAstNodeTemplate.java")
+            InputStream is = emit.class.getClassLoader().getResourceAsStream(fileName)
         ) {
             if (is == null) {
-                throw new IOException("Not found: BaseAstNodeTemplate.java");
+                throw new FileNotFoundException("Not found: " + fileName);
             }
             StringBuilder content = new StringBuilder();
             try (BufferedReader reader = new BufferedReader(
