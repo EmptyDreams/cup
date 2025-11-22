@@ -72,7 +72,7 @@ public class ComplexLocation implements Location {
                     startLine + ":" + startColumn + " - " + endLineInclude + ":" + endColumnInclude
             );
         }
-        return new ComplexLocation(startLine, startColumn, endLineInclude + 1, endColumnInclude + 1);
+        return new ComplexLocation(startLine, startColumn, endLineInclude, endColumnInclude + 1);
     }
 
     private final int startLine, startColumn;
