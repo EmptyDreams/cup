@@ -254,11 +254,33 @@ tasks.register('testAstLocation', ExecutingTask) {
             workingDir '.'
         }
 
+        def ops = execOps
+        def failures = []
+
+        // Grammars under invalid/ MUST be rejected by label validation
+        // (non-zero exit + a "Label ..." error on stderr).
+        fileTree(dir: 'src/test/resources/astloc/invalid', include: '*.cup')
+                .sort { it.name }.each { grammar ->
+            def stderr = new ByteArrayOutputStream()
+            def result = ops.exec {
+                commandLine 'java', '-cp', files(jar.archiveFile).asPath, 'java_cup.Main',
+                            '-interface', '-nonterms',
+                            '-destdir', 'testgrammars/astloc',
+                            '-ast', 'Node%p',
+                            grammar.absolutePath
+                workingDir '.'
+                errorOutput = stderr
+                ignoreExitValue = true
+            }
+            if (result.exitValue == 0 || !stderr.toString().contains('Label "')) {
+                failures.add("invalid grammar ${grammar.name} was not rejected " +
+                        "(exit=${result.exitValue})\n${stderr.toString().trim()}")
+            }
+        }
+
         // Run every case and diff against its .expected file. Non-zero JVM exit
         // (e.g. the BUGS.md BUG 3 ClassCastException) or any output mismatch
         // fails the build.
-        def ops = execOps
-        def failures = []
         fileTree(dir: 'src/test/resources/astloc/cases', include: '*.input')
                 .sort { it.name }.each { input ->
             def expectedFile = new File(input.parentFile, input.name.replace('.input', '.expected'))

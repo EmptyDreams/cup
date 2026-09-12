@@ -1,0 +1,17 @@
+/* MUST be rejected: label `a` carries two different types across the
+ * productions of `stmt`. */
+import java_cup.runtime.AstNode;
+
+terminal SEMI, TRAIL, LEAD;
+terminal String ID, NUM;
+
+non terminal AstNode program, stmt, item, sitem;
+
+start with program;
+
+program ::= stmt:s;
+stmt ::= TRAIL item:a SEMI %namer T
+       | LEAD sitem:a SEMI %namer L
+       ;
+item  ::= ID:id;
+sitem ::= NUM:n;

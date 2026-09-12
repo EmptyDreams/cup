@@ -4,6 +4,7 @@ package java_cup;
 import java_cup.runtime.symbol.complex.ComplexSymbolFactory;
 
 import java.io.*;
+import java.util.Set;
 
 /**
  * This class serves as the main driver for the JavaCup system. It accepts user
@@ -187,6 +188,7 @@ public class Main {
             if (print_progress)
                 System.err.println("Checking specification...");
             check_unused();
+            check_labels();
 
             check_end = System.currentTimeMillis();
 
@@ -194,6 +196,12 @@ public class Main {
             if (print_progress)
                 System.err.println("Building parse tables...");
             build_parser();
+
+            /* build the AST type graph up front so label validation errors
+             * surface before any output file is written */
+            if (ast_format != null && ErrorManager.getManager().getErrorCount() == 0) {
+                emit.buildNodeTypes();
+            }
 
             build_end = System.currentTimeMillis();
 
@@ -562,6 +570,46 @@ public class Main {
             }
         }
 
+    }
+
+    /* . . . . . . . . . . . . . . . . . . . . . . . . . */
+
+    /**
+     * Java keywords, reserved words and literals. Labels become variable, field
+     * and method names in the generated code, so they must be valid Java
+     * identifiers and not keywords. {@code const} and {@code goto} are reserved
+     * though unused; contextual keywords such as {@code var}, {@code record} or
+     * {@code yield} remain valid identifiers and are allowed.
+     */
+    private static final Set<String> JAVA_KEYWORDS = Set.of(
+        "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char",
+        "class", "const", "continue", "default", "do", "double", "else", "enum",
+        "extends", "final", "finally", "float", "for", "goto", "if", "implements",
+        "import", "instanceof", "int", "interface", "long", "native", "new",
+        "package", "private", "protected", "public", "return", "short", "static",
+        "strictfp", "super", "switch", "synchronized", "this", "throw", "throws",
+        "transient", "try", "void", "volatile", "while",
+        "true", "false", "null");
+
+    /**
+     * Checks that no label of any production is a Java keyword or reserved
+     * word. This applies to every mode: labels are declared as variables in the
+     * action code of non-AST parsers and as fields/getters of the node classes
+     * in AST mode, so a keyword label always produces invalid Java code.
+     */
+    protected static void check_labels() throws internal_error {
+        for (var prod : Production.all()) {
+            for (int i = 0; i < prod.rhs_length(); i++) {
+                var part = prod.rhs(i);
+                if (part.is_action()) continue;
+                String label = part.label();
+                if (label != null && JAVA_KEYWORDS.contains(label)) {
+                    ErrorManager.getManager().emit_error(
+                        "Label \"" + label + "\" is a Java keyword/reserved word and cannot be used as a label"
+                            + " (in production \"" + prod.to_simple_string() + "\")");
+                }
+            }
+        }
     }
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . */

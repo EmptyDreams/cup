@@ -101,6 +101,25 @@ public class AstNodeBuilder {
             newProd.srcExprs.add(prod.to_simple_string());
             prods.put(name, newProd);
         }
+        // A label shared by several productions of this non-terminal must carry
+        // the same type: the outer node class keeps a single field/getter per
+        // label, and VirtualType.allFields() deduplicates by label, so a type
+        // mismatch would either fail to compile or silently drop the field.
+        Map<String, String> labelTypes = new HashMap<>();
+        for (var virtualProd : prods.values()) {
+            for (var field : virtualProd.fields) {
+                if (field.label == null) continue;
+                String typeName = field.type.getRealName();
+                String prev = labelTypes.putIfAbsent(field.label, typeName);
+                if (prev != null && !prev.equals(typeName)) {
+                    ErrorManager.getManager().emit_error(
+                        "Label \"" + field.label + "\" is used with different types (\"" + prev
+                            + "\" and \"" + typeName + "\") in productions of non-terminal \""
+                            + nt.name() + "\"; a label must have the same type in every production"
+                            + " of a non-terminal");
+                }
+            }
+        }
         if (!nt.isLaAnno() && nt.isAnno()) return null;
         type.prods = List.copyOf(prods.values());
         type.isAnno = fromProd != null;

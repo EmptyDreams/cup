@@ -1,0 +1,12 @@
+/* MUST be rejected: the label `new` is a Java keyword. */
+import java_cup.runtime.AstNode;
+
+terminal SEMI;
+terminal String ID;
+
+non terminal AstNode program, stmt;
+
+start with program;
+
+program ::= stmt:s;
+stmt ::= ID:new SEMI %namer S;

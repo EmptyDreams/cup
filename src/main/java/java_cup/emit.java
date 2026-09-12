@@ -1389,8 +1389,15 @@ public class emit {
         parser_time = System.currentTimeMillis() - start_time;
     }
 
-    public static void node_classes(File dir) throws internal_error, IOException {
-        if (non_terminal.START_nt.num_productions() == 0) return;
+    /**
+     * Builds the AST type graph reachable from the start production and returns
+     * its transitive closure. Also validates labels while building (see
+     * {@link AstNodeBuilder#buildGraph(GrammarSymbol)}); errors are reported through the
+     * ErrorManager, so calling this up front lets Main abort before any output
+     * file is written.
+     */
+    public static List<VirtualType> buildNodeTypes() throws internal_error {
+        if (non_terminal.START_nt.num_productions() == 0) return List.of();
         assert non_terminal.START_nt.num_productions() == 1;
         var prod = non_terminal.START_nt.productions().iterator().next();
         var root = AstNodeBuilder.buildGraph(((symbol_part) prod.rhs(0)).the_symbol());
@@ -1407,7 +1414,11 @@ public class emit {
                 .filter(typeRecord::add)
                 .forEach(typeList::add);
         }
-        for (var type : typeList) {
+        return typeList;
+    }
+
+    public static void node_classes(File dir) throws internal_error, IOException {
+        for (var type : buildNodeTypes()) {
             var fileName = type.className + ".java";
             var file = new File(dir, fileName);
             var clazz = type.toVirtualClass();
