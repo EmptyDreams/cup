@@ -1,0 +1,58 @@
+/* AST-mode location regression grammar: the three BUGS.md repro shapes
+ * plus every grammar extension this fork adds over original CUP 11
+ * (X?, X+, [SEP !]*, [SEP ?]*, multi-symbol separators, ... spread,
+ * %namer, `class`, `import static`). Anonymous expressions (A | B) and
+ * unlabeled spread are NOT covered: the AST graph builder crashes on
+ * them (see BUGS.md). */
+import java_cup.runtime.*;
+import java_cup.runtime.symbol.complex.ComplexSymbolFactory;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import static java_cup.runtime.symbol.complex.ComplexLocation.ofInclusive;
+
+class AstLocParser;
+
+parser code {:
+  public AstLocParser(scanner sc, ComplexSymbolFactory sf) {
+    super(sc, sf);
+  }
+
+  public static void main(String[] args) throws Exception {
+    ComplexSymbolFactory csf = new ComplexSymbolFactory(
+        AstLocParserSym.TERMINAL_NAMES, AstLocParserSym.NON_TERMINAL_NAMES);
+    try (BufferedReader reader = new BufferedReader(new FileReader(args[0]))) {
+      AstLocParser parser = new AstLocParser(new scanner(reader, csf), csf);
+      AstNode root = parser.parse().value();
+      System.out.print(root.toTreeString(false));
+    }
+  }
+:};
+
+terminal String ID, NUM, STAR;
+terminal SEMI, COMMA, TRAIL, LEAD, BOTH, MIX, LIST, PLUS, SEPLIST, TAILSEP, MULTI, FLAT;
+
+non terminal AstNode program, stmt, item, sitem, titem, flatContent;
+
+start with program;
+
+program ::= stmt*:stmtList;
+
+/* Labels are unique per production: the outer node class keeps one getter
+ * per label, so the same label in two productions of one non-terminal must
+ * have the same type. */
+stmt ::= TRAIL item:ta sitem?:tb SEMI %namer TrailOpt
+       | LEAD sitem?:la item:lb SEMI %namer LeadOpt
+       | BOTH sitem?:ba titem?:bb SEMI %namer BothOpt
+       | MIX item:ma sitem?:mb item:mc SEMI %namer MixOpt
+       | LIST sitem*:ll item:lx SEMI %namer LeadList
+       | PLUS titem+:pxs SEMI %namer PlusList
+       | SEPLIST item[COMMA !]*:sxs SEMI %namer SepStar
+       | TAILSEP sitem[SEMI ?]*:txs %namer TailSep
+       | MULTI item[COMMA SEMI !]+:mxs SEMI %namer MultiSep
+       | FLAT ...flatContent:fc SEMI %namer FlatStmt
+       ;
+
+item        ::= ID:id;
+sitem       ::= NUM:n;
+titem       ::= STAR:st;
+flatContent ::= ID:x NUM:y;

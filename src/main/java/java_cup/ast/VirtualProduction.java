@@ -43,25 +43,13 @@ public class VirtualProduction {
                     break;
                 }
             }
-            boolean isMaybeNull = rightPositionIndex[0] && leftPositionIndex[1];
-            if (leftPositionIndex[1]) {
-                var base = Main.customPositionClass + ' ' + emit.pre("left");
-                if (isMaybeNull) {
-                    base += " = " + Main.customPositionClass + ".NO_LOCATION;";
-                } else {
-                    base += ';';
-                }
-                factoryExprs.add(base);
-            }
-            if (rightPositionIndex[fields.size() - 2]) {
-                var base = Main.customPositionClass + ' ' + emit.pre("right");
-                if (isMaybeNull) {
-                    base += " = " + Main.customPositionClass + ".NO_LOCATION;";
-                } else {
-                    base += ';';
-                }
-                factoryExprs.add(base);
-            }
+            // Pre-declare both boundary variables unconditionally. No assignment below
+            // uses "var", so each boundary is declared exactly once regardless of which
+            // fields are optional, and the null initializers satisfy the
+            // definite-assignment analysis when every boundary candidate is an
+            // opt-box whose value may be absent.
+            factoryExprs.add(Main.customPositionClass + ' ' + emit.pre("left") + " = null;");
+            factoryExprs.add(Main.customPositionClass + ' ' + emit.pre("right") + " = null;");
         }
         for (int i = 0; i < fields.size(); i++) {
             VirtualField field = fields.get(i);
@@ -79,7 +67,7 @@ public class VirtualProduction {
             var positionAssignment = " = (" + Main.customPositionClass + ") " + field.label + ".getLocation();";
             if (field.isOptBox()) {
                 factoryExprs.add(field.type.className + ' ' + field.label + "Node = null;");
-                factoryExprs.add("if (" + field.label + " != null) {");
+                factoryExprs.add("if (!" + field.label + ".isNull()) {");
                 factoryExprs.add("  " + valueAssignment);
             } else {
                 factoryExprs.add("var " + valueAssignment);
@@ -89,30 +77,29 @@ public class VirtualProduction {
                 // If the current field is a candidate for the left boundary,
                 // attempt to assign its position to the left boundary
                 if (i != 0) {
-                    // If this is not the first field, it means preceding fields might be null,
+                    // If this is not the first field, it means preceding fields might be absent,
                     // so we need to check whether the left boundary has already been assigned
                     factoryExprs.add(prefix + "if (" + emit.pre("left") + " == null)");
                     prefix += "  ";
-                } else if (!field.isOptBox()) {
-                    prefix += "var ";
                 }
                 factoryExprs.add(prefix + emit.pre("left") + positionAssignment);
             }
             if (rightPositionIndex[i]) {
                 // This differs from the left-boundary logic because we process fields left-to-right;
-                // thus, always assigning to the right boundary ensures it ends up as the position of the last non-null field
+                // thus, always assigning to the right boundary ensures it ends up as the position of the last present field
                 String prefix = field.isOptBox() ? "  " : "";
-                if ((i == 0 || !rightPositionIndex[i - 1]) && !field.isOptBox()) {
-                    prefix += "var ";
-                }
-                factoryExprs.add(prefix + emit.pre("right") +  positionAssignment);
+                factoryExprs.add(prefix + emit.pre("right") + positionAssignment);
             }
             if (field.isOptBox()) factoryExprs.add("}");
         }
         if (isNeedSpanPos) {
+            // The boundaries are null only when every field is an opt-box whose value
+            // is absent; fall back to the NO_LOCATION sentinel so span stays null-safe.
             factoryExprs.add(
-                "var " + emit.pre("pos") + " = " +
-                    emit.pre("left") + ".span(" + emit.pre("right") + ");"
+                "var " + emit.pre("pos") + " = (" + emit.pre("left") + " != null ? " + emit.pre("left")
+                    + " : " + Main.customPositionClass + ".NO_LOCATION).span("
+                    + emit.pre("right") + " != null ? " + emit.pre("right")
+                    + " : " + Main.customPositionClass + ".NO_LOCATION);"
             );
         } else {
             factoryExprs.add(

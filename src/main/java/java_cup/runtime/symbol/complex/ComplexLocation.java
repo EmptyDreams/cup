@@ -90,12 +90,26 @@ public class ComplexLocation implements Location {
         if (o.isNoLocation()) {
             return this;
         }
+        if (isNoLocation()) {
+            // span-identity: NO_LOCATION.span(real) == real, matching NoLocation.span
+            // and the commutativity contract of Location.span; previously this
+            // poisoned the result with min(0, start)/max(0, end).
+            return (ComplexLocation) o;
+        }
         var other = (ComplexLocation) o;
-        int newStartLine = Math.min(startLine, other.getStartLine());
-        int newStartColumn = Math.min(startColumn, other.getStartColumn());
-        int newEndLine = Math.max(endLine, other.getEndLine());
-        int newEndColumn = Math.max(endColumn, other.getEndColumn());
-        return of(newStartLine, newStartColumn, newEndLine, newEndColumn);
+        // Compare positions lexicographically: lines first, then columns.
+        // Minimizing/maximizing line and column independently produces
+        // coordinates that exist on neither of the two input lines.
+        boolean thisStartsFirst = startLine < other.getStartLine()
+            || (startLine == other.getStartLine() && startColumn <= other.getStartColumn());
+        boolean otherEndsLast = other.getEndLine() > endLine
+            || (other.getEndLine() == endLine && other.getEndColumn() >= endColumn);
+        return of(
+            thisStartsFirst ? startLine : other.getStartLine(),
+            thisStartsFirst ? startColumn : other.getStartColumn(),
+            otherEndsLast ? other.getEndLine() : endLine,
+            otherEndsLast ? other.getEndColumn() : endColumn
+        );
     }
 
     @Override

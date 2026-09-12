@@ -19,6 +19,23 @@ public class ComplexSymbolFactory implements SymbolFactory {
         this.nonTerminalNames = nonTerminalNames;
     }
 
+    /**
+     * Replaces the type-agnostic {@link Location#NO_LOCATION} sentinel with
+     * {@link ComplexLocation#NO_LOCATION}.
+     *
+     * <p>The interface-level sentinel is pushed by {@code lr_parser} for the initial
+     * stack symbol and the EOF fallback, and it is the only {@code Location} instance
+     * that is not usable as a {@code ComplexLocation}; leaving it in place makes the
+     * {@code (ComplexLocation)} casts in generated parser code fail with a
+     * {@code ClassCastException}. The identity comparison is deliberate: every position
+     * class has its own {@code NO_LOCATION} constant whose {@code isNoLocation()} is
+     * also true (including custom classes passed via {@code -location}), and those must
+     * pass through unchanged so user code can still cast to them.</p>
+     */
+    private static Location normalize(Location location) {
+        return location == Location.NO_LOCATION ? ComplexLocation.NO_LOCATION : location;
+    }
+
     @Override
     public String getTerminalName(int id) {
         return terminalNames == null || id < 0 || id >= terminalNames.length ? null : terminalNames[id];
@@ -48,63 +65,63 @@ public class ComplexSymbolFactory implements SymbolFactory {
     @Override
     public Symbol newSymbol(int id, Symbol left, Object value) {
         var def = (ComplexSymbol) left;
-        return new ComplexObjectSymbol(id, def.getLocation(), value);
+        return new ComplexObjectSymbol(id, normalize(def.getLocation()), value);
     }
 
     @Override
     public Symbol newSymbol(int id, Symbol left) {
         var def = (ComplexSymbol) left;
-        return new ComplexEmptySymbol(id, def.getLocation());
+        return new ComplexEmptySymbol(id, normalize(def.getLocation()));
     }
 
     @Override
     public Symbol newSymbol(int id, Location location, Object value) {
-        return new ComplexObjectSymbol(id, location, value);
+        return new ComplexObjectSymbol(id, normalize(location), value);
     }
 
     @Override
     public Symbol newSymbol(int id, Location location, byte value) {
-        return new ComplexByteSymbol(id, location, value);
+        return new ComplexByteSymbol(id, normalize(location), value);
     }
 
     @Override
     public Symbol newSymbol(int id, Location location, short value) {
-        return new ComplexShortSymbol(id, location, value);
+        return new ComplexShortSymbol(id, normalize(location), value);
     }
 
     @Override
     public Symbol newSymbol(int id, Location location, int value) {
-        return new ComplexIntSymbol(id, location, value);
+        return new ComplexIntSymbol(id, normalize(location), value);
     }
 
     @Override
     public Symbol newSymbol(int id, Location location, long value) {
-        return new ComplexLongSymbol(id, location, value);
+        return new ComplexLongSymbol(id, normalize(location), value);
     }
 
     @Override
     public Symbol newSymbol(int id, Location location, float value) {
-        return new ComplexFloatSymbol(id, location, value);
+        return new ComplexFloatSymbol(id, normalize(location), value);
     }
 
     @Override
     public Symbol newSymbol(int id, Location location, double value) {
-        return new ComplexDoubleSymbol(id, location, value);
+        return new ComplexDoubleSymbol(id, normalize(location), value);
     }
 
     @Override
     public Symbol newSymbol(int id, Location location, char value) {
-        return new ComplexCharSymbol(id, location, value);
+        return new ComplexCharSymbol(id, normalize(location), value);
     }
 
     @Override
     public Symbol newSymbol(int id, Location location, boolean value) {
-        return new ComplexBoolSymbol(id, location, value);
+        return new ComplexBoolSymbol(id, normalize(location), value);
     }
 
     @Override
     public Symbol newSymbol(int id, Location location) {
-        return new ComplexEmptySymbol(id, location);
+        return new ComplexEmptySymbol(id, normalize(location));
     }
 
 }

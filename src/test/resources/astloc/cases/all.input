@@ -1,0 +1,20 @@
+trail one 2 ;
+trail three ;
+lead 4 five ;
+lead six ;
+both 7 * ;
+both 8 ;
+both * ;
+both ;
+mix nine 10 eleven ;
+mix twelve thirteen ;
+list 13 14 fifteen ;
+list sixteen ;
+plus * * * ;
+seplist alpha , beta , gamma ;
+seplist delta ;
+seplist ;
+tailsep 1;2;3;
+tailsep 4;5
+multi eta , ; theta , ; iota ;
+flat x 99 ;

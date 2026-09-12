@@ -299,10 +299,21 @@ public class VirtualType {
             getByIndexExprs.add("switch (index) {");
             for (int i = 0; i < allSubFields.size(); i++) {
                 var field = allSubFields.get(i);
-                getByIndexExprs.add(
-                    "  case " + i + ": return new AbstractMap.SimpleEntry<>(\"" + field.joinLabel() + "\", "
-                        + emit.joinName("get", field.joinLabel()) + "());"
-                );
+                var getterCall = emit.joinName("get", field.joinLabel()) + "()";
+                if (field.isNullable()) {
+                    // AstNode.getByIndex documents that absent optional slots
+                    // yield null (skipped by AstNodeIterator), not an entry
+                    // with a null value.
+                    getByIndexExprs.add(
+                        "  case " + i + ": return " + getterCall + " == null ? null : " +
+                            "new AbstractMap.SimpleEntry<>(\"" + field.joinLabel() + "\", " + getterCall + ");"
+                    );
+                } else {
+                    getByIndexExprs.add(
+                        "  case " + i + ": return new AbstractMap.SimpleEntry<>(\"" + field.joinLabel() + "\", "
+                            + getterCall + ");"
+                    );
+                }
             }
             getByIndexExprs.add("  default: throw new IndexOutOfBoundsException(index);");
             getByIndexExprs.add("}");

@@ -1,5 +1,14 @@
 import org.jreleaser.gradle.plugin.tasks.AbstractJReleaserTask
 
+import javax.inject.Inject
+
+// Gradle 9 removed Project.exec/javaexec; tasks that shell out use
+// injected ExecOperations instead.
+abstract class ExecutingTask extends DefaultTask {
+    @Inject
+    abstract ExecOperations getExecOps()
+}
+
 plugins {
     id 'java'
     id 'maven-publish'
@@ -125,7 +134,7 @@ tasks.register('runtimeJavadocJar', Jar) {
     from tasks.named('runtimeJavadoc').map { it.destinationDir }
 }
 
-tasks.register('testMiniJava') {
+tasks.register('testMiniJava', ExecutingTask) {
     dependsOn(jar)
 
     doFirst {
@@ -142,14 +151,14 @@ tasks.register('testMiniJava') {
 
     doLast {
         // Generate lexer using JFlex from Gradle configuration
-        exec {
+        execOps.exec {
             commandLine 'java', '-cp', configurations.jflex.asPath, 'jflex.Main',
                         '-d', 'testgrammars/minijava', 'src/test/resources/minijava/minijava.jflex'
             workingDir '.'
         }
 
         // Generate parser using current project's CUP code
-        exec {
+        execOps.exec {
             commandLine 'java', '-cp', files(jar.archiveFile).asPath, 'java_cup.Main',
                         '-interface',
                         '-parser', 'MiniJavaParser',
@@ -162,7 +171,7 @@ tasks.register('testMiniJava') {
         }
 
         // Compile generated Java files
-        exec {
+        execOps.exec {
             commandLine 'javac', '-cp', files(runtimeJar.archiveFile, 'testgrammars/minijava').asPath,
                         '-d', 'testgrammars/minijava/classes',
                         'testgrammars/minijava/*.java'
@@ -198,16 +207,95 @@ tasks.register('testMiniJava') {
         if (normalizedActual.equals(normalizedExpected)) {
             println '\nTEST RESULT: PASS'
         } else {
-            println '\nTEST RESULT: FAIL'
-            println 'Expected:\n' + normalizedExpected
-            println 'Actual:\n' + normalizedActual
+            throw new GradleException(
+                'testMiniJava FAILED\nExpected:\n' + normalizedExpected +
+                '\nActual:\n' + normalizedActual)
         }
+    }
+}
+
+tasks.register('testAstLocation', ExecutingTask) {
+    dependsOn(jar)
+
+    doFirst {
+        mkdir 'testgrammars/astloc'
+        mkdir 'testgrammars/astloc/classes'
+
+        delete fileTree(dir: 'testgrammars/astloc/classes', include: '*.class')
+        delete fileTree(dir: 'testgrammars/astloc', include: '*.java')
+
+        println 'Running AST location test...'
+    }
+
+    doLast {
+        copy {
+            from 'src/test/resources/astloc/scanner.java'
+            into 'testgrammars/astloc'
+        }
+
+        // Generate parser with the current build of java_cup. The grammar
+        // declares `class AstLocParser;` itself, so -parser/-symbols are omitted.
+        // A javac failure of the generated Node*.java is what catches the
+        // BUGS.md BUG 1/2 duplicate/uninitialized-variable regressions.
+        execOps.exec {
+            commandLine 'java', '-cp', files(jar.archiveFile).asPath, 'java_cup.Main',
+                        '-interface',
+                        '-nonterms',
+                        '-destdir', 'testgrammars/astloc',
+                        '-ast', 'Node%p',
+                        'src/test/resources/astloc/astloc.cup'
+            workingDir '.'
+        }
+
+        execOps.exec {
+            commandLine 'javac', '-cp', files(runtimeJar.archiveFile, 'testgrammars/astloc').asPath,
+                        '-d', 'testgrammars/astloc/classes',
+                        'testgrammars/astloc/*.java'
+            workingDir '.'
+        }
+
+        // Run every case and diff against its .expected file. Non-zero JVM exit
+        // (e.g. the BUGS.md BUG 3 ClassCastException) or any output mismatch
+        // fails the build.
+        def ops = execOps
+        def failures = []
+        fileTree(dir: 'src/test/resources/astloc/cases', include: '*.input')
+                .sort { it.name }.each { input ->
+            def expectedFile = new File(input.parentFile, input.name.replace('.input', '.expected'))
+            def stdout = new ByteArrayOutputStream()
+            def stderr = new ByteArrayOutputStream()
+            def result = ops.exec {
+                commandLine 'java', '-cp',
+                            files(runtimeJar.archiveFile, 'testgrammars/astloc/classes').asPath,
+                            'AstLocParser', input.absolutePath
+                workingDir '.'
+                standardOutput = stdout
+                errorOutput = stderr
+                ignoreExitValue = true
+            }
+            def actual = stdout.toString().trim().replaceAll('\r\n', '\n')
+            if (result.exitValue != 0) {
+                failures.add("case ${input.name} FAILED (exit=${result.exitValue})\n${stderr.toString().trim()}")
+            } else if (!expectedFile.exists()) {
+                failures.add("case ${input.name} FAILED: missing expected file ${expectedFile.name}\n--- actual ---\n${actual}")
+            } else {
+                def expected = expectedFile.text.trim().replaceAll('\r\n', '\n')
+                if (actual != expected) {
+                    failures.add("case ${input.name} FAILED: output mismatch\n" +
+                            "--- expected ---\n${expected}\n--- actual ---\n${actual}")
+                }
+            }
+        }
+        if (!failures.isEmpty()) {
+            throw new GradleException('testAstLocation failed:\n' + failures.join('\n\n'))
+        }
+        println '\nTEST RESULT: PASS'
     }
 }
 
 jar.finalizedBy runtimeJar
 
-tasks.register('testCalc') {
+tasks.register('testCalc', ExecutingTask) {
     dependsOn(jar)
 
     doFirst {
@@ -230,7 +318,7 @@ tasks.register('testCalc') {
         }
 
         // Generate parser using current project's CUP code
-        exec {
+        execOps.exec {
             commandLine 'java', '-cp', files(jar.archiveFile).asPath, 'java_cup.Main',
                         '-interface',
                         '-parser', 'CalcParser',
@@ -241,7 +329,7 @@ tasks.register('testCalc') {
         }
 
         // Compile generated Java files
-        exec {
+        execOps.exec {
             commandLine 'javac', '-cp', files(runtimeJar.archiveFile, 'testgrammars/calc').asPath,
                         '-d', 'testgrammars/calc/classes',
                         'testgrammars/calc/*.java'
@@ -249,7 +337,7 @@ tasks.register('testCalc') {
         }
 
         println 'Calc example compiled successfully. To run:'
-        exec {
+        execOps.exec {
             commandLine 'java', '-cp', files(runtimeJar.archiveFile, 'testgrammars/calc/classes').asPath, 'Main'
             workingDir '.'
             standardInput = System.in

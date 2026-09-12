@@ -540,7 +540,10 @@ public class emit {
                     }
                     out.println("              default:");
                     out.print("                " + pre("result") + " = getSymbolFactory().newSymbol(" + nt.index() + ", ");
-                    if (prod.rhs_length() < 2) {
+                    if (prod.rhs_length() == 0) {
+                        // epsilon alternative: position = current lookahead token
+                        out.print("cur_token");
+                    } else if (prod.rhs_length() == 1) {
                         out.print(buildStackSymReader(0));
                     } else {
                         out.print(
@@ -663,7 +666,14 @@ public class emit {
                  */
                 if (emit.lr_values()) {
                     String posCode;
-                    if (prod.rhs_length() <= 1) {
+                    if (prod.rhs_length() == 0) {
+                        /* An epsilon production has no RHS symbol of its own; the empty
+                         * match happens right before the current lookahead token, so its
+                         * position comes from the lookahead. Reading the stack here could
+                         * yield the parser's initial dummy symbol, whose location is the
+                         * interface-level NO_LOCATION sentinel instead of a position class. */
+                        posCode = "cur_token";
+                    } else if (prod.rhs_length() == 1) {
                         posCode = buildStackSymReader(0);
                     } else {
                         posCode = emit.pre("stack") + ".subList("
@@ -835,7 +845,10 @@ public class emit {
                 }
                 writer.println("    return getSymbolFactory().newSymbol(");
                 writer.println("      " + nt.index() + ',');
-                if (labelList.size() > 1) {
+                if (prod.rhs_length() == 0) {
+                    // epsilon alternative of an anonymous group: position = current lookahead
+                    writer.print("      cur_token");
+                } else if (labelList.size() > 1) {
                     writer.print(
                         "      " + pre("stack") + ".subList(" +
                             pre("top") + " - " + (labelList.size() - 1) + ", " + pre("top") + " + 1)"

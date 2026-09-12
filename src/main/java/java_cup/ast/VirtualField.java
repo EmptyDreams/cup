@@ -55,6 +55,15 @@ public class VirtualField implements Comparable<VirtualField> {
         return (mask & 0b1000) != 0;
     }
 
+    /**
+     * Returns whether the field's value can be absent at runtime, either
+     * because the field itself is an opt-box or because it was hoisted from
+     * an opt-box via {@code ...} spread.
+     */
+    public boolean isNullable() {
+        return isOptBox() || fromField != null && fromField.isNullable();
+    }
+
     public VirtualMethod buildGetter() {
         if (isExistCheck() || isInline()) return null;
         if (fromField != null) {
