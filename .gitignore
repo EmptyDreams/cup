@@ -7,6 +7,9 @@ build/
 out/
 *.iml
 *.iws
+.mcp.json
+.codex
+.claude
 
 # Compiled files
 *.class
