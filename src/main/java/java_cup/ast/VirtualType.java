@@ -15,7 +15,6 @@ public class VirtualType {
     private static final VirtualType TYPE_SYMBOL = ofName("Symbol");
     private static final VirtualType TYPE_POSITION = ofName(Main.customPositionClass);
     private static final VirtualType TYPE_INT = ofName("int");
-    private static final VirtualType TYPE_FACTORY = ofName("SymbolFactory");
 
     public static VirtualType ofBasic(String name, int symId) {
         return basicTypeCache.computeIfAbsent(name, k -> {
