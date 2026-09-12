@@ -6,6 +6,7 @@ import java_cup.emit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class VirtualProduction {
 
@@ -53,24 +54,43 @@ public class VirtualProduction {
         }
         for (int i = 0; i < fields.size(); i++) {
             VirtualField field = fields.get(i);
+            // unlabeled spread containers carry no label and are referenced by a
+            // synthetic parameter name
+            String ref = field.paramName(i);
             //noinspection ExtractMethodRecommender
             var getterName = emit.buildSymGetter(field.type.getRealName());
             String valueAssignment;
             if (field.type.isBasic()) {
                 // For primitive types (here, "primitive" means any type not wrapped in an AST node),
                 // directly instantiate the specialized node class for that type
-                valueAssignment = field.label + "Node = new " + field.type.className + "(" +
-                    field.label + '.' + getterName + ", (" + Main.customPositionClass + ") " + field.label + ".getLocation());";
+                valueAssignment = ref + "Node = new " + field.type.className + "(" +
+                    ref + '.' + getterName + ", (" + Main.customPositionClass + ") " + ref + ".getLocation());";
             } else {
-                valueAssignment = field.label + "Node = " + field.label + "." + getterName + ';';
+                valueAssignment = ref + "Node = " + ref + "." + getterName + ';';
             }
-            var positionAssignment = " = (" + Main.customPositionClass + ") " + field.label + ".getLocation();";
+            var positionAssignment = " = (" + Main.customPositionClass + ") " + ref + ".getLocation();";
+            // fields hoisted by an unlabeled spread: they become real fields of
+            // this node, so their values are read out of the container node
+            var hoisted = field.isInline() && field.label == null
+                ? field.allSubFields().collect(Collectors.toCollection(ArrayList::new))
+                : new ArrayList<VirtualField>();
             if (field.isOptBox()) {
-                factoryExprs.add(field.type.className + ' ' + field.label + "Node = null;");
-                factoryExprs.add("if (!" + field.label + ".isNull()) {");
+                factoryExprs.add(field.type.className + ' ' + ref + "Node = null;");
+                for (var sub : hoisted) {
+                    factoryExprs.add(sub.type.className + ' ' + sub.joinLabel() + "Node = null;");
+                }
+                factoryExprs.add("if (!" + ref + ".isNull()) {");
                 factoryExprs.add("  " + valueAssignment);
+                for (var sub : hoisted) {
+                    factoryExprs.add("  " + sub.joinLabel() + "Node = " + ref + "Node." +
+                        emit.joinName("get", sub.joinLabel()) + "();");
+                }
             } else {
                 factoryExprs.add("var " + valueAssignment);
+                for (var sub : hoisted) {
+                    factoryExprs.add("var " + sub.joinLabel() + "Node = " + ref + "Node." +
+                        emit.joinName("get", sub.joinLabel()) + "();");
+                }
             }
             if (leftPositionIndex[i]) {
                 String prefix = field.isOptBox() ? "  " : "";
@@ -104,13 +124,20 @@ public class VirtualProduction {
         } else {
             factoryExprs.add(
                 "var " + emit.pre("pos") + " = (" +
-                    Main.customPositionClass + ") " + fields.get(0).label + ".getLocation();"
+                    Main.customPositionClass + ") " + fields.get(0).paramName(0) + ".getLocation();"
             );
         }
         // Construct the 'new' statement
         factoryExprs.add("return new " + name + "(");
         for (VirtualField field : fields) {
-            factoryExprs.add("  " + field.label + "Node,");
+            if (field.label == null) {
+                // unlabeled spread container: pass the hoisted values
+                for (var sub : field.allSubFields().collect(Collectors.toList())) {
+                    factoryExprs.add("  " + sub.joinLabel() + "Node,");
+                }
+            } else {
+                factoryExprs.add("  " + field.label + "Node,");
+            }
         }
         factoryExprs.add("  " + emit.pre("pos"));
         factoryExprs.add(");");

@@ -245,12 +245,14 @@ public class VirtualType {
                 .collect(Collectors.toList());
             if (allSubFields.isEmpty()) continue;
             // builder
+            var builderParams = new ArrayList<VirtualField>();
+            for (int i = 0; i < prod.fields.size(); i++) {
+                builderParams.add(new VirtualField(prod.fields.get(i).paramName(i), TYPE_SYMBOL, 0));
+            }
             var builderMethod = new VirtualMethod(
                 "build" + prod.name,
                 prod.name,
-                prod.fields.stream().map(
-                    it -> new VirtualField(it.label, TYPE_SYMBOL, 0)
-                ).collect(Collectors.toList()),
+                builderParams,
                 prod.buildFactoryExprs()
             ).markStatic();
             clazz.addMethod(builderMethod);
@@ -259,17 +261,25 @@ public class VirtualType {
                 .markStatic()
                 .markFinal();
             innerClass.markParent(clazz.getName());
-            // build fields
-            prod.fields.stream()
-                .map(VirtualField::toFinal)
-                .forEachOrdered(innerClass::addField);
+            // build fields and constructor; an unlabeled spread container is
+            // itself never a field: its hoisted sub-fields become real fields
+            var constructorParams = new ArrayList<VirtualField>();
+            var constructorExprs = new ArrayList<String>();
+            for (var field : prod.fields) {
+                if (field.label == null) {
+                    for (var sub : field.allSubFields().collect(Collectors.toList())) {
+                        innerClass.addField(sub.toFinal());
+                        constructorParams.add(sub);
+                        constructorExprs.add("this." + sub.joinLabel() + " = " + sub.joinLabel() + ';');
+                    }
+                } else {
+                    innerClass.addField(field.toFinal());
+                    constructorParams.add(field);
+                    constructorExprs.add("this." + field.label + " = " + field.label + ';');
+                }
+            }
             innerClass.addField(new VirtualField("location", TYPE_POSITION, 0b1000));
-            // build constructor
-            var constructorParams = new ArrayList<>(prod.fields);
             constructorParams.add(new VirtualField("location", TYPE_POSITION, 0));
-            var constructorExprs = prod.fields.stream()
-                .map(it -> "this." + it.label + " = " + it.label + ';')
-                .collect(Collectors.toList());
             constructorExprs.add("this.location = location;");
             var constructor = new VirtualMethod(
                 innerClass.getName(), "", constructorParams, constructorExprs

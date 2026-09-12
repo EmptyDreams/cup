@@ -6,6 +6,7 @@ import java_cup.runtime.ArrayStack;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class AstNodeBuilder {
 
@@ -108,15 +109,22 @@ public class AstNodeBuilder {
         Map<String, String> labelTypes = new HashMap<>();
         for (var virtualProd : prods.values()) {
             for (var field : virtualProd.fields) {
-                if (field.label == null) continue;
-                String typeName = field.type.getRealName();
-                String prev = labelTypes.putIfAbsent(field.label, typeName);
-                if (prev != null && !prev.equals(typeName)) {
-                    ErrorManager.getManager().emit_error(
-                        "Label \"" + field.label + "\" is used with different types (\"" + prev
-                            + "\" and \"" + typeName + "\") in productions of non-terminal \""
-                            + nt.name() + "\"; a label must have the same type in every production"
-                            + " of a non-terminal");
+                // for an unlabeled spread container the hoisted fields are the
+                // ones that end up as this node's fields
+                var candidates = field.isInline() && field.label == null
+                    ? field.allSubFields().collect(Collectors.toList())
+                    : List.of(field);
+                for (var candidate : candidates) {
+                    String name = candidate.joinLabel();
+                    String typeName = candidate.type.getRealName();
+                    String prev = labelTypes.putIfAbsent(name, typeName);
+                    if (prev != null && !prev.equals(typeName)) {
+                        ErrorManager.getManager().emit_error(
+                            "Label \"" + name + "\" is used with different types (\"" + prev
+                                + "\" and \"" + typeName + "\") in productions of non-terminal \""
+                                + nt.name() + "\"; a label must have the same type in every production"
+                                + " of a non-terminal");
+                    }
                 }
             }
         }

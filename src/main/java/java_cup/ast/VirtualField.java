@@ -35,6 +35,18 @@ public class VirtualField implements Comparable<VirtualField> {
         return fromField == null ? label : emit.joinName(fromField.label, label);
     }
 
+    /**
+     * The name of the builder parameter that receives this field's Symbol. An
+     * unlabeled spread container carries no label (its fields are hoisted into
+     * the parent with an empty prefix, so the container itself never appears in
+     * the node API); it is referenced through a synthetic name instead. The '$'
+     * character cannot occur in user labels, so the synthetic name never
+     * collides with one.
+     */
+    public String paramName(int index) {
+        return label != null ? label : "$" + index;
+    }
+
     public VirtualField toFinal() {
         return new VirtualField(label, type, mask | 0b1000);
     }
@@ -66,7 +78,8 @@ public class VirtualField implements Comparable<VirtualField> {
 
     public VirtualMethod buildGetter() {
         if (isExistCheck() || isInline()) return null;
-        if (fromField != null) {
+        if (fromField != null && fromField.label != null) {
+            // hoisted by a labeled spread: delegate into the container field
             String expr;
             if (fromField.isOptBox()) {
                 expr = "return " + fromField.label + " == null ? null : " +
@@ -81,17 +94,20 @@ public class VirtualField implements Comparable<VirtualField> {
                 List.of(expr)
             );
         }
+        // plain field (also: hoisted by an unlabeled spread, which stores the
+        // value in its own field instead of delegating)
         return new VirtualMethod(
-            emit.joinName("get", label),
+            emit.joinName("get", joinLabel()),
             type.className,
             Collections.emptyList(),
-            List.of("return " + label + ';')
+            List.of("return " + joinLabel() + ';')
         );
     }
 
     public VirtualMethod buildChecker() {
         if (isInline()) return null;
-        if (fromField != null) {
+        if (fromField != null && fromField.label != null) {
+            // hoisted by a labeled spread: delegate into the container field
             String expr;
             if (fromField.isOptBox()) {
                 expr = "return " + fromField.label + " != null && " +
@@ -105,16 +121,16 @@ public class VirtualField implements Comparable<VirtualField> {
                 Collections.emptyList(),
                 List.of(expr)
             );
-        } else if (isOptBox()) {
+        } else if (isNullable()) {
             return new VirtualMethod(
-                emit.joinName("has", label),
+                emit.joinName("has", joinLabel()),
                 "boolean",
                 Collections.emptyList(),
-                List.of("return " + label + " != null;")
+                List.of("return " + joinLabel() + " != null;")
             );
         } else {
             return new VirtualMethod(
-                emit.joinName("has", label),
+                emit.joinName("has", joinLabel()),
                 "boolean",
                 Collections.emptyList(),
                 List.of("return true;")
@@ -152,16 +168,21 @@ public class VirtualField implements Comparable<VirtualField> {
         if (o == null || getClass() != o.getClass()) return false;
 
         VirtualField that = (VirtualField) o;
+        // unlabeled spread containers have no label: compare by identity so
+        // that two of them never collapse in label-based deduplication
+        if (label == null || that.label == null) return this == o;
         return label.equals(that.label);
     }
 
     @Override
     public int hashCode() {
-        return label.hashCode();
+        return label == null ? System.identityHashCode(this) : label.hashCode();
     }
 
     @Override
     public int compareTo(VirtualField o) {
+        if (label == null) return o.label == null ? 0 : 1;
+        if (o.label == null) return -1;
         return label.compareTo(o.label);
     }
 

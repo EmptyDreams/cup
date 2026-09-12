@@ -92,6 +92,7 @@ public class scanner implements Scanner {
             case "tailsep": return sf.newSymbol(AstLocParserSym.TAILSEP, location);
             case "multi":   return sf.newSymbol(AstLocParserSym.MULTI, location);
             case "flat":    return sf.newSymbol(AstLocParserSym.FLAT, location);
+            case "spread":  return sf.newSymbol(AstLocParserSym.SPREAD, location);
             default:        return sf.newSymbol(AstLocParserSym.ID, location, word);
         }
     }

@@ -155,8 +155,20 @@ public class Production {
                 } else {
                     String className = lhs_sym.astClassName();
                     String nodeName = emit.pre("treeNode");
-                    var partMap = getLabel2SymbolPartMap();
-                    if (partMap.isEmpty()) {
+                    // A builder argument is passed for every labeled part and for
+                    // every unlabeled spread part, in RHS order — exactly the
+                    // parts the AST builder treats as fields.
+                    boolean hasBuilderArg = false;
+                    for (int i = 0; i < _rhs_length; i++) {
+                        production_part part = _rhs[i];
+                        if (part.is_action()) continue;
+                        var symPart = (symbol_part) part;
+                        if (symPart.label() != null || symPart.isInline()) {
+                            hasBuilderArg = true;
+                            break;
+                        }
+                    }
+                    if (!hasBuilderArg) {
                         actionBuilder.append(indentation)
                             .append(className).append(' ').append(nodeName)
                             .append(" = new ").append(className).append("();\n");
@@ -166,13 +178,23 @@ public class Production {
                             .append(className).append(' ').append(nodeName).append(" = ")
                             .append(className).append(".build").append(getProdName()).append("(\n");
                         boolean isFirst = true;
-                        for (var entry : partMap.entrySet()) {
-                            var label = entry.getKey();
-                            var part = entry.getValue();
-                            if (part.isExistCheck()) continue;
+                        for (int i = 0; i < _rhs_length; i++) {
+                            production_part part = _rhs[i];
+                            if (part.is_action()) continue;
+                            var symPart = (symbol_part) part;
+                            String arg;
+                            if (symPart.label() != null) {
+                                if (symPart.isExistCheck()) continue;
+                                arg = emit.joinName(symPart.label(), "sym");
+                            } else if (symPart.isInline()) {
+                                // unlabeled spread: read the symbol straight off the stack
+                                arg = emit.buildStackSymReader(_rhs_length - 1 - i);
+                            } else {
+                                continue;
+                            }
                             if (isFirst) isFirst = false;
                             else actionBuilder.append(",\n");
-                            actionBuilder.append(indentation).append("  ").append(emit.joinName(label, "sym"));
+                            actionBuilder.append(indentation).append("  ").append(arg);
                         }
                         actionBuilder.append('\n').append(indentation).append(");\n");
                     }
@@ -237,7 +259,6 @@ public class Production {
         }
     }
 
-    @SuppressWarnings("SpellCheckingInspection")
     private static final char[] CHAR_SET =
         "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".toCharArray();
 
@@ -347,10 +368,6 @@ public class Production {
     /** Access to the precedence of the rule */
     public int precedence_num() {
         return _rhs_prec;
-    }
-
-    public int precedence_side() {
-        return _rhs_assoc;
     }
 
     /** Setting the precedence of a rule */
@@ -516,15 +533,6 @@ public class Production {
     }
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
-
-    /**
-     * Determine if a character can be in a label id.
-     *
-     * @param c the character in question.
-     */
-    protected static boolean is_id_char(char c) {
-        return is_id_start(c) || c >= '0' && c <= '9';
-    }
 
     /*-----------------------------------------------------------*/
     /*--- General Methods ---------------------------------------*/

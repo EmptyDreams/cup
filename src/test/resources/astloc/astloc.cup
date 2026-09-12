@@ -1,8 +1,8 @@
 /* AST-mode location regression grammar: the three BUGS.md repro shapes
  * plus every grammar extension this fork adds over original CUP 11
- * (X?, X+, [SEP !]*, [SEP ?]*, multi-symbol separators, ... spread,
- * %namer, `class`, `import static`). Anonymous expressions (A | B) and
- * unlabeled spread are NOT covered: the AST graph builder crashes on
+ * (X?, X+, [SEP !]*, [SEP ?]*, multi-symbol separators, ... spread with
+ * and without a label, %namer, `class`, `import static`). Anonymous
+ * expressions (A | B) are NOT covered: the AST graph builder crashes on
  * them (see BUGS.md). */
 import java_cup.runtime.*;
 import java_cup.runtime.symbol.complex.ComplexSymbolFactory;
@@ -29,7 +29,7 @@ parser code {:
 :};
 
 terminal String ID, NUM, STAR;
-terminal SEMI, COMMA, TRAIL, LEAD, BOTH, MIX, LIST, PLUS, SEPLIST, TAILSEP, MULTI, FLAT;
+terminal SEMI, COMMA, TRAIL, LEAD, BOTH, MIX, LIST, PLUS, SEPLIST, TAILSEP, MULTI, FLAT, SPREAD;
 
 non terminal AstNode program, stmt, item, sitem, titem, flatContent;
 
@@ -50,6 +50,7 @@ stmt ::= TRAIL item:ta sitem?:tb SEMI %namer TrailOpt
        | TAILSEP sitem[SEMI ?]*:txs %namer TailSep
        | MULTI item[COMMA SEMI !]+:mxs SEMI %namer MultiSep
        | FLAT ...flatContent:fc SEMI %namer FlatStmt
+       | SPREAD ...flatContent SEMI %namer SpreadStmt
        ;
 
 item        ::= ID:id;

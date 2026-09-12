@@ -18,3 +18,4 @@ tailsep 1;2;3;
 tailsep 4;5
 multi eta , ; theta , ; iota ;
 flat x 99 ;
+spread foo 42 ;
