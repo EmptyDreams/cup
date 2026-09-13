@@ -4,7 +4,6 @@ package java_cup;
 import java_cup.runtime.symbol.complex.ComplexSymbolFactory;
 
 import java.io.*;
-import java.util.Set;
 
 /**
  * This class serves as the main driver for the JavaCup system. It accepts user
@@ -134,6 +133,7 @@ public class Main {
         parse_action_row.clear();
         lalr_state.clear();
         ErrorManager.clear();
+        spec_tree = null;
 
         /* process user options and arguments */
         parse_args(argv);
@@ -188,7 +188,7 @@ public class Main {
             if (print_progress)
                 System.err.println("Checking specification...");
             check_unused();
-            check_labels();
+            LabelChecker.run(spec_tree);
 
             check_end = System.currentTimeMillis();
 
@@ -521,10 +521,10 @@ public class Main {
         CupParser parser_obj = new CupParser(new Lexer(csf), csf);
         parser_obj.setDebugSymbols(opt_do_debugsymbols);
         try {
-            java_cup.spec.SpecNode spec =
+            spec_tree =
                 (opt_do_debug ? parser_obj.debug_parse() : parser_obj.parse())
                     .<java_cup.spec.SpecNode>value();
-            new Lowering(opt_do_debugsymbols).run(spec);
+            new Lowering(opt_do_debugsymbols).run(spec_tree);
         } catch (Exception e) {
             /*
              * something threw an exception. catch it and emit a message so we have a line
@@ -574,48 +574,12 @@ public class Main {
     }
 
     /* . . . . . . . . . . . . . . . . . . . . . . . . . */
-
-    /**
-     * Java keywords, reserved words and literals. Labels become variable, field
-     * and method names in the generated code, so they must be valid Java
-     * identifiers and not keywords. {@code const} and {@code goto} are reserved
-     * though unused; contextual keywords such as {@code var}, {@code record} or
-     * {@code yield} remain valid identifiers and are allowed.
-     */
-    private static final Set<String> JAVA_KEYWORDS = Set.of(
-        "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char",
-        "class", "const", "continue", "default", "do", "double", "else", "enum",
-        "extends", "final", "finally", "float", "for", "goto", "if", "implements",
-        "import", "instanceof", "int", "interface", "long", "native", "new",
-        "package", "private", "protected", "public", "return", "short", "static",
-        "strictfp", "super", "switch", "synchronized", "this", "throw", "throws",
-        "transient", "try", "void", "volatile", "while",
-        "true", "false", "null");
-
-    /**
-     * Checks that no label of any production is a Java keyword or reserved
-     * word. This applies to every mode: labels are declared as variables in the
-     * action code of non-AST parsers and as fields/getters of the node classes
-     * in AST mode, so a keyword label always produces invalid Java code.
-     */
-    protected static void check_labels() throws internal_error {
-        for (var prod : Production.all()) {
-            for (int i = 0; i < prod.rhs_length(); i++) {
-                var part = prod.rhs(i);
-                if (part.is_action()) continue;
-                String label = part.label();
-                if (label != null && JAVA_KEYWORDS.contains(label)) {
-                    ErrorManager.getManager().emit_error(
-                        "Label \"" + label + "\" is a Java keyword/reserved word and cannot be used as a label"
-                            + " (in production \"" + prod.to_simple_string() + "\")");
-                }
-            }
-        }
-    }
-
-    /* . . . . . . . . . . . . . . . . . . . . . . . . . */
     /* . . Internal Results of Generating the Parser . . */
     /* . . . . . . . . . . . . . . . . . . . . . . . . . */
+
+    /** The parsed spec tree, retained for the tree-based passes (labels,
+     *  AST node building). */
+    protected static java_cup.spec.SpecNode spec_tree;
 
     /** Start state in the overall state machine. */
     protected static lalr_state start_state;

@@ -482,16 +482,6 @@ public final class Lowering {
         if (rhs_pos >= MAX_RHS)
             throw new Exception("Internal Error: Productions limited to " +
                     MAX_RHS + " symbols and actions");
-        for (int i = 0; i < rhs_pos; i++)
-            if (part.label() != null && part.label().equals(rhs_parts[i].label())) {
-                /* the old report_error(message, part) reached ErrorManager as
-                   emit_error(message, cur_token); no lookahead exists after
-                   the parse, so the positioned form is gone but the message
-                   text and error count are preserved */
-                ErrorManager.getManager().emit_error(
-                        "Label '" + part.label() + "' for symbol #" + rhs_pos +
-                                " already used for symbol #" + i + "; compilation will fail");
-            }
         rhs_parts[rhs_pos] = part;
         rhs_pos++;
     }
