@@ -722,7 +722,7 @@ public class Production {
                 declare_str = declare_labels(_rhs, act_loc);
                 /* create a new non terminal for the action production */
                 new_nt = non_terminal.create_new(null, lhs().the_symbol().stack_type()); // TUM 20060608 embedded actions patch
-                new_nt.is_embedded_action = !actionPart.isVirtual(); /* 24-Mar-1998, CSA */
+                new_nt.is_embedded_action = true; /* 24-Mar-1998, CSA */
 
                 /* create a new production with just the action */
                 new action_production(this, new_nt, null, 0,
@@ -958,54 +958,6 @@ public class Production {
         return result.toString();
     }
 
-    /*-----------------------------------------------------------*/
-
-    /**
-     * A production position finder, allows querying the index of a production by non-terminal and its order within it.
-     *
-     * @author kmar
-     */
-    public static final class PositionFinder {
-
-        private final non_terminal nt;
-        private final int prodIndexInNt;
-
-        public PositionFinder(non_terminal nt, int prodIndexInNt) {
-            this.nt = nt;
-            this.prodIndexInNt = prodIndexInNt;
-        }
-
-        public int getProdIndex() {
-            return getProd().index();
-        }
-
-        public Production getProd() {
-            var itor = nt.productions().iterator();
-            for (int i = 0; i < prodIndexInNt; i++) {
-                itor.next();
-            }
-            return itor.next();
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (o == null || getClass() != o.getClass()) return false;
-
-            PositionFinder that = (PositionFinder) o;
-            return prodIndexInNt == that.prodIndexInNt && nt.equals(that.nt);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = nt.hashCode();
-            result = 31 * result + prodIndexInNt;
-            return result;
-        }
-
-        public static PositionFinder newInstance(non_terminal nt) {
-            return new PositionFinder(nt, nt.num_productions());
-        }
-
-    }
+   /*-----------------------------------------------------------*/
 
 }

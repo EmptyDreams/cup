@@ -12,13 +12,6 @@ import java_cup.runtime.symbol.complex.ComplexLocation;
 @SuppressWarnings({"unused", "UnnecessaryUnicodeEscape"})
 public class AnonParser extends java_cup.runtime.lr_parser {
 
-  /** Used to locate the anonymous non-terminal currently being reduced. */
-  private int currentAnnoCode = 0;
-
-  protected void _pushInlineProd(int prodIndex) {
-    currentAnnoCode = prodIndex << 5;
-  }
-
   public AnonParser(java_cup.runtime.SymbolFactory sf) { super(sf); }
 
   /** Constructor which sets the default scanner. */
@@ -27,14 +20,17 @@ public class AnonParser extends java_cup.runtime.lr_parser {
   /** Production table. */
   protected static final short[][] _production_table = 
     unpackFromStrings(new String[] {
-    "\000\030\000\002\004\003\000\002\002\004\000\002\005" +
-    "\003\000\002\006\003\000\002\007\002\000\002\002\006" +
-    "\000\002\010\002\000\002\002\007\000\002\011\003\000" +
-    "\002\011\002\000\002\002\005\000\002\012\003\000\002" +
-    "\012\006\000\002\013\003\000\002\013\005\000\002\014" +
-    "\003\000\002\014\002\000\002\002\005\000\002\015\002" +
-    "\000\002\002\006\000\002\016\002\000\002\002\006\000" +
-    "\002\003\003\000\002\003\003" });
+    "\000\040\000\002\004\003\000\002\002\004\000\002\004" +
+    "\003\000\002\002\005\000\002\005\003\000\002\005\003" +
+    "\000\002\006\003\000\002\006\003\000\002\002\006\000" +
+    "\002\007\003\000\002\007\003\000\002\010\003\000\002" +
+    "\010\002\000\002\002\005\000\002\011\003\000\002\011" +
+    "\006\000\002\012\003\000\002\012\005\000\002\013\003" +
+    "\000\002\013\002\000\002\002\005\000\002\014\003\000" +
+    "\002\014\003\000\002\002\005\000\002\015\003\000\002" +
+    "\015\002\000\002\002\005\000\002\016\003\000\002\016" +
+    "\003\000\002\002\005\000\002\003\003\000\002\003\003" +
+    "" });
 
   /** Access to production table. */
   @Override
@@ -43,26 +39,32 @@ public class AnonParser extends java_cup.runtime.lr_parser {
   /** Parse-action table. */
   protected static final short[][] _action_table = 
     unpackFromStrings(new String[] {
-    "\000\045\000\016\010\ufffd\011\ufffb\012\004\013\007\014" +
-    "\uffef\015\uffed\001\002\000\006\004\016\006\ufff8\001\002" +
-    "\000\004\010\042\001\002\000\004\011\036\001\002\000" +
-    "\010\004\030\005\026\006\ufff1\001\002\000\004\015\021" +
-    "\001\002\000\004\002\020\001\002\000\004\014\013\001" +
-    "\002\000\004\004\016\001\002\000\006\004\ufffe\006\ufffe" +
-    "\001\002\000\004\006\017\001\002\000\006\004\001\006" +
-    "\001\001\002\000\004\002\uffee\001\002\000\004\002\000" +
-    "\001\002\000\004\004\016\001\002\000\004\006\023\001" +
-    "\002\000\004\002\uffec\001\002\000\006\006\ufff6\007\ufff6" +
-    "\001\002\000\006\006\ufff4\007\033\001\002\000\006\006" +
-    "\uffea\007\uffea\001\002\000\004\006\032\001\002\000\006" +
-    "\006\uffeb\007\uffeb\001\002\000\004\006\ufff2\001\002\000" +
-    "\004\002\ufff0\001\002\000\004\006\034\001\002\000\010" +
-    "\004\030\005\026\006\ufff3\001\002\000\006\006\ufff5\007" +
-    "\ufff5\001\002\000\004\004\016\001\002\000\004\004\016" +
-    "\001\002\000\004\006\041\001\002\000\004\002\ufffa\001" +
-    "\002\000\004\004\016\001\002\000\004\006\044\001\002" +
-    "\000\004\002\ufffc\001\002\000\004\006\ufff9\001\002\000" +
-    "\004\006\047\001\002\000\004\002\ufff7\001\002" });
+    "\000\057\000\020\010\011\011\005\012\004\013\006\014" +
+    "\013\015\007\016\010\001\002\000\010\004\057\005\056" +
+    "\006\ufff5\001\002\000\006\004\050\005\047\001\002\000" +
+    "\010\004\041\005\035\006\uffee\001\002\000\006\004\032" +
+    "\006\uffe8\001\002\000\006\004\027\005\026\001\002\000" +
+    "\006\004\023\005\022\001\002\000\004\002\020\001\002" +
+    "\000\006\004\016\005\014\001\002\000\004\006\uffeb\001" +
+    "\002\000\004\006\017\001\002\000\004\006\uffec\001\002" +
+    "\000\004\002\uffea\001\002\000\004\002\000\001\002\000" +
+    "\004\006\024\001\002\000\004\006\uffff\001\002\000\004" +
+    "\006\001\001\002\000\004\002\ufffe\001\002\000\004\006" +
+    "\030\001\002\000\004\006\uffe5\001\002\000\004\006\uffe6" +
+    "\001\002\000\004\002\uffe4\001\002\000\004\006\033\001" +
+    "\002\000\004\006\uffe9\001\002\000\004\002\uffe7\001\002" +
+    "\000\006\006\ufff3\007\ufff3\001\002\000\006\006\uffe2\007" +
+    "\uffe2\001\002\000\006\006\ufff1\007\043\001\002\000\004" +
+    "\006\uffef\001\002\000\004\006\042\001\002\000\006\006" +
+    "\uffe3\007\uffe3\001\002\000\004\002\uffed\001\002\000\004" +
+    "\006\044\001\002\000\010\004\041\005\035\006\ufff0\001" +
+    "\002\000\006\006\ufff2\007\ufff2\001\002\000\006\004\053" +
+    "\005\052\001\002\000\006\004\ufffc\005\ufffc\001\002\000" +
+    "\006\004\ufffd\005\ufffd\001\002\000\004\006\054\001\002" +
+    "\000\004\006\ufffa\001\002\000\004\006\ufffb\001\002\000" +
+    "\004\002\ufff9\001\002\000\004\006\061\001\002\000\004" +
+    "\006\ufff7\001\002\000\004\006\ufff8\001\002\000\004\006" +
+    "\ufff6\001\002\000\004\002\ufff4\001\002" });
 
   /** Access to parse-action table. */
   @Override
@@ -71,22 +73,23 @@ public class AnonParser extends java_cup.runtime.lr_parser {
   /** <code>reduce_goto</code> table. */
   protected static final short[][] _reduce_table = 
     unpackFromStrings(new String[] {
-    "\000\045\000\014\002\010\007\004\010\005\015\011\016" +
-    "\007\001\001\000\010\004\013\006\044\011\045\001\001" +
-    "\000\002\001\001\000\002\001\001\000\012\003\023\012" +
-    "\024\013\030\014\026\001\001\000\002\001\001\000\002" +
-    "\001\001\000\002\001\001\000\006\004\013\006\014\001" +
+    "\000\057\000\004\002\011\001\001\000\006\007\057\010" +
+    "\054\001\001\000\004\005\045\001\001\000\012\003\033" +
+    "\011\035\012\036\013\037\001\001\000\004\015\030\001" +
+    "\001\000\004\016\024\001\001\000\004\004\020\001\001" +
+    "\000\002\001\001\000\004\014\014\001\001\000\002\001" +
     "\001\000\002\001\001\000\002\001\001\000\002\001\001" +
-    "\000\002\001\001\000\002\001\001\000\006\004\013\006" +
-    "\021\001\001\000\002\001\001\000\002\001\001\000\002" +
+    "\000\002\001\001\000\002\001\001\000\002\001\001\000" +
+    "\002\001\001\000\002\001\001\000\002\001\001\000\002" +
     "\001\001\000\002\001\001\000\002\001\001\000\002\001" +
     "\001\000\002\001\001\000\002\001\001\000\002\001\001" +
-    "\000\002\001\001\000\004\003\034\001\001\000\002\001" +
-    "\001\000\006\004\013\006\036\001\001\000\006\004\013" +
-    "\006\037\001\001\000\002\001\001\000\002\001\001\000" +
-    "\006\004\013\006\042\001\001\000\002\001\001\000\002" +
-    "\001\001\000\002\001\001\000\002\001\001\000\002\001" +
-    "\001" });
+    "\000\002\001\001\000\002\001\001\000\002\001\001\000" +
+    "\002\001\001\000\002\001\001\000\002\001\001\000\002" +
+    "\001\001\000\004\003\044\001\001\000\002\001\001\000" +
+    "\004\006\050\001\001\000\002\001\001\000\002\001\001" +
+    "\000\002\001\001\000\002\001\001\000\002\001\001\000" +
+    "\002\001\001\000\002\001\001\000\002\001\001\000\002" +
+    "\001\001\000\002\001\001\000\002\001\001" });
 
   /** Access to <code>reduce_goto</code> table. */
   @Override
@@ -149,41 +152,18 @@ protected class CUP$AnonParser$actions {
         {
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 0: { // _EBNF_0 ::= ID 
-            switch (currentAnnoCode) {
-              case 224:
-                CUP$AnonParser$result = _annoAction_224(
-                  CUP$AnonParser$act_num,
-                  CUP$AnonParser$stack,
-                  CUP$AnonParser$top
-                );
-                break;
-              case 226:
-                CUP$AnonParser$result = _annoAction_226(
-                  CUP$AnonParser$act_num,
-                  CUP$AnonParser$stack,
-                  CUP$AnonParser$top
-                );
-                break;
-              case 160:
-                CUP$AnonParser$result = _annoAction_160(
-                  CUP$AnonParser$act_num,
-                  CUP$AnonParser$stack,
-                  CUP$AnonParser$top
-                );
-                break;
-              case 672:
-                CUP$AnonParser$result = _annoAction_672(
-                  CUP$AnonParser$act_num,
-                  CUP$AnonParser$stack,
-                  CUP$AnonParser$top
-                );
-                break;
-              default:
-                CUP$AnonParser$result = getSymbolFactory().newSymbol(2, CUP$AnonParser$stack.peek());
-                break;
-            }
-            ++currentAnnoCode;
-            return CUP$AnonParser$result;
+              Object RESULT =null;
+
+              var aSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
+              var aLoc = (java_cup.runtime.symbol.complex.ComplexLocation) aSym.getLocation();
+              Object a = aSym.<Object>value();
+		RESULT = CUP$AnonParser$stack.peek().<Object>value();
+              CUP$AnonParser$result = getSymbolFactory().newSymbol(
+                2,
+                CUP$AnonParser$stack.peek(),
+                RESULT
+              );
+            break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 1: { // $START ::= stmt EOF 
@@ -203,63 +183,22 @@ protected class CUP$AnonParser$actions {
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 2: { // _EBNF_1 ::= NUM 
-            switch (currentAnnoCode) {
-              case 225:
-                CUP$AnonParser$result = _annoAction_225(
-                  CUP$AnonParser$act_num,
-                  CUP$AnonParser$stack,
-                  CUP$AnonParser$top
-                );
-                break;
-              case 227:
-                CUP$AnonParser$result = _annoAction_227(
-                  CUP$AnonParser$act_num,
-                  CUP$AnonParser$stack,
-                  CUP$AnonParser$top
-                );
-                break;
-              case 161:
-                CUP$AnonParser$result = _annoAction_161(
-                  CUP$AnonParser$act_num,
-                  CUP$AnonParser$stack,
-                  CUP$AnonParser$top
-                );
-                break;
-              case 673:
-                CUP$AnonParser$result = _annoAction_673(
-                  CUP$AnonParser$act_num,
-                  CUP$AnonParser$stack,
-                  CUP$AnonParser$top
-                );
-                break;
-              default:
-                CUP$AnonParser$result = getSymbolFactory().newSymbol(3, CUP$AnonParser$stack.peek());
-                break;
-            }
-            ++currentAnnoCode;
-            return CUP$AnonParser$result;
-          }
-          /*. . . . . . . . . . . . . . . . . . . .*/
-          case 3: { // _EBNF_2 ::= _EBNF_0 
+          case 2: { // _EBNF_0 ::= NUM 
+              Object RESULT =null;
 
+              var bSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
+              var bLoc = (java_cup.runtime.symbol.complex.ComplexLocation) bSym.getLocation();
+              Object b = bSym.<Object>value();
+		RESULT = CUP$AnonParser$stack.peek().<Object>value();
               CUP$AnonParser$result = getSymbolFactory().newSymbol(
-                4,
-                CUP$AnonParser$stack.peek()
+                2,
+                CUP$AnonParser$stack.peek(),
+                RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 4: { // NT$3 ::= 
-_pushInlineProd(6);
-              CUP$AnonParser$result = getSymbolFactory().newSymbol(
-                5,
-                cur_token
-              );
-            break;
-          }
-          /*. . . . . . . . . . . . . . . . . . . .*/
-          case 5: { // stmt ::= NT$3 KW_ANON _EBNF_2 SEMI 
+          case 3: { // stmt ::= KW_ANON _EBNF_0 SEMI 
               Object RESULT =null;
 
               var vSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.elementAt(CUP$AnonParser$top-1);
@@ -268,22 +207,73 @@ _pushInlineProd(6);
 		 RESULT = v; 
               CUP$AnonParser$result = getSymbolFactory().newSymbol(
                 0,
-                CUP$AnonParser$stack.subList(CUP$AnonParser$top-3, CUP$AnonParser$top + 1),
+                CUP$AnonParser$stack.subList(CUP$AnonParser$top-2, CUP$AnonParser$top + 1),
                 RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 6: { // NT$4 ::= 
-_pushInlineProd(8);
+          case 4: { // _EBNF_1 ::= ID 
+              Object RESULT =null;
+
+              var xSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
+              var xLoc = (java_cup.runtime.symbol.complex.ComplexLocation) xSym.getLocation();
+              Object x = xSym.<Object>value();
+		RESULT = CUP$AnonParser$stack.peek().<Object>value();
               CUP$AnonParser$result = getSymbolFactory().newSymbol(
-                6,
-                cur_token
+                3,
+                CUP$AnonParser$stack.peek(),
+                RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 7: { // stmt ::= NT$4 KW_REUSE _EBNF_2 _EBNF_2 SEMI 
+          case 5: { // _EBNF_1 ::= NUM 
+              Object RESULT =null;
+
+              var ySym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
+              var yLoc = (java_cup.runtime.symbol.complex.ComplexLocation) ySym.getLocation();
+              Object y = ySym.<Object>value();
+		RESULT = CUP$AnonParser$stack.peek().<Object>value();
+              CUP$AnonParser$result = getSymbolFactory().newSymbol(
+                3,
+                CUP$AnonParser$stack.peek(),
+                RESULT
+              );
+            break;
+          }
+          /*. . . . . . . . . . . . . . . . . . . .*/
+          case 6: { // _EBNF_2 ::= ID 
+              Object RESULT =null;
+
+              var zSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
+              var zLoc = (java_cup.runtime.symbol.complex.ComplexLocation) zSym.getLocation();
+              Object z = zSym.<Object>value();
+		RESULT = CUP$AnonParser$stack.peek().<Object>value();
+              CUP$AnonParser$result = getSymbolFactory().newSymbol(
+                4,
+                CUP$AnonParser$stack.peek(),
+                RESULT
+              );
+            break;
+          }
+          /*. . . . . . . . . . . . . . . . . . . .*/
+          case 7: { // _EBNF_2 ::= NUM 
+              Object RESULT =null;
+
+              var wSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
+              var wLoc = (java_cup.runtime.symbol.complex.ComplexLocation) wSym.getLocation();
+              Object w = wSym.<Object>value();
+		RESULT = CUP$AnonParser$stack.peek().<Object>value();
+              CUP$AnonParser$result = getSymbolFactory().newSymbol(
+                4,
+                CUP$AnonParser$stack.peek(),
+                RESULT
+              );
+            break;
+          }
+          /*. . . . . . . . . . . . . . . . . . . .*/
+          case 8: { // stmt ::= KW_REUSE _EBNF_1 _EBNF_2 SEMI 
               Object RESULT =null;
 
               var pSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.elementAt(CUP$AnonParser$top-2);
@@ -295,34 +285,58 @@ _pushInlineProd(8);
 		 RESULT = q; 
               CUP$AnonParser$result = getSymbolFactory().newSymbol(
                 0,
-                CUP$AnonParser$stack.subList(CUP$AnonParser$top-4, CUP$AnonParser$top + 1),
+                CUP$AnonParser$stack.subList(CUP$AnonParser$top-3, CUP$AnonParser$top + 1),
                 RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 8: { // _EBNF_OPT_5 ::= _EBNF_2 
+          case 9: { // _EBNF_3 ::= ID 
               Object RESULT =null;
 
-RESULT = CUP$AnonParser$stack.peek().<Object>value();
+		RESULT = CUP$AnonParser$stack.peek().<Object>value();
               CUP$AnonParser$result = getSymbolFactory().newSymbol(
-                7,
+                5,
                 CUP$AnonParser$stack.peek(),
                 RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 9: { // _EBNF_OPT_5 ::= 
+          case 10: { // _EBNF_3 ::= NUM 
+              Object RESULT =null;
+
+		RESULT = CUP$AnonParser$stack.peek().<Object>value();
+              CUP$AnonParser$result = getSymbolFactory().newSymbol(
+                5,
+                CUP$AnonParser$stack.peek(),
+                RESULT
+              );
+            break;
+          }
+          /*. . . . . . . . . . . . . . . . . . . .*/
+          case 11: { // _EBNF_OPT_4 ::= _EBNF_3 
+              Object RESULT =null;
+
+RESULT = CUP$AnonParser$stack.peek().<Object>value();
+              CUP$AnonParser$result = getSymbolFactory().newSymbol(
+                6,
+                CUP$AnonParser$stack.peek(),
+                RESULT
+              );
+            break;
+          }
+          /*. . . . . . . . . . . . . . . . . . . .*/
+          case 12: { // _EBNF_OPT_4 ::= 
 
               CUP$AnonParser$result = getSymbolFactory().newSymbol(
-                7,
+                6,
                 cur_token
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 10: { // stmt ::= KW_OPT _EBNF_OPT_5 SEMI 
+          case 13: { // stmt ::= KW_OPT _EBNF_OPT_4 SEMI 
               Object RESULT =null;
 
               var oSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.elementAt(CUP$AnonParser$top-1);
@@ -337,83 +351,83 @@ RESULT = CUP$AnonParser$stack.peek().<Object>value();
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 11: { // _EBNF_LIST_6 ::= item 
+          case 14: { // _EBNF_LIST_5 ::= item 
               List<Object> RESULT =null;
 
 var list = new ArrayList<Object>();
 list.add(CUP$AnonParser$stack.peek().<Object>value());
 RESULT = list;
               CUP$AnonParser$result = getSymbolFactory().newSymbol(
-                8,
+                7,
                 CUP$AnonParser$stack.peek(),
                 RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 12: { // _EBNF_LIST_6 ::= _EBNF_LIST_6 COMMA SEMI item 
+          case 15: { // _EBNF_LIST_5 ::= _EBNF_LIST_5 COMMA SEMI item 
               List<Object> RESULT =null;
 
 List<Object> list = CUP$AnonParser$stack.elementAt(CUP$AnonParser$top-3).<List<Object>>value();
 list.add(CUP$AnonParser$stack.peek().<Object>value());
 RESULT = list;
               CUP$AnonParser$result = getSymbolFactory().newSymbol(
-                8,
+                7,
                 CUP$AnonParser$stack.subList(CUP$AnonParser$top-3, CUP$AnonParser$top + 1),
                 RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 13: { // _EBNF_LIST_TAIL_7 ::= _EBNF_LIST_6 
+          case 16: { // _EBNF_LIST_TAIL_6 ::= _EBNF_LIST_5 
               List<Object> RESULT =null;
 
 RESULT = CUP$AnonParser$stack.peek().<List<Object>>value();
               CUP$AnonParser$result = getSymbolFactory().newSymbol(
-                9,
+                8,
                 CUP$AnonParser$stack.peek(),
                 RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 14: { // _EBNF_LIST_TAIL_7 ::= _EBNF_LIST_6 COMMA SEMI 
+          case 17: { // _EBNF_LIST_TAIL_6 ::= _EBNF_LIST_5 COMMA SEMI 
               List<Object> RESULT =null;
 
 RESULT = CUP$AnonParser$stack.elementAt(CUP$AnonParser$top-2).<List<Object>>value();
               CUP$AnonParser$result = getSymbolFactory().newSymbol(
-                9,
+                8,
                 CUP$AnonParser$stack.subList(CUP$AnonParser$top-2, CUP$AnonParser$top + 1),
                 RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 15: { // _EBNF_OPT_8 ::= _EBNF_LIST_TAIL_7 
+          case 18: { // _EBNF_OPT_7 ::= _EBNF_LIST_TAIL_6 
               List<Object> RESULT =null;
 
 RESULT = CUP$AnonParser$stack.peek().<List<Object>>value();
               CUP$AnonParser$result = getSymbolFactory().newSymbol(
-                10,
+                9,
                 CUP$AnonParser$stack.peek(),
                 RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 16: { // _EBNF_OPT_8 ::= 
+          case 19: { // _EBNF_OPT_7 ::= 
               List<Object> RESULT =null;
 
 RESULT = java.util.Collections.<Object>emptyList();
               CUP$AnonParser$result = getSymbolFactory().newSymbol(
-                10,
+                9,
                 cur_token,
                 RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 17: { // stmt ::= KW_TAIL _EBNF_OPT_8 SEMI 
+          case 20: { // stmt ::= KW_TAIL _EBNF_OPT_7 SEMI 
               Object RESULT =null;
 
               var tsSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.elementAt(CUP$AnonParser$top-1);
@@ -428,16 +442,37 @@ RESULT = java.util.Collections.<Object>emptyList();
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 18: { // NT$9 ::= 
-_pushInlineProd(20);
+          case 21: { // _EBNF_8 ::= ID 
+              Object RESULT =null;
+
+              var iaSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
+              var iaLoc = (java_cup.runtime.symbol.complex.ComplexLocation) iaSym.getLocation();
+              Object ia = iaSym.<Object>value();
+		 RESULT = ia; 
               CUP$AnonParser$result = getSymbolFactory().newSymbol(
-                11,
-                cur_token
+                10,
+                CUP$AnonParser$stack.peek(),
+                RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 19: { // stmt ::= NT$9 KW_ACT _EBNF_2 SEMI 
+          case 22: { // _EBNF_8 ::= NUM 
+              Object RESULT =null;
+
+              var ibSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
+              var ibLoc = (java_cup.runtime.symbol.complex.ComplexLocation) ibSym.getLocation();
+              Object ib = ibSym.<Object>value();
+		RESULT = CUP$AnonParser$stack.peek().<Object>value();
+              CUP$AnonParser$result = getSymbolFactory().newSymbol(
+                10,
+                CUP$AnonParser$stack.peek(),
+                RESULT
+              );
+            break;
+          }
+          /*. . . . . . . . . . . . . . . . . . . .*/
+          case 23: { // stmt ::= KW_ACT _EBNF_8 SEMI 
               Object RESULT =null;
 
               var rSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.elementAt(CUP$AnonParser$top-1);
@@ -446,22 +481,79 @@ _pushInlineProd(20);
 		 RESULT = r; 
               CUP$AnonParser$result = getSymbolFactory().newSymbol(
                 0,
-                CUP$AnonParser$stack.subList(CUP$AnonParser$top-3, CUP$AnonParser$top + 1),
+                CUP$AnonParser$stack.subList(CUP$AnonParser$top-2, CUP$AnonParser$top + 1),
                 RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 20: { // NT$10 ::= 
-_pushInlineProd(22);
+          case 24: { // _EBNF_9 ::= ID 
+              Object RESULT =null;
+
+		RESULT = CUP$AnonParser$stack.peek().<Object>value();
               CUP$AnonParser$result = getSymbolFactory().newSymbol(
-                12,
+                11,
+                CUP$AnonParser$stack.peek(),
+                RESULT
+              );
+            break;
+          }
+          /*. . . . . . . . . . . . . . . . . . . .*/
+          case 25: { // _EBNF_9 ::= 
+
+              CUP$AnonParser$result = getSymbolFactory().newSymbol(
+                11,
                 cur_token
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 21: { // stmt ::= NT$10 KW_TYPED _EBNF_2 SEMI 
+          case 26: { // stmt ::= KW_EMPTY _EBNF_9 SEMI 
+              Object RESULT =null;
+
+              var eSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.elementAt(CUP$AnonParser$top-1);
+              var eLoc = (java_cup.runtime.symbol.complex.ComplexLocation) eSym.getLocation();
+              Object e = eSym.<Object>value();
+		 RESULT = e; 
+              CUP$AnonParser$result = getSymbolFactory().newSymbol(
+                0,
+                CUP$AnonParser$stack.subList(CUP$AnonParser$top-2, CUP$AnonParser$top + 1),
+                RESULT
+              );
+            break;
+          }
+          /*. . . . . . . . . . . . . . . . . . . .*/
+          case 27: { // _EBNF_10 ::= ID 
+              Object RESULT =null;
+
+              var tSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
+              var tLoc = (java_cup.runtime.symbol.complex.ComplexLocation) tSym.getLocation();
+              Object t = tSym.<Object>value();
+		RESULT = CUP$AnonParser$stack.peek().<Object>value();
+              CUP$AnonParser$result = getSymbolFactory().newSymbol(
+                12,
+                CUP$AnonParser$stack.peek(),
+                RESULT
+              );
+            break;
+          }
+          /*. . . . . . . . . . . . . . . . . . . .*/
+          case 28: { // _EBNF_10 ::= NUM 
+              Object RESULT =null;
+
+              var uSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
+              var uLoc = (java_cup.runtime.symbol.complex.ComplexLocation) uSym.getLocation();
+              Object u = uSym.<Object>value();
+		RESULT = CUP$AnonParser$stack.peek().<Object>value();
+              CUP$AnonParser$result = getSymbolFactory().newSymbol(
+                12,
+                CUP$AnonParser$stack.peek(),
+                RESULT
+              );
+            break;
+          }
+          /*. . . . . . . . . . . . . . . . . . . .*/
+          case 29: { // stmt ::= KW_TYPED _EBNF_10 SEMI 
               Object RESULT =null;
 
               var tvSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.elementAt(CUP$AnonParser$top-1);
@@ -470,13 +562,13 @@ _pushInlineProd(22);
 		 RESULT = tv; 
               CUP$AnonParser$result = getSymbolFactory().newSymbol(
                 0,
-                CUP$AnonParser$stack.subList(CUP$AnonParser$top-3, CUP$AnonParser$top + 1),
+                CUP$AnonParser$stack.subList(CUP$AnonParser$top-2, CUP$AnonParser$top + 1),
                 RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 22: { // item ::= ID 
+          case 30: { // item ::= ID 
               Object RESULT =null;
 
               var idSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
@@ -491,7 +583,7 @@ _pushInlineProd(22);
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 23: { // item ::= NUM 
+          case 31: { // item ::= NUM 
               Object RESULT =null;
 
               var numSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
@@ -527,125 +619,5 @@ _pushInlineProd(22);
                                CUP$AnonParser$top);
     }
 }
-
-  private java_cup.runtime.Symbol _annoAction_224(
-    int CUP$AnonParser$act_num,
-    java_cup.runtime.ArrayStack<java_cup.runtime.Symbol> CUP$AnonParser$stack,
-    int CUP$AnonParser$top
-  ) {
-    java_cup.runtime.Symbol CUP$AnonParser$result;
-              var xSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
-              var xLoc = (java_cup.runtime.symbol.complex.ComplexLocation) xSym.getLocation();
-              Object x = xSym.<Object>value();
-    return getSymbolFactory().newSymbol(
-      2,
-      CUP$AnonParser$stack.peek()
-    );
-  }
-
-  private java_cup.runtime.Symbol _annoAction_226(
-    int CUP$AnonParser$act_num,
-    java_cup.runtime.ArrayStack<java_cup.runtime.Symbol> CUP$AnonParser$stack,
-    int CUP$AnonParser$top
-  ) {
-    java_cup.runtime.Symbol CUP$AnonParser$result;
-              var zSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
-              var zLoc = (java_cup.runtime.symbol.complex.ComplexLocation) zSym.getLocation();
-              Object z = zSym.<Object>value();
-    return getSymbolFactory().newSymbol(
-      2,
-      CUP$AnonParser$stack.peek()
-    );
-  }
-
-  private java_cup.runtime.Symbol _annoAction_160(
-    int CUP$AnonParser$act_num,
-    java_cup.runtime.ArrayStack<java_cup.runtime.Symbol> CUP$AnonParser$stack,
-    int CUP$AnonParser$top
-  ) {
-    java_cup.runtime.Symbol CUP$AnonParser$result;
-              var aSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
-              var aLoc = (java_cup.runtime.symbol.complex.ComplexLocation) aSym.getLocation();
-              Object a = aSym.<Object>value();
-    return getSymbolFactory().newSymbol(
-      2,
-      CUP$AnonParser$stack.peek()
-    );
-  }
-
-  private java_cup.runtime.Symbol _annoAction_672(
-    int CUP$AnonParser$act_num,
-    java_cup.runtime.ArrayStack<java_cup.runtime.Symbol> CUP$AnonParser$stack,
-    int CUP$AnonParser$top
-  ) {
-    java_cup.runtime.Symbol CUP$AnonParser$result;
-              var tSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
-              var tLoc = (java_cup.runtime.symbol.complex.ComplexLocation) tSym.getLocation();
-              Object t = tSym.<Object>value();
-    return getSymbolFactory().newSymbol(
-      2,
-      CUP$AnonParser$stack.peek()
-    );
-  }
-
-  private java_cup.runtime.Symbol _annoAction_225(
-    int CUP$AnonParser$act_num,
-    java_cup.runtime.ArrayStack<java_cup.runtime.Symbol> CUP$AnonParser$stack,
-    int CUP$AnonParser$top
-  ) {
-    java_cup.runtime.Symbol CUP$AnonParser$result;
-              var ySym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
-              var yLoc = (java_cup.runtime.symbol.complex.ComplexLocation) ySym.getLocation();
-              Object y = ySym.<Object>value();
-    return getSymbolFactory().newSymbol(
-      3,
-      CUP$AnonParser$stack.peek()
-    );
-  }
-
-  private java_cup.runtime.Symbol _annoAction_227(
-    int CUP$AnonParser$act_num,
-    java_cup.runtime.ArrayStack<java_cup.runtime.Symbol> CUP$AnonParser$stack,
-    int CUP$AnonParser$top
-  ) {
-    java_cup.runtime.Symbol CUP$AnonParser$result;
-              var wSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
-              var wLoc = (java_cup.runtime.symbol.complex.ComplexLocation) wSym.getLocation();
-              Object w = wSym.<Object>value();
-    return getSymbolFactory().newSymbol(
-      3,
-      CUP$AnonParser$stack.peek()
-    );
-  }
-
-  private java_cup.runtime.Symbol _annoAction_161(
-    int CUP$AnonParser$act_num,
-    java_cup.runtime.ArrayStack<java_cup.runtime.Symbol> CUP$AnonParser$stack,
-    int CUP$AnonParser$top
-  ) {
-    java_cup.runtime.Symbol CUP$AnonParser$result;
-              var bSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
-              var bLoc = (java_cup.runtime.symbol.complex.ComplexLocation) bSym.getLocation();
-              Object b = bSym.<Object>value();
-    return getSymbolFactory().newSymbol(
-      3,
-      CUP$AnonParser$stack.peek()
-    );
-  }
-
-  private java_cup.runtime.Symbol _annoAction_673(
-    int CUP$AnonParser$act_num,
-    java_cup.runtime.ArrayStack<java_cup.runtime.Symbol> CUP$AnonParser$stack,
-    int CUP$AnonParser$top
-  ) {
-    java_cup.runtime.Symbol CUP$AnonParser$result;
-              var uSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$AnonParser$stack.peek();
-              var uLoc = (java_cup.runtime.symbol.complex.ComplexLocation) uSym.getLocation();
-              Object u = uSym.<Object>value();
-    return getSymbolFactory().newSymbol(
-      3,
-      CUP$AnonParser$stack.peek()
-    );
-  }
 
 }

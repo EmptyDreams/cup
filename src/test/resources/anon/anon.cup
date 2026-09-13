@@ -1,15 +1,16 @@
-/* Anonymous-expression golden grammar (non-AST mode): pins the lowering
- * order of the hidden branch/group NTs (createSubNt / createSubNts), the
- * _useRhsCache memo-hit early return on same-shape reuse, the opt-box
- * over a group NT, bracket-separator list boxes with a tail, branch
- * trailing actions, and the implicit $START build that fires while the
- * first production's anon branches are still being created.
+/* Anonymous-expression golden grammar (non-AST mode): pins the per-use-site
+ * lowering -- one fresh hidden NT per use site (no shape memoization, so the
+ * KW_REUSE alternative expands twice), one real production per branch with
+ * branch labels kept on the parts, a branch trailing action as a normal
+ * production action, the single-symbol no-action value passthrough, the
+ * empty branch, the opt-box over a hidden NT, bracket-separator list boxes
+ * with a tail, and the implicit $START build that fires while the first
+ * production's anon branches are still being created.
  *
- * Anonymous expressions crash the -ast graph builder today (see BUGS.md);
- * this grammar only pins the non-ast pipeline. It is never executed. */
+ * This grammar is never executed; it pins the generated parser's shape. */
 import java_cup.runtime.*;
 
-terminal ID, NUM, SEMI, COMMA, KW_ANON, KW_REUSE, KW_OPT, KW_TAIL, KW_ACT, KW_TYPED;
+terminal ID, NUM, SEMI, COMMA, KW_ANON, KW_REUSE, KW_OPT, KW_TAIL, KW_ACT, KW_EMPTY, KW_TYPED;
 
 non terminal Object stmt, item;
 
@@ -25,8 +26,10 @@ stmt ::= KW_ANON (ID:a | NUM:b):v SEMI
          {: RESULT = o; :}
         | KW_TAIL item[COMMA SEMI ?]*:ts SEMI
          {: RESULT = ts; :}
-        | KW_ACT (ID|NUM):r SEMI
+        | KW_ACT (ID:ia {: RESULT = ia; :} | NUM:ib):r SEMI
          {: RESULT = r; :} %namer AnonStmt
+        | KW_EMPTY (ID | ):e SEMI
+         {: RESULT = e; :}
         | KW_TYPED (::String ID:t | NUM:u):tv SEMI
          {: RESULT = tv; :}
         ;

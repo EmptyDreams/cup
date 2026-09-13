@@ -260,8 +260,6 @@ public class emit {
     /* frankf 6/18/96 */
     protected static boolean _lr_values;
 
-    static boolean hasAnnoCode = false;
-
     /**
      * whether or not to emit code for left and right values
      */
@@ -520,48 +518,6 @@ public class emit {
                 out.println("          /*. . . . . . . . . . . . . . . . . . . .*/");
                 out.println("          case " + prod.index() + ": { // " + prod.to_simple_string());
 
-                if (prod.lhs().the_symbol().is_non_term() && ((non_terminal) prod.lhs().the_symbol()).isLaAnno()) {
-                    out.println("            switch (currentAnnoCode) {");
-                    var nt = (non_terminal) prod.lhs().the_symbol();
-                    var infoList = non_terminal.getAnnoNtAllInfo(nt);
-                    for (var entry : infoList) {
-                        var posFinder = entry.getFirst();
-                        var info = entry.getSecond();
-                        var fromProdIndex = posFinder.getProdIndex();
-                        var annoCode = (fromProdIndex << 5) | info.getIndexInProd();
-                        out.println("              case " + annoCode + ':');
-                        var methodName = "_annoAction_" + annoCode;
-                        out.println("                " + pre("result") + " = " + methodName + '(');
-                        out.println("                  " + pre("act_num") + ',');
-                        out.println("                  " + pre("stack") + ',');
-                        out.println("                  " + pre("top"));
-                        out.println("                );");
-                        out.println("                break;");
-                    }
-                    out.println("              default:");
-                    out.print("                " + pre("result") + " = getSymbolFactory().newSymbol(" + nt.index() + ", ");
-                    if (prod.rhs_length() == 0) {
-                        // epsilon alternative: position = current lookahead token
-                        out.print("cur_token");
-                    } else if (prod.rhs_length() == 1) {
-                        out.print(buildStackSymReader(0));
-                    } else {
-                        out.print(
-                            pre("stack") + ".subList(" +
-                                pre("top") + " - " + (prod.rhs_length() - 1) + ", " + pre("top") + " + 1)"
-                        );
-                    }
-                    out.println(");");
-                    out.println("                break;");
-                    out.println("            }");
-                    if (infoList.size() > 1) {
-                        out.println("            ++currentAnnoCode;");
-                    }
-                    out.println("            return " + pre("result") + ';');
-                    out.println("          }");
-                    continue;
-                }
-
                 var resultType = prod.lhs().the_symbol().stack_type();
                 var propagate = new StringBuilder();
                 /*
@@ -786,89 +742,6 @@ public class emit {
         action_code_time = System.currentTimeMillis() - start_time;
     }
 
-    private static void emit_inline_action_code(PrintWriter writer) throws internal_error {
-        for (Production prod : Production.all()) {
-            if (!prod.lhs().the_symbol().is_non_term() || !((non_terminal) prod.lhs().the_symbol()).isLaAnno()) continue;
-            var nt = (non_terminal) prod.lhs().the_symbol();
-            var annoList = non_terminal.getAnnoNtAllInfo(nt);
-            for (var entry : annoList) {
-                var posFinder = entry.getFirst();
-                var info = entry.getSecond();
-                var fromProdIndex = posFinder.getProdIndex();
-                var annoCode = (fromProdIndex << 5) | info.getIndexInProd();
-                var methodName = "_annoAction_" + annoCode;
-                writer.println("  private java_cup.runtime.Symbol " + methodName + "(");
-                writer.println("    int " + pre("act_num") + ',');
-                writer.println("    java_cup.runtime.ArrayStack<java_cup.runtime.Symbol> " + pre("stack") + ',');
-                writer.println("    int " + pre("top"));
-                writer.println("  ) {");
-                writer.println("    java_cup.runtime.Symbol " + pre("result") + ';');
-                List<String> labelList = info.getLabelList();
-                for (int i = 0, labelListSize = labelList.size(); i < labelListSize; i++) {
-                    String label = labelList.get(i);
-                    if (label == null) continue;
-                    int offset = labelList.size() - i - 1;
-                    writer.print(
-                        Production.make_declaration(
-                            label,
-                            ((symbol_part) prod.rhs(i)).the_symbol().stack_type(),
-                            offset
-                        )
-                    );
-                }
-                var actionCode = info.getAction();
-                var hasResult = false;
-                if (actionCode != null) {
-                    writer.println(actionCode);
-                    hasResult = hasReadOrWriteResult(actionCode);
-                } else if (Main.ast_format != null) {
-                    // Automatically generate action code for anonymous non-terminals in AST mode
-                    String indentation = "    ";
-                    String className = getAnnoExprName((non_terminal) posFinder.getProd().lhs().the_symbol(), posFinder.getProd(), info.getIndexInProd());
-                    String nodeName = pre("treeNode");
-                    if (labelList.isEmpty()) {
-                        writer.println(indentation + className + " " + nodeName + " = new " + className + "();");
-                    } else {
-                        writer.println(indentation + className + " " + nodeName + " = " + className + ".build" + 
-                                     prod.getProdName() + "(");
-                        boolean isFirst = true;
-                        for (String label : labelList) {
-                            if (isFirst) isFirst = false;
-                            else writer.println(",");
-                            writer.print(indentation + "  " + joinName(label, "sym"));
-                        }
-                        writer.println();
-                        writer.println(indentation + ");");
-                    }
-                    writer.println(indentation + "var RESULT = " + nodeName + ";");
-                    hasResult = true;
-                }
-                writer.println("    return getSymbolFactory().newSymbol(");
-                writer.println("      " + nt.index() + ',');
-                if (prod.rhs_length() == 0) {
-                    // epsilon alternative of an anonymous group: position = current lookahead
-                    writer.print("      cur_token");
-                } else if (labelList.size() > 1) {
-                    writer.print(
-                        "      " + pre("stack") + ".subList(" +
-                            pre("top") + " - " + (labelList.size() - 1) + ", " + pre("top") + " + 1)"
-                    );
-                } else {
-                    writer.print("      " + buildStackSymReader(0));
-                }
-                if (hasResult) {
-                    writer.println(',');
-                    writer.println("      RESULT");
-                } else {
-                    writer.println();
-                }
-                writer.println("    );");
-                writer.println("  }");
-                writer.println();
-            }
-        }
-    }
-
     /**
      * Checks if the provided Java function body code reads or writes the variable named RESULT.
      *
@@ -957,16 +830,6 @@ public class emit {
     }
 
     /**
-     * Get the name of the anonymous non-terminal expression.
-     *
-     * @param nt The parent non-terminal that contains the anonymous non-terminal
-     * @param prod The production in which the anonymous non-terminal is located
-     * @param index The index of the anonymous non-terminal within the production
-     */
-    public static String getAnnoExprName(non_terminal nt, Production prod, int index) {
-        return nt.astClassName() + '_' + prod.index() + '_' + index;
-    }
-
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
     /**
@@ -1273,16 +1136,6 @@ public class emit {
         out.println("@SuppressWarnings({\"unused\", \"UnnecessaryUnicodeEscape\"})");
         out.println("public class " + parser_class_name + typeArgument() + " extends java_cup.runtime.lr_parser {");
 
-        if (hasAnnoCode) {
-            out.println();
-            out.println("  /** Used to locate the anonymous non-terminal currently being reduced. */");
-            out.println("  private int currentAnnoCode = 0;");
-            out.println();
-            out.println("  protected void _pushInlineProd(int prodIndex) {");
-            out.println("    currentAnnoCode = prodIndex << 5;");
-            out.println("  }");
-        }
-
         /* constructors [CSA/davidm, 24-jul-99] */
         out.println();
         out.println("  public " + parser_class_name + "(java_cup.runtime.SymbolFactory sf) { super(sf); }");
@@ -1379,9 +1232,6 @@ public class emit {
 
         /* put out the action code class */
         emit_action_code(out, start_prod);
-
-        if (hasAnnoCode)
-            emit_inline_action_code(out);
 
         /* end of class */
         out.println("}");

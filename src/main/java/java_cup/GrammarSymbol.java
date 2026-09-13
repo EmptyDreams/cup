@@ -166,7 +166,6 @@ public abstract class GrammarSymbol {
     ) throws internal_error {
         if (_optBox != null) return _optBox;
         var newNt = non_terminal.create_new("_EBNF_OPT_", stack_type());
-        newNt._isAnno = true;
         new Production(
             newNt,
             new production_part[]{new symbol_part(this)},
@@ -239,7 +238,6 @@ public abstract class GrammarSymbol {
         var cache = _listBoxCache.computeIfAbsent(sepList, k -> {
             try {
                 var newNt = non_terminal.create_new("_EBNF_LIST_", listType);
-                newNt._isAnno = true;
                 ((GrammarSymbol) newNt)._listElementSymbol = this;
                 new Production(
                     newNt,
@@ -295,7 +293,6 @@ public abstract class GrammarSymbol {
     ) throws internal_error {
         var listType = emit.buildListExpr(type);
         var newNt = non_terminal.create_new("_EBNF_LIST_TAIL_", listType);
-        newNt._isAnno = true;
         ((GrammarSymbol) newNt)._listElementSymbol = nt.getListElementContent();
         new Production(
             newNt,

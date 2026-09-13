@@ -16,7 +16,6 @@ import java_cup.spec.SymbolPartNode;
 import java_cup.spec.SymRef;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,12 +34,11 @@ import java.util.Map;
  * left-recursive.</p>
  *
  * <p>Historic quirks are preserved on purpose (documented in REFACTORING.md):
- * {@code %prec X %namer N} drops the namer, the memoization caches in
- * non_terminal are shared across the whole run and never cleared, the group
- * non-terminal of an anonymous expression only ever gets one production, and
- * an undeclared {@code %prec} terminal still crashes with an NPE exactly as
- * before. Do not "fix" any of these here -- Phase 2 replaces this whole
- * anonymous-expression layer.</p>
+ * {@code %prec X %namer N} drops the namer, and an undeclared {@code %prec}
+ * terminal still crashes with an NPE exactly as before. Anonymous
+ * expressions expand per use site: one fresh hidden non-terminal with one
+ * real production per branch, branch labels and trailing actions included,
+ * so plain LALR dispatches between the branches -- no runtime machinery.</p>
  */
 public final class Lowering {
 
@@ -90,16 +88,9 @@ public final class Lowering {
 
     /**
      * Whether we are currently between the parentheses of an anonymous
-     * expression. Replaces the old rhsPartsCache emptiness test and the
-     * subNtRecord nesting guard.
+     * expression -- the nesting guard (anonymous expressions cannot nest).
      */
     private boolean inAnon = false;
-
-    /** The name of the last child non_terminal (null again once consumed). */
-    private String lastSubNtName = null;
-
-    /** The branch non-terminals of the anonymous expression being lowered. */
-    private List<production_part> subNtList = null;
 
     /** Shared id counter for debug symbols on code parts and embedded actions. */
     private int cur_debug_id = 0;
@@ -277,11 +268,11 @@ public final class Lowering {
         if (rn.precTerminal != null) {
             /* historical quirk: `prod_part_list %prec T %namer N` calls
                handle_rhs_expr with is_namer = false, dropping the namer */
-            handle_rhs_expr(true, lowerTermId(rn.precTerminal), false, null, true);
+            handle_rhs_expr(true, lowerTermId(rn.precTerminal), false, null);
         } else if (rn.namer != null) {
-            handle_rhs_expr(false, null, true, rn.namer, true);
+            handle_rhs_expr(false, null, true, rn.namer);
         } else {
-            handle_rhs_expr(false, null, false, null, true);
+            handle_rhs_expr(false, null, false, null);
         }
     }
 
@@ -384,18 +375,25 @@ public final class Lowering {
     /*---------------------------------------------------------------*/
 
     /**
-     * Ports the symbol_id LPAREN alternative: lowers every branch (creating
-     * the shared branch non-terminal and its production via the
-     * handle_rhs_expr branch path), then the group non-terminal when there
-     * is more than one branch. Returns the resulting non-terminal's name.
+     * Lowers one anonymous-expression use site: a fresh hidden non-terminal
+     * with one real production per branch. Branch labels stay on the parts
+     * and a trailing branch action stays the production's tail action, so
+     * plain LALR dispatches between the branches -- no runtime machinery.
+     * Every use site gets its own hidden NT (no shape memoization): sharing
+     * one NT across use sites is incompatible with per-use-site branch
+     * labels. Returns the hidden NT's name.
      */
     private String lowerAnonExpr(AnonExprNode ae) throws Exception {
-        /* the old newSubNtList() */
         if (inAnon) {
             throw new internal_error("Anonymous non-terminals cannot be nested");
         }
-        /* the old cacheRhs(): shelve the enclosing rhs accumulation so the
-           branch lowering below does not clobber it */
+        /* degenerate use sites (e.g. inside a precedence declaration before
+           any production): nothing was ever created for these */
+        if (lhs_nt == null) {
+            return null;
+        }
+        /* shelve the enclosing rhs accumulation so the branch lowering below
+           does not clobber it */
         production_part[] shelved = new production_part[rhs_pos];
         if (rhs_pos != 0) {
             System.arraycopy(rhs_parts, 0, shelved, 0, rhs_pos);
@@ -403,53 +401,60 @@ public final class Lowering {
         int shelvedPos = rhs_pos;
         new_rhs();
 
+        non_terminal hidden = non_terminal.create_new(
+                "_EBNF_", Main.ast_format == null ? "Object" : "AstNode");
+        symbols.put(hidden.name(), new symbol_part(hidden));
+        corr.recordAnon(ae, hidden);
+
         inAnon = true;
-        subNtList = new ArrayList<>();
         try {
             for (RhsNode branch : ae.branches) {
                 new_rhs();
                 for (PartNode part : branch.parts) {
                     lowerPart(part);
                 }
-                pendingRhs = branch;
-                if (branch.precTerminal != null) {
-                    handle_rhs_expr(true, lowerTermId(branch.precTerminal), false, null, true);
-                } else if (branch.namer != null) {
-                    handle_rhs_expr(false, null, true, branch.namer, true);
-                } else {
-                    handle_rhs_expr(false, null, false, null, true);
-                }
+                finishBranchProduction(hidden, branch);
             }
         } finally {
             inAnon = false;
         }
-        List<production_part> branchNts = subNtList;
-        subNtList = null;
 
-        if (branchNts.size() > 1) {
-            var subNt = lhs_nt.createSubNts(branchNts);
-            lastSubNtName = subNt.name();
-            symbols.put(lastSubNtName, new symbol_part(subNt));
-            for (production_part part : branchNts) {
-                rhs_pos = 1;
-                rhs_parts[0] = part;
-                handle_rhs_expr(false, null, false, null, false);
-            }
-        }
-        String result = lastSubNtName;
-        lastSubNtName = null;
-        /* correlate the use site with the hidden NT it resolved to (the
-           group NT, or the single branch NT) */
-        if (result != null) {
-            corr.recordAnon(ae, (non_terminal) ((symbol_part) symbols.get(result)).the_symbol());
-        }
-
-        /* the old popRhsCache(): restore the enclosing rhs accumulation */
+        /* restore the enclosing rhs accumulation */
         if (shelvedPos != 0) {
             System.arraycopy(shelved, 0, rhs_parts, 0, shelvedPos);
         }
         rhs_pos = shelvedPos;
-        return result;
+        return hidden.name();
+    }
+
+    /**
+     * Constructs the production for one branch of an anonymous expression:
+     * %prec / %namer are honored exactly like a top-level alternative
+     * (including the historical quirk that {@code %prec T %namer N} drops
+     * the namer).
+     */
+    private void finishBranchProduction(non_terminal hidden, RhsNode branch) throws Exception {
+        String termName = branch.precTerminal == null ? null : lowerTermId(branch.precTerminal);
+        GrammarSymbol precSym = termName == null
+                ? null
+                : ((symbol_part) symbols.get(termName)).the_symbol();
+
+        /* non-AST default: a branch that is exactly one symbol and carries
+           no action passes that symbol's value through (the opt-box
+           precedent); every other shape without a user action produces no
+           value. In -ast mode the Production constructor's auto action
+           builds the node instead. */
+        if (Main.ast_format == null && rhs_pos == 1 && !rhs_parts[0].is_action()) {
+            var sole = (symbol_part) rhs_parts[0];
+            add_rhs_part(new action_part(
+                    "RESULT = " + emit.buildStackValueReader(sole.the_symbol().stack_type(), 0) + ";"));
+        }
+
+        Production p = buildProductionCore(
+                hidden, precSym, termName,
+                branch.namer != null && branch.precTerminal == null, branch.namer);
+        corr.recordRhs(branch, p);
+        new_rhs();
     }
 
     /**
@@ -493,10 +498,6 @@ public final class Lowering {
     /** start a new right hand side */
     private void new_rhs() { rhs_pos = 0; }
 
-    private void addSubNt(non_terminal nt) throws internal_error {
-        subNtList.add(new symbol_part(nt));
-    }
-
     /** add a new right hand side part */
     private void add_rhs_part(production_part part) throws java.lang.Exception {
         if (rhs_pos >= MAX_RHS)
@@ -534,33 +535,16 @@ public final class Lowering {
     }
 
     /**
-     * The end-of-rhs funnel, ported verbatim from parser.cup.
-     *
-     * <p>Callers, as before: {@code isSubList == true} from the rhs rule
-     * (either a top-level alternative, or an anonymous-expression branch when
-     * {@link #inAnon} is set), {@code isSubList == false} from the anonymous
-     * group loop (when {@link #lastSubNtName} names the group NT).</p>
+     * The end-of-rhs funnel for a top-level alternative: %prec resolution,
+     * the shared production-construction core, then reset.
      */
     private void handle_rhs_expr(
-            boolean is_prec, String term_name, boolean is_namer, String prod_name, boolean isSubList
+            boolean is_prec, String term_name, boolean is_namer, String prod_name
     ) throws Exception {
-        java_cup.GrammarSymbol sym = null;
         java_cup.spec.RhsNode pending = pendingRhs;
         pendingRhs = null;
         if (lhs_nt != null) {
-            non_terminal subNt = null;
-            if (inAnon && isSubList) {
-                subNt = lhs_nt.createSubNt(
-                        rhs_parts, rhs_pos, Production.PositionFinder.newInstance(lhs_nt)
-                );
-                lastSubNtName = subNt.name();
-                symbols.put(lastSubNtName, new symbol_part(subNt));
-                addSubNt(subNt);
-            }
-            if (!isSubList && lastSubNtName != null) {
-                subNt = (non_terminal) ((symbol_part) symbols.get(lastSubNtName)).the_symbol();
-            }
-            non_terminal nt = subNt == null ? lhs_nt : subNt;
+            GrammarSymbol sym = null;
             if (is_prec) {
                 /* Find the precedence symbol */
                 if (term_name == null) {
@@ -569,93 +553,80 @@ public final class Lowering {
                     sym = ((symbol_part) symbols.get(term_name)).the_symbol();
                 }
             }
-            if (subNt == null) {
-                boolean exists = Arrays.stream(rhs_parts, 0, rhs_pos)
-                        .anyMatch(
-                                part -> {
-                                    if (part.is_action()) return false;
-                                    GrammarSymbol symbol = ((symbol_part) part).the_symbol();
-                                    if (!symbol.is_non_term()) return false;
-                                    non_terminal partNt = (non_terminal) symbol;
-                                    return partNt.isAnno() && !partNt.isListBox() && !partNt.isOptBox();
-                                }
-                        );
-                if (exists) {
-                    // The logic here is to determine the index of the production,
-                    // we need to know the index in advance in order to insert the action for it.
-                    int count = 1;
-                    boolean inActionSequence = true;
-                    for (int i = 0; i < rhs_pos; i++) {
-                        if (rhs_parts[i].is_action()) {
-                            if (!inActionSequence) {
-                                count++;
-                                inActionSequence = true;
-                            }
-                        } else {
-                            inActionSequence = false;
-                        }
-                    }
-                    // insert the action to the first position
-                    System.arraycopy(rhs_parts, 0, rhs_parts, 1, rhs_pos++);
-                    rhs_parts[0] = new action_part("_pushInlineProd(" + (Production.number() + count) + ");", true);
-                }
-            } else if (subNt.num_productions() != 0) {
-                new_rhs();
-                return;
-            }
-            /* build the production */
-            Production p;
-            if (sym instanceof terminal) {
-                p = new Production(
-                        nt, rhs_parts, rhs_pos,
-                        ((terminal) sym).precedence_num(),
-                        ((terminal) sym).precedence_side()
-                );
-                ((symbol_part) symbols.get(term_name)).the_symbol().note_use();
-            } else {
-                if (is_prec) {
-                    System.err.println(
-                            "Invalid terminal " + term_name + " for contextual precedence assignment"
-                    );
-                }
-                p = new Production(nt, rhs_parts, rhs_pos);
-            }
+            Production p = buildProductionCore(lhs_nt, sym, term_name, is_namer, prod_name);
             if (pending != null) corr.recordRhs(pending, p);
-            if (is_namer) {
-                if (prod_name == null || prod_name.isEmpty()) {
-                    System.err.println("No production name for precedence assignment");
-                } else {
-                    p.setProdName(prod_name);
-                }
-            }
-
-            /* if we have no start non-terminal declared and this is
-                       the first production, make its lhs nt the start_nt
-                       and build a special start production for it. */
-            if (start_nt == null) {
-                start_nt = lhs_nt;
-
-                /* build a special start production */
-                new_rhs();
-                add_rhs_part(add_lab(new symbol_part(start_nt), "start_val"));
-                add_rhs_part(new symbol_part(terminal.EOF));
-                add_rhs_part(new action_part("RESULT = start_val;"));
-                if (sym instanceof terminal) {
-                    emit.start_production = new Production(
-                            non_terminal.START_nt,
-                            rhs_parts,
-                            rhs_pos,
-                            ((terminal) sym).precedence_num(),
-                            ((terminal) sym).precedence_side()
-                    );
-                } else {
-                    emit.start_production = new Production(non_terminal.START_nt, rhs_parts, rhs_pos);
-                }
-                new_rhs();
-            }
         }
 
         /* reset the rhs accumulation in any case */
+        new_rhs();
+    }
+
+    /**
+     * Shared production-construction core (top-level alternatives and
+     * anonymous branches alike): builds the Production for the current
+     * rhs_parts -- with the precedence-argument constructor when the %prec
+     * target resolved to a terminal -- applies %namer, and builds the
+     * implicit $START production after the very first construction.
+     */
+    private Production buildProductionCore(
+            non_terminal lhs, GrammarSymbol precSym, String termName,
+            boolean is_namer, String prod_name
+    ) throws Exception {
+        Production p;
+        if (precSym instanceof terminal) {
+            p = new Production(
+                    lhs, rhs_parts, rhs_pos,
+                    ((terminal) precSym).precedence_num(),
+                    ((terminal) precSym).precedence_side()
+            );
+            ((symbol_part) symbols.get(termName)).the_symbol().note_use();
+        } else {
+            if (precSym != null) {
+                System.err.println(
+                        "Invalid terminal " + termName + " for contextual precedence assignment"
+                );
+            }
+            p = new Production(lhs, rhs_parts, rhs_pos);
+        }
+        if (is_namer) {
+            if (prod_name == null || prod_name.isEmpty()) {
+                System.err.println("No production name for precedence assignment");
+            } else {
+                p.setProdName(prod_name);
+            }
+        }
+
+        maybeBuildImplicitStart(precSym);
+        return p;
+    }
+
+    /**
+     * If we have no start non-terminal declared and this is the first
+     * production, make its lhs nt the start_nt and build a special start
+     * production for it. Kept as its own helper so anonymous branch
+     * productions trigger it at exactly the same point they used to (after
+     * the first branch production of the first alternative).
+     */
+    private void maybeBuildImplicitStart(GrammarSymbol sym) throws Exception {
+        if (start_nt != null) return;
+        start_nt = lhs_nt;
+
+        /* build a special start production */
+        new_rhs();
+        add_rhs_part(add_lab(new symbol_part(start_nt), "start_val"));
+        add_rhs_part(new symbol_part(terminal.EOF));
+        add_rhs_part(new action_part("RESULT = start_val;"));
+        if (sym instanceof terminal) {
+            emit.start_production = new Production(
+                    non_terminal.START_nt,
+                    rhs_parts,
+                    rhs_pos,
+                    ((terminal) sym).precedence_num(),
+                    ((terminal) sym).precedence_side()
+            );
+        } else {
+            emit.start_production = new Production(non_terminal.START_nt, rhs_parts, rhs_pos);
+        }
         new_rhs();
     }
 }

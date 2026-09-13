@@ -18,7 +18,8 @@ public interface AnonSym {
   int KW_OPT = 8;
   int KW_TAIL = 9;
   int KW_ACT = 10;
-  int KW_TYPED = 11;
+  int KW_EMPTY = 11;
+  int KW_TYPED = 12;
 
   String[] TERMINAL_NAMES = new String[] {
     "EOF",
@@ -32,6 +33,7 @@ public interface AnonSym {
     "KW_OPT",
     "KW_TAIL",
     "KW_ACT",
+    "KW_EMPTY",
     "KW_TYPED"
   };
 
