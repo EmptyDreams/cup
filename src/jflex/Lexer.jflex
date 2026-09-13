@@ -26,11 +26,11 @@ import java.io.InputStreamReader;
     private int csline,cscolumn;
 
     public Symbol symbol(int code){
-        var location = ComplexLocation.of(yyline + 1, yycolumn - yylength() + 1, yyline + 1, yycolumn + 1);
+        var location = ComplexLocation.of(yyline + 1, yycolumn + 1, yyline + 1, yycolumn + yylength() + 1);
 	    return symbolFactory.newSymbol(code, location);
     }
     public Symbol symbol(int code, String lexem){
-        var location = ComplexLocation.of(yyline + 1, yycolumn + 1, yyline + 1, yycolumn + yylength());
+        var location = ComplexLocation.of(yyline + 1, yycolumn + 1, yyline + 1, yycolumn + yylength() + 1);
 	    return symbolFactory.newSymbol(code, location, lexem);
     }
     protected void emit_warning(String message){
