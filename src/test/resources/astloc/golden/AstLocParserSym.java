@@ -12,19 +12,23 @@ public interface AstLocParserSym {
   int ID = 2;
   int NUM = 3;
   int STAR = 4;
-  int SEMI = 5;
-  int COMMA = 6;
-  int TRAIL = 7;
-  int LEAD = 8;
-  int BOTH = 9;
-  int MIX = 10;
-  int LIST = 11;
-  int PLUS = 12;
-  int SEPLIST = 13;
-  int TAILSEP = 14;
-  int MULTI = 15;
-  int FLAT = 16;
-  int SPREAD = 17;
+  int STRING = 5;
+  int SEMI = 6;
+  int COMMA = 7;
+  int TRAIL = 8;
+  int LEAD = 9;
+  int BOTH = 10;
+  int MIX = 11;
+  int LIST = 12;
+  int PLUS = 13;
+  int SEPLIST = 14;
+  int TAILSEP = 15;
+  int MULTI = 16;
+  int FLAT = 17;
+  int SPREAD = 18;
+  int ANON = 19;
+  int QANON = 20;
+  int TYPED = 21;
 
   String[] TERMINAL_NAMES = new String[] {
     "EOF",
@@ -32,6 +36,7 @@ public interface AstLocParserSym {
     "ID",
     "NUM",
     "STAR",
+    "STRING",
     "SEMI",
     "COMMA",
     "TRAIL",
@@ -44,7 +49,10 @@ public interface AstLocParserSym {
     "TAILSEP",
     "MULTI",
     "FLAT",
-    "SPREAD"
+    "SPREAD",
+    "ANON",
+    "QANON",
+    "TYPED"
   };
 
   /* non terminals */
@@ -67,6 +75,10 @@ public interface AstLocParserSym {
   int _EBNF_LIST_TAIL_10 = 16;
   int _EBNF_OPT_11 = 17;
   int _EBNF_LIST_12 = 18;
+  int _EBNF_13 = 19;
+  int _EBNF_14 = 20;
+  int _EBNF_OPT_15 = 21;
+  int _EBNF_16 = 22;
 
   /* non terminal names */
   String[] NON_TERMINAL_NAMES = new String[] {
@@ -88,7 +100,11 @@ public interface AstLocParserSym {
     "_EBNF_LIST_9",
     "_EBNF_LIST_TAIL_10",
     "_EBNF_OPT_11",
-    "_EBNF_LIST_12"
+    "_EBNF_LIST_12",
+    "_EBNF_13",
+    "_EBNF_14",
+    "_EBNF_OPT_15",
+    "_EBNF_16"
   };
 
 }

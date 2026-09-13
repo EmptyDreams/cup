@@ -272,7 +272,8 @@ public class Main {
             + "    -nonterms           put non terminals in symbol constant class\n"
             + "    -location           specify the full class name of the custom location class to be used\n"
             + "    -ast format         auto generates AST. The format param defines node class naming, " +
-                                      "where %s is after the first underscore and %p is before, " +
+                                      "where %s uses the part after the first underscore of the symbol " +
+                                      "name and %p uses the whole name, " +
                                       "defaulting to \"Node%s\".\n"
             + "    -compact_red        compact tables by defaulting to most frequent reduce\n"
             + "    -nowarn             don't warn about useless productions, etc.\n"

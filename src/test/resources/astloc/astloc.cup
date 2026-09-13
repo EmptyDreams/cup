@@ -1,9 +1,8 @@
-/* AST-mode location regression grammar: the three BUGS.md repro shapes
- * plus every grammar extension this fork adds over original CUP 11
- * (X?, X+, [SEP !]*, [SEP ?]*, multi-symbol separators, ... spread with
- * and without a label, %namer, `class`, `import static`). Anonymous
- * expressions (A | B) are NOT covered: the AST graph builder crashes on
- * them (see BUGS.md). */
+/* AST-mode location regression grammar: every grammar extension this fork
+ * adds over original CUP 11 (X?, X+, [SEP !]*, [SEP ?]*, multi-symbol
+ * separators, ... spread with and without a label, %namer, `class`,
+ * `import static`, and anonymous expressions -- plain multi-symbol
+ * branches, an optional-wrapped group, and a ::T typed single branch). */
 import java_cup.runtime.*;
 import java_cup.runtime.symbol.complex.ComplexSymbolFactory;
 import java.io.BufferedReader;
@@ -28,8 +27,8 @@ parser code {:
   }
 :};
 
-terminal String ID, NUM, STAR;
-terminal SEMI, COMMA, TRAIL, LEAD, BOTH, MIX, LIST, PLUS, SEPLIST, TAILSEP, MULTI, FLAT, SPREAD;
+terminal String ID, NUM, STAR, STRING;
+terminal SEMI, COMMA, TRAIL, LEAD, BOTH, MIX, LIST, PLUS, SEPLIST, TAILSEP, MULTI, FLAT, SPREAD, ANON, QANON, TYPED;
 
 non terminal AstNode program, stmt, item, sitem, titem, flatContent;
 
@@ -51,6 +50,9 @@ stmt ::= TRAIL item:ta sitem?:tb SEMI %namer TrailOpt
        | MULTI item[COMMA SEMI !]+:mxs SEMI %namer MultiSep
        | FLAT ...flatContent:fc SEMI %namer FlatStmt
        | SPREAD ...flatContent SEMI %namer SpreadStmt
+       | ANON (item:one | sitem:first item:second):a SEMI %namer AnonStmt
+       | QANON (titem:t | sitem:n)?:q SEMI %namer QAnonStmt
+       | TYPED (::String STRING:s):v SEMI %namer TypedStmt
        ;
 
 item        ::= ID:id;

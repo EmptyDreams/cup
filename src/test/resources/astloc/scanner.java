@@ -69,6 +69,20 @@ public class scanner implements Scanner {
             return sf.newSymbol(AstLocParserSym.NUM,
                 loc(startLine, startColumn, line, column - 1), sb.toString());
         }
+        if (nextChar == '"') {
+            advance();
+            StringBuilder sb = new StringBuilder();
+            while (nextChar != '"') {
+                if (nextChar == -1 || nextChar == '\n') {
+                    throw new IOException("unterminated string at " + startLine + ":" + startColumn);
+                }
+                sb.append((char) nextChar);
+                advance();
+            }
+            advance();
+            return sf.newSymbol(AstLocParserSym.STRING,
+                loc(startLine, startColumn, line, column - 1), sb.toString());
+        }
         if (Character.isJavaIdentifierStart(nextChar)) {
             StringBuilder sb = new StringBuilder();
             while (Character.isJavaIdentifierPart(nextChar)) {
@@ -93,6 +107,9 @@ public class scanner implements Scanner {
             case "multi":   return sf.newSymbol(AstLocParserSym.MULTI, location);
             case "flat":    return sf.newSymbol(AstLocParserSym.FLAT, location);
             case "spread":  return sf.newSymbol(AstLocParserSym.SPREAD, location);
+            case "anon":    return sf.newSymbol(AstLocParserSym.ANON, location);
+            case "qanon":   return sf.newSymbol(AstLocParserSym.QANON, location);
+            case "typed":   return sf.newSymbol(AstLocParserSym.TYPED, location);
             default:        return sf.newSymbol(AstLocParserSym.ID, location, word);
         }
     }

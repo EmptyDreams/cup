@@ -32,31 +32,11 @@ public class NodeStmt extends AstNode {
     return false;
   }
 
-  public boolean hasX() {
-    return false;
-  }
-
-  public boolean hasY() {
-    return false;
-  }
-
   public boolean hasFcX() {
     return false;
   }
 
   public boolean hasFcY() {
-    return false;
-  }
-
-  public boolean hasMa() {
-    return false;
-  }
-
-  public boolean hasMb() {
-    return false;
-  }
-
-  public boolean hasMc() {
     return false;
   }
 
@@ -72,11 +52,11 @@ public class NodeStmt extends AstNode {
     return false;
   }
 
-  public boolean hasPxs() {
+  public boolean hasQ() {
     return false;
   }
 
-  public boolean hasMxs() {
+  public boolean hasPxs() {
     return false;
   }
 
@@ -88,11 +68,43 @@ public class NodeStmt extends AstNode {
     return false;
   }
 
+  public boolean hasV() {
+    return false;
+  }
+
+  public boolean hasA() {
+    return false;
+  }
+
   public boolean hasLa() {
     return false;
   }
 
   public boolean hasLb() {
+    return false;
+  }
+
+  public boolean hasX() {
+    return false;
+  }
+
+  public boolean hasY() {
+    return false;
+  }
+
+  public boolean hasMa() {
+    return false;
+  }
+
+  public boolean hasMb() {
+    return false;
+  }
+
+  public boolean hasMc() {
+    return false;
+  }
+
+  public boolean hasMxs() {
     return false;
   }
 
@@ -108,31 +120,11 @@ public class NodeStmt extends AstNode {
     return null;
   }
 
-  public NodeString getX() {
-    return null;
-  }
-
-  public NodeString getY() {
-    return null;
-  }
-
   public NodeString getFcX() {
     return null;
   }
 
   public NodeString getFcY() {
-    return null;
-  }
-
-  public NodeItem getMa() {
-    return null;
-  }
-
-  public NodeSitem getMb() {
-    return null;
-  }
-
-  public NodeItem getMc() {
     return null;
   }
 
@@ -148,11 +140,11 @@ public class NodeStmt extends AstNode {
     return null;
   }
 
-  public NodeListNodeTitem getPxs() {
+  public NodeEbnf14 getQ() {
     return null;
   }
 
-  public NodeListNodeItem getMxs() {
+  public NodeListNodeTitem getPxs() {
     return null;
   }
 
@@ -164,11 +156,43 @@ public class NodeStmt extends AstNode {
     return null;
   }
 
+  public NodeEbnf16 getV() {
+    return null;
+  }
+
+  public NodeEbnf13 getA() {
+    return null;
+  }
+
   public NodeSitem getLa() {
     return null;
   }
 
   public NodeItem getLb() {
+    return null;
+  }
+
+  public NodeString getX() {
+    return null;
+  }
+
+  public NodeString getY() {
+    return null;
+  }
+
+  public NodeItem getMa() {
+    return null;
+  }
+
+  public NodeSitem getMb() {
+    return null;
+  }
+
+  public NodeItem getMc() {
+    return null;
+  }
+
+  public NodeListNodeItem getMxs() {
     return null;
   }
 
@@ -180,22 +204,25 @@ public class NodeStmt extends AstNode {
       case "ll": return hasLl();
       case "lx": return hasLx();
       case "sxs": return hasSxs();
-      case "x": return hasX();
-      case "y": return hasY();
       case "fcX": return hasFcX();
       case "fcY": return hasFcY();
-      case "ma": return hasMa();
-      case "mb": return hasMb();
-      case "mc": return hasMc();
       case "ta": return hasTa();
       case "tb": return hasTb();
       case "txs": return hasTxs();
+      case "q": return hasQ();
       case "pxs": return hasPxs();
-      case "mxs": return hasMxs();
       case "ba": return hasBa();
       case "bb": return hasBb();
+      case "v": return hasV();
+      case "a": return hasA();
       case "la": return hasLa();
       case "lb": return hasLb();
+      case "x": return hasX();
+      case "y": return hasY();
+      case "ma": return hasMa();
+      case "mb": return hasMb();
+      case "mc": return hasMc();
+      case "mxs": return hasMxs();
       default: return false;
     }
   }
@@ -208,22 +235,25 @@ public class NodeStmt extends AstNode {
       case "ll": return getLl();
       case "lx": return getLx();
       case "sxs": return getSxs();
-      case "x": return getX();
-      case "y": return getY();
       case "fcX": return getFcX();
       case "fcY": return getFcY();
-      case "ma": return getMa();
-      case "mb": return getMb();
-      case "mc": return getMc();
       case "ta": return getTa();
       case "tb": return getTb();
       case "txs": return getTxs();
+      case "q": return getQ();
       case "pxs": return getPxs();
-      case "mxs": return getMxs();
       case "ba": return getBa();
       case "bb": return getBb();
+      case "v": return getV();
+      case "a": return getA();
       case "la": return getLa();
       case "lb": return getLb();
+      case "x": return getX();
+      case "y": return getY();
+      case "ma": return getMa();
+      case "mb": return getMb();
+      case "mc": return getMc();
+      case "mxs": return getMxs();
       default: return null;
     }
   }
@@ -265,20 +295,6 @@ public class NodeStmt extends AstNode {
     );
   }
 
-  public static SpreadStmt buildSpreadStmt(
-    Symbol $0
-  ) {
-    var $0Node = $0.<NodeFlatContent>value();
-    var xNode = $0Node.getX();
-    var yNode = $0Node.getY();
-    var CUP$AstLocParser$pos = (java_cup.runtime.symbol.complex.ComplexLocation) $0.getLocation();
-    return new SpreadStmt(
-      xNode,
-      yNode,
-      CUP$AstLocParser$pos
-    );
-  }
-
   public static FlatStmt buildFlatStmt(
     Symbol fc
   ) {
@@ -286,30 +302,6 @@ public class NodeStmt extends AstNode {
     var CUP$AstLocParser$pos = (java_cup.runtime.symbol.complex.ComplexLocation) fc.getLocation();
     return new FlatStmt(
       fcNode,
-      CUP$AstLocParser$pos
-    );
-  }
-
-  public static MixOpt buildMixOpt(
-    Symbol ma,
-    Symbol mb,
-    Symbol mc
-  ) {
-    java_cup.runtime.symbol.complex.ComplexLocation CUP$AstLocParser$left = null;
-    java_cup.runtime.symbol.complex.ComplexLocation CUP$AstLocParser$right = null;
-    var maNode = ma.<NodeItem>value();
-    CUP$AstLocParser$left = (java_cup.runtime.symbol.complex.ComplexLocation) ma.getLocation();
-    NodeSitem mbNode = null;
-    if (!mb.isNull()) {
-      mbNode = mb.<NodeSitem>value();
-    }
-    var mcNode = mc.<NodeItem>value();
-    CUP$AstLocParser$right = (java_cup.runtime.symbol.complex.ComplexLocation) mc.getLocation();
-    var CUP$AstLocParser$pos = (CUP$AstLocParser$left != null ? CUP$AstLocParser$left : java_cup.runtime.symbol.complex.ComplexLocation.NO_LOCATION).span(CUP$AstLocParser$right != null ? CUP$AstLocParser$right : java_cup.runtime.symbol.complex.ComplexLocation.NO_LOCATION);
-    return new MixOpt(
-      maNode,
-      mbNode,
-      mcNode,
       CUP$AstLocParser$pos
     );
   }
@@ -350,6 +342,20 @@ public class NodeStmt extends AstNode {
     );
   }
 
+  public static QAnonStmt buildQAnonStmt(
+    Symbol q
+  ) {
+    NodeEbnf14 qNode = null;
+    if (!q.isNull()) {
+      qNode = q.<NodeEbnf14>value();
+    }
+    var CUP$AstLocParser$pos = (java_cup.runtime.symbol.complex.ComplexLocation) q.getLocation();
+    return new QAnonStmt(
+      qNode,
+      CUP$AstLocParser$pos
+    );
+  }
+
   public static PlusList buildPlusList(
     Symbol pxs
   ) {
@@ -357,17 +363,6 @@ public class NodeStmt extends AstNode {
     var CUP$AstLocParser$pos = (java_cup.runtime.symbol.complex.ComplexLocation) pxs.getLocation();
     return new PlusList(
       pxsNode,
-      CUP$AstLocParser$pos
-    );
-  }
-
-  public static MultiSep buildMultiSep(
-    Symbol mxs
-  ) {
-    var mxsNode = new NodeListNodeItem(mxs.<List<NodeItem>>value(), (java_cup.runtime.symbol.complex.ComplexLocation) mxs.getLocation());
-    var CUP$AstLocParser$pos = (java_cup.runtime.symbol.complex.ComplexLocation) mxs.getLocation();
-    return new MultiSep(
-      mxsNode,
       CUP$AstLocParser$pos
     );
   }
@@ -399,6 +394,28 @@ public class NodeStmt extends AstNode {
     );
   }
 
+  public static TypedStmt buildTypedStmt(
+    Symbol v
+  ) {
+    var vNode = v.<NodeEbnf16>value();
+    var CUP$AstLocParser$pos = (java_cup.runtime.symbol.complex.ComplexLocation) v.getLocation();
+    return new TypedStmt(
+      vNode,
+      CUP$AstLocParser$pos
+    );
+  }
+
+  public static AnonStmt buildAnonStmt(
+    Symbol a
+  ) {
+    var aNode = a.<NodeEbnf13>value();
+    var CUP$AstLocParser$pos = (java_cup.runtime.symbol.complex.ComplexLocation) a.getLocation();
+    return new AnonStmt(
+      aNode,
+      CUP$AstLocParser$pos
+    );
+  }
+
   public static LeadOpt buildLeadOpt(
     Symbol la,
     Symbol lb
@@ -418,6 +435,55 @@ public class NodeStmt extends AstNode {
     return new LeadOpt(
       laNode,
       lbNode,
+      CUP$AstLocParser$pos
+    );
+  }
+
+  public static SpreadStmt buildSpreadStmt(
+    Symbol $0
+  ) {
+    var $0Node = $0.<NodeFlatContent>value();
+    var xNode = $0Node.getX();
+    var yNode = $0Node.getY();
+    var CUP$AstLocParser$pos = (java_cup.runtime.symbol.complex.ComplexLocation) $0.getLocation();
+    return new SpreadStmt(
+      xNode,
+      yNode,
+      CUP$AstLocParser$pos
+    );
+  }
+
+  public static MixOpt buildMixOpt(
+    Symbol ma,
+    Symbol mb,
+    Symbol mc
+  ) {
+    java_cup.runtime.symbol.complex.ComplexLocation CUP$AstLocParser$left = null;
+    java_cup.runtime.symbol.complex.ComplexLocation CUP$AstLocParser$right = null;
+    var maNode = ma.<NodeItem>value();
+    CUP$AstLocParser$left = (java_cup.runtime.symbol.complex.ComplexLocation) ma.getLocation();
+    NodeSitem mbNode = null;
+    if (!mb.isNull()) {
+      mbNode = mb.<NodeSitem>value();
+    }
+    var mcNode = mc.<NodeItem>value();
+    CUP$AstLocParser$right = (java_cup.runtime.symbol.complex.ComplexLocation) mc.getLocation();
+    var CUP$AstLocParser$pos = (CUP$AstLocParser$left != null ? CUP$AstLocParser$left : java_cup.runtime.symbol.complex.ComplexLocation.NO_LOCATION).span(CUP$AstLocParser$right != null ? CUP$AstLocParser$right : java_cup.runtime.symbol.complex.ComplexLocation.NO_LOCATION);
+    return new MixOpt(
+      maNode,
+      mbNode,
+      mcNode,
+      CUP$AstLocParser$pos
+    );
+  }
+
+  public static MultiSep buildMultiSep(
+    Symbol mxs
+  ) {
+    var mxsNode = new NodeListNodeItem(mxs.<List<NodeItem>>value(), (java_cup.runtime.symbol.complex.ComplexLocation) mxs.getLocation());
+    var CUP$AstLocParser$pos = (java_cup.runtime.symbol.complex.ComplexLocation) mxs.getLocation();
+    return new MultiSep(
+      mxsNode,
       CUP$AstLocParser$pos
     );
   }
@@ -527,65 +593,6 @@ public class NodeStmt extends AstNode {
 
 
   }
-  public static final class SpreadStmt extends NodeStmt {
-
-    private final NodeString x;
-    private final NodeString y;
-    private final java_cup.runtime.symbol.complex.ComplexLocation location;
-
-    public  SpreadStmt(
-      NodeString x,
-      NodeString y,
-      java_cup.runtime.symbol.complex.ComplexLocation location
-    ) {
-      this.x = x;
-      this.y = y;
-      this.location = location;
-    }
-
-    @Override
-    public NodeString getX() {
-      return x;
-    }
-
-    @Override
-    public NodeString getY() {
-      return y;
-    }
-
-    @Override
-    public java_cup.runtime.symbol.complex.ComplexLocation getLocation() {
-      return location;
-    }
-
-    @Override
-    public boolean hasX() {
-      return true;
-    }
-
-    @Override
-    public boolean hasY() {
-      return true;
-    }
-
-    @Override
-    public Map.Entry<String, AstNode> getByIndex(
-      int index
-    ) {
-      switch (index) {
-        case 0: return new AbstractMap.SimpleEntry<>("x", getX());
-        case 1: return new AbstractMap.SimpleEntry<>("y", getY());
-        default: throw new IndexOutOfBoundsException(index);
-      }
-    }
-
-    @Override
-    public Iterator<Map.Entry<String, AstNode>> iterator() {
-      return new AstNodeIterator(this, 2);
-    }
-
-
-  }
   public static final class FlatStmt extends NodeStmt {
 
     private final NodeFlatContent fc;
@@ -638,79 +645,6 @@ public class NodeStmt extends AstNode {
     @Override
     public Iterator<Map.Entry<String, AstNode>> iterator() {
       return new AstNodeIterator(this, 2);
-    }
-
-
-  }
-  public static final class MixOpt extends NodeStmt {
-
-    private final NodeItem ma;
-    private final NodeSitem mb;
-    private final NodeItem mc;
-    private final java_cup.runtime.symbol.complex.ComplexLocation location;
-
-    public  MixOpt(
-      NodeItem ma,
-      NodeSitem mb,
-      NodeItem mc,
-      java_cup.runtime.symbol.complex.ComplexLocation location
-    ) {
-      this.ma = ma;
-      this.mb = mb;
-      this.mc = mc;
-      this.location = location;
-    }
-
-    @Override
-    public NodeItem getMa() {
-      return ma;
-    }
-
-    @Override
-    public NodeSitem getMb() {
-      return mb;
-    }
-
-    @Override
-    public NodeItem getMc() {
-      return mc;
-    }
-
-    @Override
-    public java_cup.runtime.symbol.complex.ComplexLocation getLocation() {
-      return location;
-    }
-
-    @Override
-    public boolean hasMa() {
-      return true;
-    }
-
-    @Override
-    public boolean hasMb() {
-      return mb != null;
-    }
-
-    @Override
-    public boolean hasMc() {
-      return true;
-    }
-
-    @Override
-    public Map.Entry<String, AstNode> getByIndex(
-      int index
-    ) {
-      switch (index) {
-        case 0: return new AbstractMap.SimpleEntry<>("ma", getMa());
-        case 1: return getMb() == null ? null : new AbstractMap.SimpleEntry<>("mb", getMb());
-        case 2: return new AbstractMap.SimpleEntry<>("mc", getMc());
-        default: throw new IndexOutOfBoundsException(index);
-      }
-    }
-
-    @Override
-    public Iterator<Map.Entry<String, AstNode>> iterator() {
-      return new AstNodeIterator(this, 3);
     }
 
 
@@ -819,6 +753,51 @@ public class NodeStmt extends AstNode {
 
 
   }
+  public static final class QAnonStmt extends NodeStmt {
+
+    private final NodeEbnf14 q;
+    private final java_cup.runtime.symbol.complex.ComplexLocation location;
+
+    public  QAnonStmt(
+      NodeEbnf14 q,
+      java_cup.runtime.symbol.complex.ComplexLocation location
+    ) {
+      this.q = q;
+      this.location = location;
+    }
+
+    @Override
+    public NodeEbnf14 getQ() {
+      return q;
+    }
+
+    @Override
+    public java_cup.runtime.symbol.complex.ComplexLocation getLocation() {
+      return location;
+    }
+
+    @Override
+    public boolean hasQ() {
+      return q != null;
+    }
+
+    @Override
+    public Map.Entry<String, AstNode> getByIndex(
+      int index
+    ) {
+      switch (index) {
+        case 0: return getQ() == null ? null : new AbstractMap.SimpleEntry<>("q", getQ());
+        default: throw new IndexOutOfBoundsException(index);
+      }
+    }
+
+    @Override
+    public Iterator<Map.Entry<String, AstNode>> iterator() {
+      return new AstNodeIterator(this, 1);
+    }
+
+
+  }
   public static final class PlusList extends NodeStmt {
 
     private final NodeListNodeTitem pxs;
@@ -853,51 +832,6 @@ public class NodeStmt extends AstNode {
     ) {
       switch (index) {
         case 0: return new AbstractMap.SimpleEntry<>("pxs", getPxs());
-        default: throw new IndexOutOfBoundsException(index);
-      }
-    }
-
-    @Override
-    public Iterator<Map.Entry<String, AstNode>> iterator() {
-      return new AstNodeIterator(this, 1);
-    }
-
-
-  }
-  public static final class MultiSep extends NodeStmt {
-
-    private final NodeListNodeItem mxs;
-    private final java_cup.runtime.symbol.complex.ComplexLocation location;
-
-    public  MultiSep(
-      NodeListNodeItem mxs,
-      java_cup.runtime.symbol.complex.ComplexLocation location
-    ) {
-      this.mxs = mxs;
-      this.location = location;
-    }
-
-    @Override
-    public NodeListNodeItem getMxs() {
-      return mxs;
-    }
-
-    @Override
-    public java_cup.runtime.symbol.complex.ComplexLocation getLocation() {
-      return location;
-    }
-
-    @Override
-    public boolean hasMxs() {
-      return true;
-    }
-
-    @Override
-    public Map.Entry<String, AstNode> getByIndex(
-      int index
-    ) {
-      switch (index) {
-        case 0: return new AbstractMap.SimpleEntry<>("mxs", getMxs());
         default: throw new IndexOutOfBoundsException(index);
       }
     }
@@ -968,6 +902,96 @@ public class NodeStmt extends AstNode {
 
 
   }
+  public static final class TypedStmt extends NodeStmt {
+
+    private final NodeEbnf16 v;
+    private final java_cup.runtime.symbol.complex.ComplexLocation location;
+
+    public  TypedStmt(
+      NodeEbnf16 v,
+      java_cup.runtime.symbol.complex.ComplexLocation location
+    ) {
+      this.v = v;
+      this.location = location;
+    }
+
+    @Override
+    public NodeEbnf16 getV() {
+      return v;
+    }
+
+    @Override
+    public java_cup.runtime.symbol.complex.ComplexLocation getLocation() {
+      return location;
+    }
+
+    @Override
+    public boolean hasV() {
+      return true;
+    }
+
+    @Override
+    public Map.Entry<String, AstNode> getByIndex(
+      int index
+    ) {
+      switch (index) {
+        case 0: return new AbstractMap.SimpleEntry<>("v", getV());
+        default: throw new IndexOutOfBoundsException(index);
+      }
+    }
+
+    @Override
+    public Iterator<Map.Entry<String, AstNode>> iterator() {
+      return new AstNodeIterator(this, 1);
+    }
+
+
+  }
+  public static final class AnonStmt extends NodeStmt {
+
+    private final NodeEbnf13 a;
+    private final java_cup.runtime.symbol.complex.ComplexLocation location;
+
+    public  AnonStmt(
+      NodeEbnf13 a,
+      java_cup.runtime.symbol.complex.ComplexLocation location
+    ) {
+      this.a = a;
+      this.location = location;
+    }
+
+    @Override
+    public NodeEbnf13 getA() {
+      return a;
+    }
+
+    @Override
+    public java_cup.runtime.symbol.complex.ComplexLocation getLocation() {
+      return location;
+    }
+
+    @Override
+    public boolean hasA() {
+      return true;
+    }
+
+    @Override
+    public Map.Entry<String, AstNode> getByIndex(
+      int index
+    ) {
+      switch (index) {
+        case 0: return new AbstractMap.SimpleEntry<>("a", getA());
+        default: throw new IndexOutOfBoundsException(index);
+      }
+    }
+
+    @Override
+    public Iterator<Map.Entry<String, AstNode>> iterator() {
+      return new AstNodeIterator(this, 1);
+    }
+
+
+  }
   public static final class LeadOpt extends NodeStmt {
 
     private final NodeSitem la;
@@ -1023,6 +1047,183 @@ public class NodeStmt extends AstNode {
     @Override
     public Iterator<Map.Entry<String, AstNode>> iterator() {
       return new AstNodeIterator(this, 2);
+    }
+
+
+  }
+  public static final class SpreadStmt extends NodeStmt {
+
+    private final NodeString x;
+    private final NodeString y;
+    private final java_cup.runtime.symbol.complex.ComplexLocation location;
+
+    public  SpreadStmt(
+      NodeString x,
+      NodeString y,
+      java_cup.runtime.symbol.complex.ComplexLocation location
+    ) {
+      this.x = x;
+      this.y = y;
+      this.location = location;
+    }
+
+    @Override
+    public NodeString getX() {
+      return x;
+    }
+
+    @Override
+    public NodeString getY() {
+      return y;
+    }
+
+    @Override
+    public java_cup.runtime.symbol.complex.ComplexLocation getLocation() {
+      return location;
+    }
+
+    @Override
+    public boolean hasX() {
+      return true;
+    }
+
+    @Override
+    public boolean hasY() {
+      return true;
+    }
+
+    @Override
+    public Map.Entry<String, AstNode> getByIndex(
+      int index
+    ) {
+      switch (index) {
+        case 0: return new AbstractMap.SimpleEntry<>("x", getX());
+        case 1: return new AbstractMap.SimpleEntry<>("y", getY());
+        default: throw new IndexOutOfBoundsException(index);
+      }
+    }
+
+    @Override
+    public Iterator<Map.Entry<String, AstNode>> iterator() {
+      return new AstNodeIterator(this, 2);
+    }
+
+
+  }
+  public static final class MixOpt extends NodeStmt {
+
+    private final NodeItem ma;
+    private final NodeSitem mb;
+    private final NodeItem mc;
+    private final java_cup.runtime.symbol.complex.ComplexLocation location;
+
+    public  MixOpt(
+      NodeItem ma,
+      NodeSitem mb,
+      NodeItem mc,
+      java_cup.runtime.symbol.complex.ComplexLocation location
+    ) {
+      this.ma = ma;
+      this.mb = mb;
+      this.mc = mc;
+      this.location = location;
+    }
+
+    @Override
+    public NodeItem getMa() {
+      return ma;
+    }
+
+    @Override
+    public NodeSitem getMb() {
+      return mb;
+    }
+
+    @Override
+    public NodeItem getMc() {
+      return mc;
+    }
+
+    @Override
+    public java_cup.runtime.symbol.complex.ComplexLocation getLocation() {
+      return location;
+    }
+
+    @Override
+    public boolean hasMa() {
+      return true;
+    }
+
+    @Override
+    public boolean hasMb() {
+      return mb != null;
+    }
+
+    @Override
+    public boolean hasMc() {
+      return true;
+    }
+
+    @Override
+    public Map.Entry<String, AstNode> getByIndex(
+      int index
+    ) {
+      switch (index) {
+        case 0: return new AbstractMap.SimpleEntry<>("ma", getMa());
+        case 1: return getMb() == null ? null : new AbstractMap.SimpleEntry<>("mb", getMb());
+        case 2: return new AbstractMap.SimpleEntry<>("mc", getMc());
+        default: throw new IndexOutOfBoundsException(index);
+      }
+    }
+
+    @Override
+    public Iterator<Map.Entry<String, AstNode>> iterator() {
+      return new AstNodeIterator(this, 3);
+    }
+
+
+  }
+  public static final class MultiSep extends NodeStmt {
+
+    private final NodeListNodeItem mxs;
+    private final java_cup.runtime.symbol.complex.ComplexLocation location;
+
+    public  MultiSep(
+      NodeListNodeItem mxs,
+      java_cup.runtime.symbol.complex.ComplexLocation location
+    ) {
+      this.mxs = mxs;
+      this.location = location;
+    }
+
+    @Override
+    public NodeListNodeItem getMxs() {
+      return mxs;
+    }
+
+    @Override
+    public java_cup.runtime.symbol.complex.ComplexLocation getLocation() {
+      return location;
+    }
+
+    @Override
+    public boolean hasMxs() {
+      return true;
+    }
+
+    @Override
+    public Map.Entry<String, AstNode> getByIndex(
+      int index
+    ) {
+      switch (index) {
+        case 0: return new AbstractMap.SimpleEntry<>("mxs", getMxs());
+        default: throw new IndexOutOfBoundsException(index);
+      }
+    }
+
+    @Override
+    public Iterator<Map.Entry<String, AstNode>> iterator() {
+      return new AstNodeIterator(this, 1);
     }
 
 

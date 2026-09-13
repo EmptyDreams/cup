@@ -275,8 +275,10 @@ tasks.register('testAstLocation', ExecutingTask) {
 
         // Generate parser with the current build of java_cup. The grammar
         // declares `class AstLocParser;` itself, so -parser/-symbols are omitted.
-        // A javac failure of the generated Node*.java is what catches the
-        // BUGS.md BUG 1/2 duplicate/uninitialized-variable regressions.
+        // The javac step below is also the regression net for generated-code
+        // defects: the parser's baked auto actions and the Node*.java classes
+        // must agree on every class and factory name (incl. anonymous
+        // expressions' NodeEbnf* classes).
         execOps.exec {
             commandLine 'java', '-cp', files(jar.archiveFile).asPath, 'java_cup.Main',
                         '-interface',
@@ -324,8 +326,8 @@ tasks.register('testAstLocation', ExecutingTask) {
         }
 
         // Run every case and diff against its .expected file. Non-zero JVM exit
-        // (e.g. the BUGS.md BUG 3 ClassCastException) or any output mismatch
-        // fails the build.
+        // (e.g. a ClassCastException while building an empty list node) or any
+        // output mismatch fails the build.
         fileTree(dir: 'src/test/resources/astloc/cases', include: '*.input')
                 .sort { it.name }.each { input ->
             def expectedFile = new File(input.parentFile, input.name.replace('.input', '.expected'))

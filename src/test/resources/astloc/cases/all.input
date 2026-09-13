@@ -19,3 +19,8 @@ tailsep 4;5
 multi eta , ; theta , ; iota ;
 flat x 99 ;
 spread foo 42 ;
+anon one ;
+anon 2 three ;
+qanon * ;
+qanon ;
+typed "hello" ;
