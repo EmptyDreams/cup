@@ -18,11 +18,14 @@ build and extending grammar support:
 Prerequisites: JDK 11+, Gradle (or use the wrapper)
 
 ```bash
-# Generate parser and lexer sources
-./gradlew generateCupParser generateJFlexLexer
-
-# Build main and runtime JARs
+# Build main and runtime JARs — the bootstrap sources (CupParser,
+# GrammarSymConstants, Lexer) are committed under src/generated, so a fresh
+# clone needs no prerequisite generation step
 ./gradlew jar
+
+# Regenerate CUP's own parser/lexer from the grammar (runs jflex too) and
+# verify the output still matches the committed sources byte-for-byte
+./gradlew generateCupParser
 ```
 
 ## 📦 Release
@@ -36,9 +39,6 @@ variables or `~/.jreleaser/config.toml`, then run:
 
 # Remove previous build outputs
 ./gradlew clean
-
-# Generate CUP parser and JFlex lexer sources
-./gradlew generateCupParser generateJFlexLexer
 
 # Build and publish artifacts to the local staging repository
 ./gradlew publish

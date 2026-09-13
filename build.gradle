@@ -84,12 +84,21 @@ configurations {
 
 dependencies {
     jflex 'de.jflex:jflex:1.9.1'
+    // Self-hosting loop: the generator that regenerates CUP's own parser.
+    // Currently a committed local jar; once a Maven release with a working
+    // -ast mode is published, swap this for the coordinate (e.g.
+    // 'top.kmar.cup:java-cup:<version>') and delete the jar.
+    cup files('bin/java-cup-11.jar')
 }
 
 sourceSets {
     main {
         java {
-            srcDirs = ['src/main/java', 'build/generated']
+            // Bootstrap sources (CupParser/GrammarSymConstants/Lexer) are
+            // committed here; `generateCupParser` regenerates them into
+            // build/generated and byte-compares (see below). A fresh clone
+            // compiles with no prerequisite generation step.
+            srcDirs = ['src/main/java', 'src/generated']
         }
     }
 }
@@ -98,18 +107,34 @@ compileJava {
     options.compilerArgs << '-parameters'
 }
 
-tasks.register('generateCupParser', JavaExec) {
-    mainClass = 'java_cup.Main'
-    classpath = files('bin/java-cup-11.jar')
-    args = [
-            '-parser', 'CupParser',
-            '-symbols', 'GrammarSymConstants',
-            '-interface',
-            '-nonterms',
-            '-destdir', 'build/generated/java_cup',
-            'src/cup/parser.cup'
-    ]
-    workingDir = project.projectDir
+tasks.register('generateCupParser', ExecutingTask) {
+    dependsOn tasks.named('generateJFlexLexer')
+
+    doLast {
+        // Regenerate CUP's own parser with the bootstrap generator declared in
+        // the `cup` configuration (self-hosting loop).
+        execOps.exec {
+            commandLine 'java', '-cp', configurations.cup.asPath, 'java_cup.Main',
+                        '-parser', 'CupParser',
+                        '-symbols', 'GrammarSymConstants',
+                        '-interface',
+                        '-nonterms',
+                        '-destdir', 'build/generated/java_cup',
+                        'src/cup/parser.cup'
+            workingDir '.'
+        }
+
+        // The committed bootstrap sources under src/generated/java_cup are the
+        // contract: every file the generators emit (jflex runs first via the
+        // task dependency) must be reproduced byte-for-byte. Mismatch means
+        // either the grammar changed (regenerate and commit) or the generator
+        // regressed.
+        def failures = diffGoldenNet('build/generated/java_cup', 'src/generated/java_cup')
+        if (!failures.isEmpty()) {
+            throw new GradleException(
+                'bootstrap sources out of sync with src/generated/java_cup:\n' + failures.join('\n'))
+        }
+    }
 }
 
 tasks.register('generateJFlexLexer', JavaExec) {
@@ -117,6 +142,13 @@ tasks.register('generateJFlexLexer', JavaExec) {
     classpath = configurations.jflex
     args = ['-d', 'build/generated/java_cup', 'src/jflex/Lexer.jflex']
     workingDir = project.projectDir
+    // Regeneration output goes to build/generated only (the compiled copy is
+    // committed under src/generated). Stale files here would mask the diff in
+    // generateCupParser, so wipe them before regenerating; CUP generation runs
+    // after this task via its task dependency.
+    doFirst {
+        delete fileTree(dir: 'build/generated/java_cup', include: '*.java')
+    }
 }
 
 jar {
