@@ -18,9 +18,9 @@
 
     Package and import declarations
       These serve the same purpose as in a normal Java source file
-      (and will appear in the generated code for the parser). In this
-      case we are part of the java_cup package and we import both the
-      java_cup runtime system and HashMap from the standard Java
+      (and will appear in the generated code for the parser).  In this
+      case we are part of the java_cup package and we import the
+      java_cup runtime system and List/ArrayList from the standard Java
       utilities package.
 
     Action code
@@ -30,8 +30,8 @@
       data structures that the semantic actions use.
 
     Parser code
-      This section provides code included in the parser class itself.  In
-      this case we override the default error reporting routines.
+      This section provides code included in the parser class itself.  In this
+      case we override the default error reporting routines.
 
     Init with and scan with
       These sections provide small bits of code that initialize, then
@@ -46,24 +46,27 @@
     Operation of the parser
       The parser acts by building an immutable, sugar-preserving tree of
       java_cup.spec nodes (SpecNode and friends).  Every semantic action
-      below is pure construction: it reads the labeled RESULTs of its
-      parts, builds a node, and returns it as its own RESULT.  No global
-      state is touched during the parse.  After the parse, Main hands the
-      tree to java_cup.Lowering, which replays the historical graph
-      construction (symbol tables, desugaring, Production numbering) in
-      exactly the old order.  Positions are taken from the labeled
-      <name>Sym symbols, whose ComplexLocation spans come from the lexer.
+      below is pure construction: it reads its labeled symbols through the
+      always-declared <name>Sym locals (the plain label-value locals are
+      suppressed when the parser is generated in -ast mode, so actions use
+      the <name>Sym.<T>value() form that works in both modes), builds a
+      node, and returns it as its own RESULT.  No global state is touched
+      during the parse.  After the parse, Main hands the tree to
+      java_cup.Lowering, which replays the historical graph construction
+      (symbol tables, desugaring, Production numbering) in exactly the old
+      order.
 
-      The grammar rules themselves are structurally frozen: mid-rule
-      action blocks of the old builder version are kept as empty {: :}
-      stubs so the epsilon productions -- and with them the LALR
-      automaton -- stay identical, and the committed bootstrap jar
-      (bin/java-cup-11.jar) can always regenerate this parser.
+      The grammar is shaped for -ast generation: every list and option uses
+      the fork's own quantifier sugar (X*, X?, X+, [SEP !]+), and labels
+      that appear in only some alternatives of a non-terminal (st, tkw,
+      ntkw, a/p/i/sc, l/r/n, s, q, ...) are deliberate discriminators.
+      Generated node classes derive one field per label, so alternative
+      identity is recoverable from which getters are non-null.
 
   Author(s)
     Scott Hudson, GVU Center, Georgia Tech.
     Frank Flannery, Department of Computer Science, Princeton Univ.
-    C. Scott Ananian, Dept. of Electrical Engineering, Princeton Univ.
+    C. Scott Ananian, Dept of Electrical Engineering, Princeton Univ.
 
   Revisions
     v0.9a   First released version                     [SEH] 8/29/95
@@ -83,7 +86,7 @@
             that only java reserved words (and not CUP reserved words like
             'parser' and 'start') are prohibited.  Allow reordering of
 	    action code, parser code, init code, and scan with sections,
-	    and made closing semicolon optional for these sections.
+            and made closing semicolon optional for these sections.
 	    Added 'nonterminal' as a terminal symbol, finally fixing a
 	    spelling mistake that's been around since the beginning.
 	    For backwards compatibility, you can still misspell the
@@ -97,8 +100,6 @@ import java_cup.runtime.symbol.complex.*;
 import java_cup.spec.*;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
 
 /*----------------------------------------------------------------*/
 
@@ -162,37 +163,24 @@ terminal
 
 terminal String  ID, CODE_STRING;
 
-/* purely structural symbols -- no RESULT value */
-non terminal
-  opt_semi, non_terminal, empty;
+/* structural symbol -- no RESULT value */
+non terminal opt_semi;
 
 non terminal SpecNode spec;
 non terminal String package_spec, class_name, start_spec;
 non terminal String nt_id, label_id, opt_label, robust_id;
 non terminal String multipart_id, import_id, type_id;
 non terminal String typearglist, typearguement, wildcard;
-non terminal String new_term_id, new_non_term_id;
 non terminal String star_or_plus, question_or_exclamation, opt_return_type;
-non terminal boolean opt_spread;
+non terminal String id_ref, non_terminal;
 non terminal ImportNode import_spec;
-non terminal CodePartNode code_part, action_code_part,
-                        parser_code_part, init_code, scan_code;
+non terminal CodePartNode code_part;
 non terminal SymbolDeclNode symbol;
-non terminal List<ImportNode> import_list;
-non terminal List<CodePartNode> code_parts;
-non terminal List<SymbolDeclNode> symbol_list;
-non terminal List<String> declares_term, declares_non_term,
-                          term_name_list, non_term_name_list;
 non terminal PrecedenceNode preced;
-non terminal List<PrecedenceNode> precedence_list, precedence_l;
-non terminal SymRef terminal_id, term_id, symbol_id;
-non terminal List<SymRef> terminal_list, symbol_id_list;
-non terminal QuantifierNode opt_quantifier;
-non terminal List<ProductionNode> production_list;
+non terminal SymRef symbol_id, anon_expr;
+non terminal QuantifierNode quantifier;
 non terminal ProductionNode production;
-non terminal List<RhsNode> rhs_list;
 non terminal RhsNode rhs;
-non terminal List<PartNode> prod_part_list;
 non terminal PartNode prod_part;
 
 /*----------------------------------------------------------------*/
@@ -201,40 +189,52 @@ start with spec;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+/* symbol+ / production+ (not *) keep the historical requirement of at
+   least one symbol declaration and one production -- and their
+   non-nullability is what keeps `error` out of the lookahead set of the
+   leading epsilon reductions, so the error-recovery alternative below
+   stays conflict-free */
 spec ::=
-	{:
-          /* the old seeding of the "error" terminal and the "$START"
-             non terminal is now the pre-pass of Lowering.run() */
-	:}
 	package_spec:pkg
-	import_list:imports
+	import_spec*:imports
 	class_name:cls
-	code_parts:codes
-	symbol_list:syms
-	precedence_list:precs
+	code_part*:codes
+	symbol+:syms
+	preced*:precs
 	start_spec:start
-	production_list:prods
+	production+:prods
 	{:
-	  RESULT = new SpecNode(pkg, imports, cls, codes, syms, precs,
-	                        start, prods, false);
+	  RESULT = new SpecNode(pkgSym.<String>value(),
+	                        importsSym.<List<ImportNode>>value(),
+	                        clsSym.<String>value(),
+	                        codesSym.<List<CodePartNode>>value(),
+	                        symsSym.<List<SymbolDeclNode>>value(),
+	                        precsSym.<List<PrecedenceNode>>value(),
+	                        startSym.<String>value(),
+	                        prodsSym.<List<ProductionNode>>value(),
+	                        false);
 	:}
 	|
 	/* error recovery assuming something went wrong before symbols
 	   and we have TERMINAL or NON TERMINAL to sync on.  if we get an
-	   error after that, we recover inside symbol_list or
-	   production_list
+	   error after that, we recover inside the symbol or production
+	   list boxes
 	*/
 	error
-	symbol_list:syms
-	precedence_list:precs
+	symbol+:syms
+	preced*:precs
 	start_spec:start
-	production_list:prods
+	production+:prods
 	{:
 	  /* sections parsed before the error are lost from the tree (no
 	     output is produced once a parse error is on record) */
 	  RESULT = new SpecNode(null, new ArrayList<>(), null,
-	                        new ArrayList<>(), syms, precs,
-	                        start, prods, true);
+	                        new ArrayList<>(),
+	                        symsSym.<List<SymbolDeclNode>>value(),
+	                        precsSym.<List<PrecedenceNode>>value(),
+	                        startSym.<String>value(),
+	                        prodsSym.<List<ProductionNode>>value(),
+	                        true);
 	:}
 	;
 
@@ -243,27 +243,10 @@ spec ::=
 package_spec ::=
 	PACKAGE
 	multipart_id:name
-	{: :}
 	SEMI
-	{: RESULT = name; :}
+	{: RESULT = nameSym.<String>value(); :}
 	|
-	empty
 	{: RESULT = null; :}
-	;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-import_list ::=
-	import_list:list
-	import_spec:imp
-	{:
-	  if (list == null) list = new ArrayList<>();
-	  list.add(imp);
-	  RESULT = list;
-	:}
-	|
-	empty
-	{: RESULT = new ArrayList<>(); :}
 	;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -271,290 +254,138 @@ import_list ::=
 import_spec ::=
 	IMPORT
 	import_id:target
-	{: :}
 	SEMI
-	{: RESULT = new ImportNode(false, target); :}
+	{: RESULT = new ImportNode(false, targetSym.<String>value()); :}
 	|
-	IMPORT STATIC
+	IMPORT
+	STATIC:st
 	import_id:target
-	{: :}
 	SEMI
-	{: RESULT = new ImportNode(true, target); :}
+	{: RESULT = new ImportNode(true, targetSym.<String>value()); :}
 	;
 
 class_name ::=
-    empty
     {: RESULT = null; :}
     |
     CLASS ID:id SEMI
-    {: RESULT = id; :}
+    {: RESULT = idSym.<String>value(); :}
     ;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-// allow any order; all parts are optional. [CSA, 23-Jul-1999]
+// any order of the four kinds; all optional. [CSA, 23-Jul-1999]
 // (Lowering checks for a second part of any kind and warns)
 code_part ::=
-	action_code_part:cp {: RESULT = cp; :}
-	| parser_code_part:cp {: RESULT = cp; :}
-	| init_code:cp {: RESULT = cp; :}
-	| scan_code:cp {: RESULT = cp; :} ;
-code_parts ::=
-	{: RESULT = new ArrayList<>(); :}
-	| code_parts:list code_part:cp
-	  {:
-	    if (list == null) list = new ArrayList<>();
-	    list.add(cp);
-	    RESULT = list;
-	  :};
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-action_code_part ::=
-	ACTION CODE CODE_STRING:user_code opt_semi
+	ACTION:a CODE CODE_STRING:code opt_semi
 	{:
-	  RESULT = new CodePartNode(CodePartNode.Kind.ACTION, user_code,
-	                            (ComplexLocation) user_codeSym.getLocation());
+	  RESULT = new CodePartNode(CodePartNode.Kind.ACTION,
+	      codeSym.<String>value(),
+	      (ComplexLocation) codeSym.getLocation());
+	:}
+	| PARSER:p CODE CODE_STRING:code opt_semi
+	{:
+	  RESULT = new CodePartNode(CodePartNode.Kind.PARSER,
+	      codeSym.<String>value(),
+	      (ComplexLocation) codeSym.getLocation());
+	:}
+	| INIT:i WITH CODE_STRING:code opt_semi
+	{:
+	  RESULT = new CodePartNode(CodePartNode.Kind.INIT,
+	      codeSym.<String>value(),
+	      (ComplexLocation) codeSym.getLocation());
+	:}
+	| SCAN:sc WITH CODE_STRING:code opt_semi
+	{:
+	  RESULT = new CodePartNode(CodePartNode.Kind.SCAN,
+	      codeSym.<String>value(),
+	      (ComplexLocation) codeSym.getLocation());
 	:}
 	;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-parser_code_part ::=
-	PARSER CODE CODE_STRING:user_code opt_semi
-	{:
-	  RESULT = new CodePartNode(CodePartNode.Kind.PARSER, user_code,
-	                            (ComplexLocation) user_codeSym.getLocation());
-	:}
-	;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-init_code ::=
-	INIT WITH CODE_STRING:user_code opt_semi
-	{:
-	  RESULT = new CodePartNode(CodePartNode.Kind.INIT, user_code,
-	                            (ComplexLocation) user_codeSym.getLocation());
-	:}
-	;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-scan_code ::=
-	SCAN WITH CODE_STRING:user_code opt_semi
-	{:
-	  RESULT = new CodePartNode(CodePartNode.Kind.SCAN, user_code,
-	                            (ComplexLocation) user_codeSym.getLocation());
-	:}
-	;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-symbol_list ::= symbol_list:list symbol:s
-	{:
-	  if (list == null) list = new ArrayList<>();
-	  if (s != null) list.add(s);
-	  RESULT = list;
-	:}
-	| symbol:s
-	{:
-	  var r = new ArrayList<SymbolDeclNode>();
-	  if (s != null) r.add(s);
-	  RESULT = r;
-	:};
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 symbol ::=
-	TERMINAL
-	type_id:type
-	declares_term:names
-	{: RESULT = new SymbolDeclNode(true, type, names); :}
+	TERMINAL:tkw
+	type_id:ty
+	id_ref[COMMA !]+:names
+	SEMI
+	{: RESULT = new SymbolDeclNode(true, tySym.<String>value(),
+	      namesSym.<List<String>>value()); :}
 	|
-	TERMINAL
-	declares_term:names
-	{: RESULT = new SymbolDeclNode(true, null, names); :}
+	TERMINAL:tkw
+	id_ref[COMMA !]+:names
+	SEMI
+	{: RESULT = new SymbolDeclNode(true, null,
+	      namesSym.<List<String>>value()); :}
 	|
-	non_terminal
-	type_id:type
-	declares_non_term:names
-	{: RESULT = new SymbolDeclNode(false, type, names); :}
+	non_terminal:ntkw
+	type_id:ty
+	id_ref[COMMA !]+:names
+	SEMI
+	{: RESULT = new SymbolDeclNode(false, tySym.<String>value(),
+	      namesSym.<List<String>>value()); :}
 	|
-	non_terminal
-	declares_non_term:names
-	{: RESULT = new SymbolDeclNode(false, null, names); :}
+	non_terminal:ntkw
+	id_ref[COMMA !]+:names
+	SEMI
+	{: RESULT = new SymbolDeclNode(false, null,
+	      namesSym.<List<String>>value()); :}
 	|
-	/* error recovery productions -- sync on semicolon */
+	/* error recovery productions -- sync on semicolon; the empty
+	   declaration lowers to nothing (the old grammar produced null
+	   here and filtered it while building the list) */
 
 	TERMINAL
 	error
-	{: :}
 	SEMI
-	{: RESULT = null; :}
+	{: RESULT = new SymbolDeclNode(true, null, new ArrayList<String>()); :}
 	|
 	non_terminal
 	error
-	{: :}
 	SEMI
-	{: RESULT = null; :}
+	{: RESULT = new SymbolDeclNode(false, null, new ArrayList<String>()); :}
 	;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-declares_term ::=
-	term_name_list:names
-	{: :}
-	SEMI
-	{: RESULT = names; :}
-	;
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-declares_non_term ::=
-	non_term_name_list:names
-	{: :}
-	SEMI
-	{: RESULT = names; :}
-	;
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-term_name_list ::= term_name_list:list COMMA new_term_id:name
-	{:
-	  if (list == null) list = new ArrayList<>();
-	  list.add(name);
-	  RESULT = list;
-	:}
-	| new_term_id:name
-	{:
-	  var r = new ArrayList<String>();
-	  r.add(name);
-	  RESULT = r;
-	:};
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-non_term_name_list ::=
-	non_term_name_list:list
-	COMMA
-	new_non_term_id:name
-	{:
-	  if (list == null) list = new ArrayList<>();
-	  list.add(name);
-	  RESULT = list;
-	:}
-	|
-	new_non_term_id:name
-	{:
-	  var r = new ArrayList<String>();
-	  r.add(name);
-	  RESULT = r;
-	:}
-	;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-
-precedence_list ::= precedence_l:l {: RESULT = l; :} | empty
-	{: RESULT = new ArrayList<>(); :};
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-precedence_l ::= precedence_l:list preced:p
-	{:
-	  if (list == null) list = new ArrayList<>();
-	  list.add(p);
-	  RESULT = list;
-	:}
-	| preced:p
-	{:
-	  var r = new ArrayList<PrecedenceNode>();
-	  r.add(p);
-	  RESULT = r;
-	:};
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 preced ::=
-	PRECEDENCE LEFT
-	{: :}
-        terminal_list:refs SEMI
-	{: RESULT = new PrecedenceNode(assoc.left, refs); :}
+	PRECEDENCE LEFT:l
+	symbol_id[COMMA !]+:refs SEMI
+	{: RESULT = new PrecedenceNode(assoc.left,
+	      refsSym.<List<SymRef>>value()); :}
 	|
-	PRECEDENCE RIGHT
-	{: :}
-        terminal_list:refs SEMI
-	{: RESULT = new PrecedenceNode(assoc.right, refs); :}
+	PRECEDENCE RIGHT:r
+	symbol_id[COMMA !]+:refs SEMI
+	{: RESULT = new PrecedenceNode(assoc.right,
+	      refsSym.<List<SymRef>>value()); :}
 	|
-	PRECEDENCE NONASSOC
-	{: :}
-        terminal_list:refs SEMI
-	{: RESULT = new PrecedenceNode(assoc.nonassoc, refs); :}
+	PRECEDENCE NONASSOC:n
+	symbol_id[COMMA !]+:refs SEMI
+	{: RESULT = new PrecedenceNode(assoc.nonassoc,
+	      refsSym.<List<SymRef>>value()); :}
 	;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-terminal_list ::= terminal_list:list COMMA terminal_id:ref
-	{:
-	  if (list == null) list = new ArrayList<>();
-	  list.add(ref);
-	  RESULT = list;
-	:}
-	|
-	terminal_id:ref
-	{:
-	  var r = new ArrayList<SymRef>();
-	  r.add(ref);
-	  RESULT = r;
-	:}
-	;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-terminal_id ::= term_id:sym
-	{: RESULT = sym; :};
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-term_id ::= symbol_id:sym_id
-        {: RESULT = sym_id; :};
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 start_spec ::=
 	START WITH nt_id:start_name
-	{: :}
 	SEMI
-	{: RESULT = start_name; :}
+	{: RESULT = start_nameSym.<String>value(); :}
 	|
-	empty
 	{: RESULT = null; :}
 	;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-production_list ::= production_list:list production:p
-	{:
-	  if (list == null) list = new ArrayList<>();
-	  if (p != null) list.add(p);
-	  RESULT = list;
-	:}
-	| production:p
-	{:
-	  var r = new ArrayList<ProductionNode>();
-	  if (p != null) r.add(p);
-	  RESULT = r;
-	:};
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 production ::=
-	nt_id:lhs_id
-	{: :}
+	nt_id:lhs
 	COLON_COLON_EQUALS
-	rhs_list:alts
+	rhs[BAR !]+:alts
 	SEMI
 	{:
-	  RESULT = new ProductionNode(lhs_id,
-	      (ComplexLocation) lhs_idSym.getLocation(), alts, false);
+	  RESULT = new ProductionNode(lhsSym.<String>value(),
+	      (ComplexLocation) lhsSym.getLocation(),
+	      altsSym.<List<RhsNode>>value(), false);
 	:}
 	|
 	error
@@ -566,74 +397,61 @@ production ::=
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-rhs_list ::= rhs_list:list BAR rhs:r
-	{:
-	  if (list == null) list = new ArrayList<>();
-	  list.add(r);
-	  RESULT = list;
-	:}
-	| rhs:r
-	{:
-	  var rr = new ArrayList<RhsNode>();
-	  rr.add(r);
-	  RESULT = rr;
-	:};
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 rhs ::=
-	prod_part_list:parts PERCENT_PREC term_id:term_name PERCENT_NAMER ID:prod_name
-	{: RESULT = new RhsNode(parts, term_name, prod_name); :}
+	prod_part*:parts PERCENT_PREC symbol_id:prec PERCENT_NAMER ID:namer
+	{: RESULT = new RhsNode(partsSym.<List<PartNode>>value(),
+	      precSym.<SymRef>value(), namerSym.<String>value()); :}
 	|
-	prod_part_list:parts PERCENT_NAMER ID:prod_name
-	{: RESULT = new RhsNode(parts, null, prod_name); :}
+	prod_part*:parts PERCENT_NAMER ID:namer
+	{: RESULT = new RhsNode(partsSym.<List<PartNode>>value(),
+	      null, namerSym.<String>value()); :}
 	|
-	prod_part_list:parts PERCENT_PREC term_id:term_name
-	{: RESULT = new RhsNode(parts, term_name, null); :}
+	prod_part*:parts PERCENT_PREC symbol_id:prec
+	{: RESULT = new RhsNode(partsSym.<List<PartNode>>value(),
+	      precSym.<SymRef>value(), null); :}
 	|
-	prod_part_list:parts
-	{: RESULT = new RhsNode(parts, null, null); :}
+	prod_part*:parts
+	{: RESULT = new RhsNode(partsSym.<List<PartNode>>value(),
+	      null, null); :}
 	;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-prod_part_list ::= prod_part_list:list prod_part:p
-	{:
-	  if (list == null) list = new ArrayList<>();
-	  if (p != null) list.add(p);
-	  RESULT = list;
-	:}
-	| empty
-	{: RESULT = new ArrayList<>(); :};
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 prod_part ::=
-	opt_spread:spread symbol_id:symid opt_quantifier:quantifier opt_label:labid
+	SPREAD:s symbol_id:symid quantifier?:quant opt_label:labid
 	{:
 	  /* the part's anchor: the label token when there is one, otherwise
 	     the whole symbol reference (the ID or the parenthesized group) */
-	  var loc = labid != null
+	  var loc = labidSym.<String>value() != null
 	      ? (ComplexLocation) labidSym.getLocation()
 	      : (ComplexLocation) symidSym.getLocation();
-	  RESULT = new SymbolPartNode(spread, symid, quantifier, labid, loc);
+	  RESULT = new SymbolPartNode(true, symidSym.<SymRef>value(),
+	      quantSym.<QuantifierNode>value(), labidSym.<String>value(), loc);
+	:}
+	|
+	symbol_id:symid quantifier?:quant opt_label:labid
+	{:
+	  var loc = labidSym.<String>value() != null
+	      ? (ComplexLocation) labidSym.getLocation()
+	      : (ComplexLocation) symidSym.getLocation();
+	  RESULT = new SymbolPartNode(false, symidSym.<SymRef>value(),
+	      quantSym.<QuantifierNode>value(), labidSym.<String>value(), loc);
 	:}
 	|
 	CODE_STRING:code_str
 	{:
-	  RESULT = new ActionPartNode(code_str,
+	  RESULT = new ActionPartNode(code_strSym.<String>value(),
 	      (ComplexLocation) code_strSym.getLocation());
 	:}
 	;
 
-opt_spread ::= SPREAD {: RESULT = true; :} | empty {: RESULT = false; :};
-
-opt_quantifier ::=
-  QUESTION {: RESULT = QuantifierNode.opt(); :}
-  | star_or_plus:sp {: RESULT = QuantifierNode.starPlus("*".equals(sp)); :}
-  | LBRACK symbol_id_list:list question_or_exclamation:qe RBRACK star_or_plus:sp {:
-    RESULT = QuantifierNode.bracket(list, "*".equals(sp), "?".equals(qe)); :}
-  | empty {: RESULT = null; :};
+quantifier ::=
+  QUESTION:q {: RESULT = QuantifierNode.opt(); :}
+  | star_or_plus:sp {: RESULT = QuantifierNode.starPlus("*".equals(spSym.<String>value())); :}
+  | LBRACK symbol_id+:seps question_or_exclamation:qe RBRACK star_or_plus:sp {:
+    RESULT = QuantifierNode.bracket(sepsSym.<List<SymRef>>value(),
+        "*".equals(spSym.<String>value()), "?".equals(qeSym.<String>value())); :}
+  ;
 
 star_or_plus ::=
   STAR {: RESULT = "*"; :}
@@ -644,16 +462,15 @@ question_or_exclamation ::=
   | EXCLAMATION {: RESULT = "!"; :};
 
 opt_return_type ::=
-    COLON_COLON ID:type {: RESULT = type; :}
-    | empty {: RESULT = null; :};
+    COLON_COLON ID:type {: RESULT = typeSym.<String>value(); :}
+    | {: RESULT = null; :};
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 opt_label ::=
 	COLON label_id:labid
-	{: RESULT = labid; :}
+	{: RESULT = labidSym.<String>value(); :}
 	|
-	empty
 	{: RESULT = null; :}
 	;
 
@@ -661,80 +478,74 @@ opt_label ::=
 
 multipart_id ::=
 	multipart_id:base DOT robust_id:another_id
-	{: RESULT = base + "." + another_id; :}
+	{: RESULT = baseSym.<String>value() + "." + another_idSym.<String>value(); :}
 	|multipart_id:base
-        {: :}
         LT typearglist:types GT
-         {: RESULT = base + "<" + types + ">"; :}
+	 {: RESULT = baseSym.<String>value() + "<" + typesSym.<String>value() + ">"; :}
         |
 	robust_id:an_id
-	{: RESULT = an_id; :}
+	{: RESULT = an_idSym.<String>value(); :}
 	;
-/*. . . . . . . . . . . . .TUM CHANGES. . . . . . . . . . . . . . . */
+/*. . . . . . . .TUM CHANGES. . . . . . . . . . . . . . . */
 
 
 typearglist ::=
             typearguement:arg
-            {: RESULT = arg; :}
+            {: RESULT = argSym.<String>value(); :}
             | typearglist:list COMMA typearguement:arg
-            {: RESULT = list + "," + arg; :}
+            {: RESULT = listSym.<String>value() + "," + argSym.<String>value(); :}
             ;
 
 typearguement ::=
               type_id:t
-              {: RESULT = t; :}
+              {: RESULT = tSym.<String>value(); :}
               | wildcard:w
-              {: RESULT = w; :}
+              {: RESULT = wSym.<String>value(); :}
               ;
 
 wildcard ::=
          QUESTION
          {: RESULT = " ? "; :}
          | QUESTION EXTENDS type_id:t
-         {: RESULT = " ? extends " + t; :}
+         {: RESULT = " ? extends " + tSym.<String>value(); :}
          | QUESTION SUPER type_id:t
-         {: RESULT = " ? super " + t; :}
+         {: RESULT = " ? super " + tSym.<String>value(); :}
          ;
 
-/*. . . . . . . . . . .END TUM CHANGES. . . . . . . . . . . . . . . */
+/*. . . . . . . .END TUM CHANGES. . . . . . . . . . . . . . . */
 
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 import_id ::=
 	multipart_id:name DOT STAR
-	{: RESULT = name + ".*"; :}
+	{: RESULT = nameSym.<String>value() + ".*"; :}
 	|
 	multipart_id:name
-	{: RESULT = name; :}
+	{: RESULT = nameSym.<String>value(); :}
 	;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-type_id ::= multipart_id:m {: RESULT = m; :}
+type_id ::= multipart_id:m {: RESULT = mSym.<String>value(); :}
 	| type_id:t LBRACK RBRACK
-	{: RESULT = t + "[]"; :}
+	{: RESULT = tSym.<String>value() + "[]"; :}
        	;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-new_term_id ::=
-	ID:term_id
-	{: RESULT = term_id; :}
-	;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-new_non_term_id ::=
-	ID:non_term_id
-	{: RESULT = non_term_id; :}
+/* a name inside a terminal / non terminal declaration list; a node
+   wrapper in -ast mode, so the list box element is a node type */
+id_ref ::=
+	ID:the_id
+	{: RESULT = the_idSym.<String>value(); :}
 	;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 nt_id ::=
 	ID:the_id
-	{: RESULT = the_id; :}
+	{: RESULT = the_idSym.<String>value(); :}
 	| error
 	{:
 		ErrorManager.getManager().emit_error("Illegal use of reserved word");
@@ -746,14 +557,9 @@ nt_id ::=
 
 symbol_id ::=
 	ID:the_id
-	{: RESULT = new NamedRefNode(the_id); :}
-	| LPAREN:lp {: :} opt_return_type:type rhs_list:branches RPAREN
-	{:
-	  /* the branches' hidden non terminals and productions are now
-	     created by Lowering.lowerAnonExpr at the point of use */
-	  RESULT = new AnonExprNode(type, branches,
-	                            (ComplexLocation) lpSym.getLocation());
-	:}
+	{: RESULT = new NamedRefNode(the_idSym.<String>value()); :}
+	| anon_expr:anon
+	{: RESULT = anonSym.<SymRef>value(); :}
 	| error
 	{:
 		ErrorManager.getManager().emit_error("Illegal use of reserved word");
@@ -761,28 +567,30 @@ symbol_id ::=
 	:}
 	;
 
-symbol_id_list ::= symbol_id:item {:
-    var list = new ArrayList<SymRef>();
-    list.add(item);
-    RESULT = list;
-  :}
-  | symbol_id_list:list symbol_id:item {:
-    if (list == null) list = new ArrayList<>();
-    list.add(item);
-    RESULT = list;
-  :};
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+anon_expr ::=
+	LPAREN:lp opt_return_type:type rhs[BAR !]+:branches RPAREN
+	{:
+	  /* the branches' hidden non terminals and productions are now
+	     created by Lowering.lowerAnonExpr at the point of use */
+	  RESULT = new AnonExprNode(typeSym.<String>value(),
+	      branchesSym.<List<RhsNode>>value(),
+	      (ComplexLocation) lpSym.getLocation());
+	:}
+	;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 label_id ::=
 	robust_id:the_id
-	{: RESULT = the_id; :}
+	{: RESULT = the_idSym.<String>value(); :}
 	;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 robust_id ::= /* all ids that aren't reserved words in Java */
-	ID:the_id	{: RESULT = the_id; :}
+	ID:the_id	{: RESULT = the_idSym.<String>value(); :}
 	/* package is reserved. */
 	/* import is reserved. */
 	| CODE		{: RESULT = "code"; :}
@@ -808,15 +616,12 @@ robust_id ::= /* all ids that aren't reserved words in Java */
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-non_terminal ::= NON TERMINAL | NONTERMINAL;
+non_terminal ::= NON TERMINAL {: RESULT = "nonterminal"; :} | NONTERMINAL {: RESULT = "nonterminal"; :};
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 opt_semi ::= /* nothing */
-	| SEMI;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-empty ::= /* nothing */;
+	{: RESULT = null; :}
+	| SEMI {: RESULT = null; :};
 
 /*----------------------------------------------------------------*/

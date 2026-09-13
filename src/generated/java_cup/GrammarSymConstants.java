@@ -103,79 +103,55 @@ public interface GrammarSymConstants {
 
   /* non terminals */
   int opt_semi = 0;
-  int non_terminal = 1;
-  int empty = 2;
-  int spec = 3;
-  int package_spec = 4;
-  int class_name = 5;
-  int start_spec = 6;
-  int nt_id = 7;
-  int label_id = 8;
-  int opt_label = 9;
-  int robust_id = 10;
-  int multipart_id = 11;
-  int import_id = 12;
-  int type_id = 13;
-  int typearglist = 14;
-  int typearguement = 15;
-  int wildcard = 16;
-  int new_term_id = 17;
-  int new_non_term_id = 18;
-  int star_or_plus = 19;
-  int question_or_exclamation = 20;
-  int opt_return_type = 21;
-  int opt_spread = 22;
-  int import_spec = 23;
-  int code_part = 24;
-  int action_code_part = 25;
-  int parser_code_part = 26;
-  int init_code = 27;
-  int scan_code = 28;
-  int symbol = 29;
-  int import_list = 30;
-  int code_parts = 31;
-  int symbol_list = 32;
-  int declares_term = 33;
-  int declares_non_term = 34;
-  int term_name_list = 35;
-  int non_term_name_list = 36;
-  int preced = 37;
-  int precedence_list = 38;
-  int precedence_l = 39;
-  int terminal_id = 40;
-  int term_id = 41;
-  int symbol_id = 42;
-  int terminal_list = 43;
-  int symbol_id_list = 44;
-  int opt_quantifier = 45;
-  int production_list = 46;
-  int production = 47;
-  int rhs_list = 48;
-  int rhs = 49;
-  int prod_part_list = 50;
-  int prod_part = 51;
-  int NT$0 = 52;
-  int NT$1 = 53;
-  int NT$2 = 54;
-  int NT$3 = 55;
-  int NT$4 = 56;
-  int NT$5 = 57;
-  int NT$6 = 58;
-  int NT$7 = 59;
-  int NT$8 = 60;
-  int NT$9 = 61;
-  int NT$10 = 62;
-  int NT$11 = 63;
-  int NT$12 = 64;
-  int NT$13 = 65;
-  int NT$14 = 66;
-  int NT$15 = 67;
+  int spec = 1;
+  int package_spec = 2;
+  int class_name = 3;
+  int start_spec = 4;
+  int nt_id = 5;
+  int label_id = 6;
+  int opt_label = 7;
+  int robust_id = 8;
+  int multipart_id = 9;
+  int import_id = 10;
+  int type_id = 11;
+  int typearglist = 12;
+  int typearguement = 13;
+  int wildcard = 14;
+  int star_or_plus = 15;
+  int question_or_exclamation = 16;
+  int opt_return_type = 17;
+  int id_ref = 18;
+  int non_terminal = 19;
+  int import_spec = 20;
+  int code_part = 21;
+  int symbol = 22;
+  int preced = 23;
+  int symbol_id = 24;
+  int anon_expr = 25;
+  int quantifier = 26;
+  int production = 27;
+  int rhs = 28;
+  int prod_part = 29;
+  int _EBNF_LIST_0 = 30;
+  int _EBNF_OPT_1 = 31;
+  int _EBNF_LIST_2 = 32;
+  int _EBNF_OPT_3 = 33;
+  int _EBNF_LIST_4 = 34;
+  int _EBNF_LIST_5 = 35;
+  int _EBNF_OPT_6 = 36;
+  int _EBNF_LIST_7 = 37;
+  int _EBNF_LIST_8 = 38;
+  int _EBNF_LIST_9 = 39;
+  int _EBNF_LIST_10 = 40;
+  int NT$11 = 41;
+  int _EBNF_LIST_12 = 42;
+  int _EBNF_OPT_13 = 43;
+  int _EBNF_OPT_14 = 44;
+  int _EBNF_LIST_15 = 45;
 
   /* non terminal names */
   String[] NON_TERMINAL_NAMES = new String[] {
     "opt_semi",
-    "non_terminal",
-    "empty",
     "spec",
     "package_spec",
     "class_name",
@@ -190,57 +166,37 @@ public interface GrammarSymConstants {
     "typearglist",
     "typearguement",
     "wildcard",
-    "new_term_id",
-    "new_non_term_id",
     "star_or_plus",
     "question_or_exclamation",
     "opt_return_type",
-    "opt_spread",
+    "id_ref",
+    "non_terminal",
     "import_spec",
     "code_part",
-    "action_code_part",
-    "parser_code_part",
-    "init_code",
-    "scan_code",
     "symbol",
-    "import_list",
-    "code_parts",
-    "symbol_list",
-    "declares_term",
-    "declares_non_term",
-    "term_name_list",
-    "non_term_name_list",
     "preced",
-    "precedence_list",
-    "precedence_l",
-    "terminal_id",
-    "term_id",
     "symbol_id",
-    "terminal_list",
-    "symbol_id_list",
-    "opt_quantifier",
-    "production_list",
+    "anon_expr",
+    "quantifier",
     "production",
-    "rhs_list",
     "rhs",
-    "prod_part_list",
     "prod_part",
-    "NT$0",
-    "NT$1",
-    "NT$2",
-    "NT$3",
-    "NT$4",
-    "NT$5",
-    "NT$6",
-    "NT$7",
-    "NT$8",
-    "NT$9",
-    "NT$10",
+    "_EBNF_LIST_0",
+    "_EBNF_OPT_1",
+    "_EBNF_LIST_2",
+    "_EBNF_OPT_3",
+    "_EBNF_LIST_4",
+    "_EBNF_LIST_5",
+    "_EBNF_OPT_6",
+    "_EBNF_LIST_7",
+    "_EBNF_LIST_8",
+    "_EBNF_LIST_9",
+    "_EBNF_LIST_10",
     "NT$11",
-    "NT$12",
-    "NT$13",
-    "NT$14",
-    "NT$15"
+    "_EBNF_LIST_12",
+    "_EBNF_OPT_13",
+    "_EBNF_OPT_14",
+    "_EBNF_LIST_15"
   };
 
 }
