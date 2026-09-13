@@ -1,0 +1,36 @@
+/* Anonymous-expression golden grammar (non-AST mode): pins the lowering
+ * order of the hidden branch/group NTs (createSubNt / createSubNts), the
+ * _useRhsCache memo-hit early return on same-shape reuse, the opt-box
+ * over a group NT, bracket-separator list boxes with a tail, branch
+ * trailing actions, and the implicit $START build that fires while the
+ * first production's anon branches are still being created.
+ *
+ * Anonymous expressions crash the -ast graph builder today (see BUGS.md);
+ * this grammar only pins the non-ast pipeline. It is never executed. */
+import java_cup.runtime.*;
+
+terminal ID, NUM, SEMI, COMMA, KW_ANON, KW_REUSE, KW_OPT, KW_TAIL, KW_ACT, KW_TYPED;
+
+non terminal Object stmt, item;
+
+/* Deliberately no `start with`: the implicit $START production must be
+ * built between the KW_ANON branches' productions (which run first) and
+ * the enclosing production. */
+
+stmt ::= KW_ANON (ID:a | NUM:b):v SEMI
+         {: RESULT = v; :}
+        | KW_REUSE (ID:x | NUM:y):p (ID:z | NUM:w):q SEMI
+         {: RESULT = q; :}
+        | KW_OPT (ID|NUM)?:o SEMI
+         {: RESULT = o; :}
+        | KW_TAIL item[COMMA SEMI ?]*:ts SEMI
+         {: RESULT = ts; :}
+        | KW_ACT (ID|NUM):r SEMI
+         {: RESULT = r; :} %namer AnonStmt
+        | KW_TYPED (::String ID:t | NUM:u):tv SEMI
+         {: RESULT = tv; :}
+        ;
+
+item ::= ID:id {: RESULT = id; :}
+        | NUM:num {: RESULT = num; :}
+        ;

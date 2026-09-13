@@ -7,6 +7,38 @@ import javax.inject.Inject
 abstract class ExecutingTask extends DefaultTask {
     @Inject
     abstract ExecOperations getExecOps()
+
+    /**
+     * Generated-output stability net: byte-compare every generated .java in
+     * {@code genDir} against its committed golden copy under {@code goldenDir}.
+     * Both sides are CRLF->LF normalized first (the emitter mixes line endings),
+     * so "byte-stable" means stable after that fixed normalization. Golden files
+     * must exist for every generated file (and vice versa) except names listed
+     * in {@code excludes} (hand-written scanners, jflex lexers).
+     *
+     * @return failure descriptions; empty list means pass.
+     */
+    protected List<String> diffGoldenNet(String genDir, String goldenDir, String... excludes) {
+        def excl = excludes as Set
+        def failures = []
+        def norm = { File f -> f.text.replaceAll('\r\n', '\n') }
+        def goldenNames = project.fileTree(dir: goldenDir, include: '*.java')
+                .collect { it.name }.sort()
+        goldenNames.each { name ->
+            def generated = new File(genDir, name)
+            if (!generated.exists()) {
+                failures.add("${genDir}/${name} was not generated (golden exists under ${goldenDir})")
+            } else if (norm(generated) != norm(new File(goldenDir, name))) {
+                failures.add("${genDir}/${name} differs from golden ${goldenDir}/${name}")
+            }
+        }
+        project.fileTree(dir: genDir, include: '*.java').each { f ->
+            if (!excl.contains(f.name) && !goldenNames.contains(f.name)) {
+                failures.add("${genDir}/${f.name} was generated but has no golden under ${goldenDir}")
+            }
+        }
+        return failures
+    }
 }
 
 plugins {
@@ -178,6 +210,14 @@ tasks.register('testMiniJava', ExecutingTask) {
             workingDir '.'
         }
 
+        // Generated parser output must stay byte-stable (REFACTORING.md Phase 1).
+        // Lexer.java is the jflex artifact, not a CUP output, so it has no golden.
+        def goldenFailures = diffGoldenNet('testgrammars/minijava',
+                'src/test/resources/minijava/golden', 'Lexer.java')
+        if (!goldenFailures.isEmpty()) {
+            throw new GradleException('testMiniJava golden diff failed:\n' + goldenFailures.join('\n'))
+        }
+
         // Run the parser and capture output
         def actualOutput
         try {
@@ -256,6 +296,11 @@ tasks.register('testAstLocation', ExecutingTask) {
 
         def ops = execOps
         def failures = []
+
+        // Generated parser output must stay byte-stable (REFACTORING.md Phase 1).
+        // scanner.java is hand-written, not a CUP output, so it has no golden.
+        failures.addAll(diffGoldenNet('testgrammars/astloc',
+                'src/test/resources/astloc/golden', 'scanner.java'))
 
         // Grammars under invalid/ MUST be rejected by label validation
         // (non-zero exit + a "Label ..." error on stderr).
@@ -358,12 +403,68 @@ tasks.register('testCalc', ExecutingTask) {
             workingDir '.'
         }
 
+        // Generated parser output must stay byte-stable (REFACTORING.md Phase 1).
+        // scanner.java is hand-written, not a CUP output, so it has no golden.
+        def goldenFailures = diffGoldenNet('testgrammars/calc',
+                'src/test/resources/calc/golden', 'scanner.java')
+        if (!goldenFailures.isEmpty()) {
+            throw new GradleException('testCalc golden diff failed:\n' + goldenFailures.join('\n'))
+        }
+
         println 'Calc example compiled successfully. To run:'
         execOps.exec {
             commandLine 'java', '-cp', files(runtimeJar.archiveFile, 'testgrammars/calc/classes').asPath, 'Main'
             workingDir '.'
             standardInput = System.in
         }
+    }
+}
+
+// Anonymous-expression golden net (non-AST mode): the calc/minijava/astloc
+// grammars contain no (A|B) groups, yet the anon lowering paths (hidden
+// branch/group NTs, _useRhsCache memo hits, _pushInlineProd injection, the
+// implicit $START build firing mid-branch) are the trickiest order-sensitive
+// code in the front half. This grammar pins them; it is generated, compiled
+// and byte-diffed, never executed.
+tasks.register('testAnonGolden', ExecutingTask) {
+    dependsOn(jar)
+
+    doFirst {
+        mkdir 'testgrammars/anon'
+        mkdir 'testgrammars/anon/classes'
+
+        delete fileTree(dir: 'testgrammars/anon/classes', include: '*.class')
+        delete fileTree(dir: 'testgrammars/anon', include: '*.java')
+
+        println 'Running anonymous-expression golden test...'
+    }
+
+    doLast {
+        // Generate parser using current project's CUP code
+        execOps.exec {
+            commandLine 'java', '-cp', files(jar.archiveFile).asPath, 'java_cup.Main',
+                        '-interface',
+                        '-parser', 'AnonParser',
+                        '-symbols', 'AnonSym',
+                        '-destdir', 'testgrammars/anon',
+                        'src/test/resources/anon/anon.cup'
+            workingDir '.'
+        }
+
+        // Compile generated Java files
+        execOps.exec {
+            commandLine 'javac', '-cp', files(runtimeJar.archiveFile, 'testgrammars/anon').asPath,
+                        '-d', 'testgrammars/anon/classes',
+                        'testgrammars/anon/*.java'
+            workingDir '.'
+        }
+
+        def goldenFailures = diffGoldenNet('testgrammars/anon',
+                'src/test/resources/anon/golden')
+        if (!goldenFailures.isEmpty()) {
+            throw new GradleException('testAnonGolden failed:\n' + goldenFailures.join('\n'))
+        }
+        println '\nTEST RESULT: PASS'
     }
 }
 
