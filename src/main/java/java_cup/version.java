@@ -20,34 +20,14 @@ package java_cup;
  */
 public class version {
 
-    /** The major version number. */
-    public static final int major = 0;
-
-    /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-    /** The minor version number. */
-    public static final int minor = 11;
-
-    /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-    /** The update letter. */
-    public static final String update = "b beta 20140226";
-
-    /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-    /** String for the current version. */
-    public static final String version_str = "v" + major + "." + minor + update;
-
     /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
     /** Full title of the system */
-    public static final String title_str = "CUP " + "v0.11b 20160615 (GIT 3d0ae71)";
+    public static final String title_str = "CUP " + "v1.1.0";
 
     /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-    /** Name of the author */
-    public static final String author_str =
-        "Scott E. Hudson, Frank Flannery, Michael Petter, C. Scott Ananian and Kmar";
+//    public static final String author_str = "Scott E. Hudson, Frank Flannery, Michael Petter, C. Scott Ananian and Kmar";
 
     /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
