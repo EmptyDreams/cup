@@ -508,11 +508,12 @@ public class Main {
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
     /**
-     * Parse the grammar specification from standard input. This produces sets of
-     * terminal, non-terminals, and productions which can be accessed via static
-     * variables of the respective classes, as well as the setting of various
-     * variables (mostly in the emit class) for small user supplied items such as
-     * the code to scan with.
+     * Parse the grammar specification from standard input into the immutable
+     * spec tree, then lower that tree into the internal graph. Lowering
+     * produces the sets of terminal, non-terminals, and productions which can
+     * be accessed via static variables of the respective classes, as well as
+     * the setting of various variables (mostly in the emit class) for small
+     * user supplied items such as the code to scan with.
      */
     protected static void parse_grammar_spec() throws java.lang.Exception {
         /* create a parser and parse with it */
@@ -520,10 +521,10 @@ public class Main {
         CupParser parser_obj = new CupParser(new Lexer(csf), csf);
         parser_obj.setDebugSymbols(opt_do_debugsymbols);
         try {
-            if (opt_do_debug)
-                parser_obj.debug_parse();
-            else
-                parser_obj.parse();
+            java_cup.spec.SpecNode spec =
+                (opt_do_debug ? parser_obj.debug_parse() : parser_obj.parse())
+                    .<java_cup.spec.SpecNode>value();
+            new Lowering(opt_do_debugsymbols).run(spec);
         } catch (Exception e) {
             /*
              * something threw an exception. catch it and emit a message so we have a line

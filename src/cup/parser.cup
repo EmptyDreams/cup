@@ -1,10 +1,10 @@
 
-/*================================================================*/ 
-/* 
+/*================================================================*/
+/*
   JavaCup Specification for the JavaCup Specification Language
   by Scott Hudson, GVU Center, Georgia Tech, August 1995
   and Frank Flannery, Department of Computer Science, Princeton Univ,
-  July 1996
+  July 1996.
   Bug Fixes: C. Scott Ananian, Dept of Electrical Engineering, Princeton
   University, October 1996. [later Massachusetts Institute of Technology]
 
@@ -15,9 +15,10 @@
   spec looks like).
 
   The specification has the following parts:
+
     Package and import declarations
       These serve the same purpose as in a normal Java source file
-      (and will appear in the generated code for the parser). In this 
+      (and will appear in the generated code for the parser). In this
       case we are part of the java_cup package and we import both the
       java_cup runtime system and HashMap from the standard Java
       utilities package.
@@ -28,55 +29,57 @@
       semantic actions).  This provides a series of helper routines and
       data structures that the semantic actions use.
 
-    Parser code    
+    Parser code
       This section provides code included in the parser class itself.  In
       this case we override the default error reporting routines.
 
-    Init with and scan with 
-      These sections provide small bits of code that initialize, then 
+    Init with and scan with
+      These sections provide small bits of code that initialize, then
       indicate how to invoke the scanner.
 
     Symbols and grammar
-      These sections declare all the terminal and non terminal symbols 
+      These sections declare all of the terminal and non terminal symbols
       and the types of objects that they will be represented by at runtime,
       then indicate the start symbol of the grammar (), and finally provide
       the grammar itself (with embedded actions).
 
     Operation of the parser
-      The parser acts primarily by accumulating data structures representing
-      various parts of the specification.  Various small parts (e.g., single
-      code strings) are stored as static variables of the emit class and
-      in a few cases as variables declared in the action code section.  
-      Terminals, non terminals, and productions, are maintained as collection
-      accessible via static methods of those classes.  In addition, two 
-      symbol tables are kept:  
-	symbols   maintains the name to object mapping for all symbols
-	non_terms maintains a separate mapping containing only the non terms
+      The parser acts by building an immutable, sugar-preserving tree of
+      java_cup.spec nodes (SpecNode and friends).  Every semantic action
+      below is pure construction: it reads the labeled RESULTs of its
+      parts, builds a node, and returns it as its own RESULT.  No global
+      state is touched during the parse.  After the parse, Main hands the
+      tree to java_cup.Lowering, which replays the historical graph
+      construction (symbol tables, desugaring, Production numbering) in
+      exactly the old order.  Positions are taken from the labeled
+      <name>Sym symbols, whose ComplexLocation spans come from the lexer.
 
-      Several intermediate working structures are also declared in the action
-      code section.  These include: rhs_parts, rhs_pos, and lhs_nt which
-      build up parts of the current production while it is being parsed.
-	
+      The grammar rules themselves are structurally frozen: mid-rule
+      action blocks of the old builder version are kept as empty {: :}
+      stubs so the epsilon productions -- and with them the LALR
+      automaton -- stay identical, and the committed bootstrap jar
+      (bin/java-cup-11.jar) can always regenerate this parser.
+
   Author(s)
     Scott Hudson, GVU Center, Georgia Tech.
     Frank Flannery, Department of Computer Science, Princeton Univ.
-    C. Scott Ananian, Department of Electrical Engineering, Princeton Univ.
+    C. Scott Ananian, Dept. of Electrical Engineering, Princeton Univ.
 
   Revisions
     v0.9a   First released version                     [SEH] 8/29/95
     v0.9b   Updated for beta language (throws clauses) [SEH] 11/25/95
-    v0.10a  Made many improvements/changes. now offers:
+    v0.10a   Made many improvements/changes. now offers:
               return value
               left/right positions and propagations
               cleaner label references
               precedence and associativity for terminals
               contextual precedence for productions
               [FF] 7/3/96
-    v0.10b  Fixed %prec directive so it works like it's supposed to.
+    v0.10b   Fixed %prec directive so it works like it's supposed to.
               [CSA] 10/10/96
     v0.10g   Added support for array types on symbols.
               [CSA] 03/23/98
-    v0.10i  Broaden set of IDs allowed in multipart_id and label_id so
+    v0.10i   Broaden set of IDs allowed in multipart_id and label_id so
             that only java reserved words (and not CUP reserved words like
             'parser' and 'start') are prohibited.  Allow reordering of
 	    action code, parser code, init code, and scan with sections,
@@ -86,292 +89,26 @@
 	    For backwards compatibility, you can still misspell the
 	    word if you like.
 */
-/*================================================================*/ 
+/*================================================================*/
 
 package java_cup;
 import java_cup.runtime.*;
 import java_cup.runtime.symbol.complex.*;
+import java_cup.spec.*;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 
-/*----------------------------------------------------------------*/ 
+/*----------------------------------------------------------------*/
 
 action code {:
-  /** helper routine to clone a new production part adding a given label */
-  protected production_part add_lab(production_part part, String lab)
-    throws internal_error
-    {
-      /* if there is no label, or this is an action, just return the original */
-      if (lab == null || part.is_action()) return part;
-      var symPart = (symbol_part) part;
-
-      /* otherwise build a new one with the given label attached */
-      return new symbol_part(symPart.the_symbol(), lab, symPart.getType());
-    }
-
-  /** max size of right hand side we will support */
-  protected final int MAX_RHS = 200;
-
-  /** array for accumulating right hand side parts */
-  protected production_part[] rhs_parts = new production_part[MAX_RHS + 1];
-  /**
-   * rhsParts cache (for temporarily shelving rhs_parts,
-   * the length of each array stored is the value of rhs_pos at the time of shelving)
-   */
-  private final List<production_part[]> rhsPartsCache = new ArrayList<>();
-  private final List<List<production_part>> subNtRecord = new ArrayList<>();
-  /** The name of the last child non_terminal (used to help symbol_id read the name, which is then set to null) */
-  private String lastSubNtName = null;
-
-  /** where we are currently in building a right hand side */
-  protected int rhs_pos = 0;
-
-  /** start a new right hand side */
-  protected void new_rhs() { rhs_pos = 0; }
-
-  /**
-   * Sometimes we need to temporarily shelve an existing rhs and restore it later.
-   * <br/>
-   * This method is used to store a copy of the current rhs so that it is not affected by subsequent operations.
-   * <br/>
-   * This method should be used in pairs with popRhsCache.
-   */
-  private void cacheRhs() {
-    production_part[] cache = new production_part[rhs_pos];
-    if (rhs_pos != 0) {
-      System.arraycopy(rhs_parts, 0, cache, 0, rhs_pos);
-    }
-    rhsPartsCache.add(cache);
-    new_rhs();
-  }
-
-  /**
-   * Sometimes we need to temporarily shelve an existing rhs and restore it later.
-   * <br/>
-   * This method is used to restore a previously shelved rhs.
-   * <br/>
-   * Make sure you've called cacheRhs before calling this method.
-   */
-  private void popRhsCache() {
-    production_part[] cache = rhsPartsCache.remove(rhsPartsCache.size() - 1);
-    System.arraycopy(cache, 0, rhs_parts, 0, cache.length);
-    rhs_pos = cache.length;
-  }
-
-  private void addSubNt(non_terminal nt) throws internal_error {
-    subNtRecord.get(subNtRecord.size() - 1).add(new symbol_part(nt));
-  }
-
-  private void newSubNtList() throws internal_error {
-    if (!subNtRecord.isEmpty()) {
-      throw new internal_error("Anonymous non-terminals cannot be nested");
-    }
-    subNtRecord.add(new ArrayList<>());
-  }
-
-  private List<production_part> popSubNtList() {
-    return subNtRecord.remove(subNtRecord.size() - 1);
-  }
-
-  /** add a new right hand side part */
-  protected void add_rhs_part(production_part part) throws java.lang.Exception
-    {
-      if (rhs_pos >= MAX_RHS)
-	throw new Exception("Internal Error: Productions limited to " + 
-			     MAX_RHS + " symbols and actions"); 
-	  for (int i=0;i<rhs_pos;i++)
-	  	if (part.label()!=null && part.label().equals(rhs_parts[i].label()))
-		  report_error("Label '"+part.label()+"' for symbol #"+rhs_pos+" already used for symbol #"+i+"; compilation will fail",part);
-      rhs_parts[rhs_pos] = part;
-      rhs_pos++;
-    }
-
-  /** string to build up multiple part names */
-  protected String multipart_name = "";
-  protected ArrayStack<String> multipart_names = new ArrayStack<>();
-  /** append a new name segment to the accumulated multipart name */
-
-//  TUM CHANGES
-//   protected void append_multipart(String name)
-//     {
-//       String dot = "";
-// 
-//       /* if we aren't just starting out, put on a dot */
-//       if (multipart_name.length() != 0)  dot = ".";
-// 
-//       multipart_name = multipart_name.concat(dot + name);
-//     }
-// TUM CHANGES
-
-  /** table of declared symbols -- contains production parts indexed by name */
-  protected Map<String,production_part> symbols = new HashMap<>();
-
-  /** table of just non terminals -- contains non_terminals indexed by name */
-  protected Map<String,non_terminal> non_terms = new HashMap<>();
-
-  /** declared start non_terminal */
-  protected non_terminal start_nt = null;
-
-  /** left hand side non terminal of the current production */
-  protected non_terminal lhs_nt;
-
-  /** Current precedence number */
-  int _cur_prec = 0;
-
-  /** Current precedence side */
-  int _cur_side = assoc.no_prec;
-
-  /** update the precedences we are declaring */
-  protected void update_precedence(int p) {
-    _cur_side = p;
-    _cur_prec++;
-  }
-  /** add relevant data to terminals */ 
-  protected void add_precedence(String term) {
-    if (term == null) {
-      System.err.println("Unable to add precedence to nonexistent terminal");
-    } else {
-      symbol_part sp = (symbol_part)symbols.get(term);
-      if (sp == null) {
-	System.err.println("Could find terminal " + term + " while declaring precedence");
-      } else {
-	java_cup.GrammarSymbol sym = sp.the_symbol();
-	if (sym instanceof terminal) 
-	  ((terminal)sym).set_precedence(_cur_side, _cur_prec);
-	else System.err.println("Precedence declaration: Can't find terminal " + term);
-      }
-    }
-  }
-  
-  private int cur_debug_id = 0;
-  public int get_new_debug_id() {
-   	return cur_debug_id++;
-  }
-   
-  public String attach_debug_symbol(int id, String code) {
- 	if (!debugSymbols)
- 		return code;
- 	return "//@@CUPDBG" + id + "\n" + code;
-  }
-
-  private void handle_rhs_expr(
-    boolean is_prec, String term_name, boolean is_namer, String prod_name, boolean isSubList
-  ) throws Exception {
-    java_cup.GrammarSymbol sym = null;
-    if (lhs_nt != null) {
-      non_terminal subNt = null;
-      if (!rhsPartsCache.isEmpty() && isSubList) {
-        subNt = lhs_nt.createSubNt(
-          rhs_parts, rhs_pos, Production.PositionFinder.newInstance(lhs_nt)
-        );
-        lastSubNtName = subNt.name();
-        symbols.put(lastSubNtName, new symbol_part(subNt));
-        addSubNt(subNt);
-      }
-      if (!isSubList && lastSubNtName != null) {
-        subNt = (non_terminal) ((symbol_part) symbols.get(lastSubNtName)).the_symbol();
-      }
-      non_terminal nt = subNt == null ? lhs_nt : subNt;
-      if (is_prec) {
-        /* Find the precedence symbol */
-        if (term_name == null) {
-          System.err.println("No terminal for contextual precedence");
-        } else {
-          sym = ((symbol_part) symbols.get(term_name)).the_symbol();
-        }
-      }
-      if (subNt == null) {
-        boolean exists = java.util.Arrays.stream(rhs_parts, 0, rhs_pos)
-          .anyMatch(
-            part -> {
-              if (part.is_action()) return false;
-              GrammarSymbol symbol = ((symbol_part) part).the_symbol();
-              if (!symbol.is_non_term()) return false;
-              non_terminal partNt = (non_terminal) symbol;
-              return partNt.isAnno() && !partNt.isListBox() && !partNt.isOptBox();
-            }
-          );
-        if (exists) {
-          // The logic here is to determine the index of the production,
-          // we need to know the index in advance in order to insert the action for it.
-          int count = 1;
-          boolean inActionSequence = true;
-          for (int i = 0; i < rhs_pos; i++) {
-            if (rhs_parts[i].is_action()) {
-              if (!inActionSequence) {
-                count++;
-                inActionSequence = true;
-              }
-            } else {
-              inActionSequence = false;
-            }
-          }
-          // insert the action to the first position
-          System.arraycopy(rhs_parts, 0, rhs_parts, 1, rhs_pos++);
-          rhs_parts[0] = new action_part("_pushInlineProd(" + (Production.number() + count) + ");", true);
-        }
-      } else if (subNt.num_productions() != 0) {
-        new_rhs();
-        return;
-      }
-      /* build the production */
-      Production p;
-      if (sym instanceof terminal) {
-        p = new Production(
-          nt, rhs_parts, rhs_pos,
-          ((terminal) sym).precedence_num(),
-          ((terminal) sym).precedence_side()
-        );
-        ((symbol_part) symbols.get(term_name)).the_symbol().note_use();
-      } else {
-        if (is_prec) {
-          System.err.println(
-            "Invalid terminal " + term_name + " for contextual precedence assignment"
-          );
-        }
-        p = new Production(nt, rhs_parts, rhs_pos);
-      }
-      if (is_namer) {
-        if (prod_name == null || prod_name.isEmpty()) {
-          System.err.println("No production name for precedence assignment");
-        } else {
-          p.setProdName(prod_name);
-        }
-      }
-
-      /* if we have no start non-terminal declared and this is
-    		 the first production, make its lhs nt the start_nt
-    		 and build a special start production for it. */
-      if (start_nt == null) {
-        start_nt = lhs_nt;
-
-        /* build a special start production */
-        new_rhs();
-        add_rhs_part(add_lab(new symbol_part(start_nt), "start_val"));
-        add_rhs_part(new symbol_part(terminal.EOF));
-        add_rhs_part(new action_part("RESULT = start_val;"));
-        if (sym instanceof terminal) {
-          emit.start_production = new Production(
-            non_terminal.START_nt,
-            rhs_parts,
-            rhs_pos,
-            ((terminal) sym).precedence_num(),
-            ((terminal) sym).precedence_side()
-          );
-        } else {
-          emit.start_production = new Production(non_terminal.START_nt, rhs_parts, rhs_pos);
-        }
-        new_rhs();
-      }
-    }
-
-    /* reset the rhs accumulation in any case */
-    new_rhs();
-  }
+  /* The former helper routines and accumulators (add_lab, add_rhs_part,
+     handle_rhs_expr, the symbol tables, ...) now live in java_cup.Lowering.
+     The actions in this grammar only construct spec tree nodes. */
 :};
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 parser code {:
  /* override error routines */
@@ -401,23 +138,23 @@ parser code {:
 
 /*---------------------------------------------------------------- */
 
-init with {: 
+init with {:
     ComplexSymbolFactory f = new ComplexSymbolFactory(
       GrammarSymConstants.TERMINAL_NAMES,
       GrammarSymConstants.NON_TERMINAL_NAMES
     );
     symbolFactory = f;
-    lexer = new Lexer(f); 
+    lexer = new Lexer(f);
 :}
 /*lexer.init(); :};*/
-scan with {: 
-    return lexer.next_token(); 
+scan with {:
+    return lexer.next_token();
 :};
 
-/*----------------------------------------------------------------*/ 
+/*----------------------------------------------------------------*/
 
 terminal
-  PACKAGE, IMPORT, STATIC ,CODE, ACTION, PARSER, TERMINAL, NON, INIT, SCAN, WITH, 
+  PACKAGE, IMPORT, STATIC ,CODE, ACTION, PARSER, TERMINAL, NON, INIT, SCAN, WITH,
   START, SEMI, COMMA, STAR, DOT, PLUS, COLON, COLON_COLON, COLON_COLON_EQUALS, BAR, PRECEDENCE,
   LEFT, RIGHT, NONASSOC, PERCENT_PREC, PERCENT_NAMER,
   LPAREN, RPAREN, LBRACK, RBRACK, NONTERMINAL, GT, LT, SPREAD,
@@ -425,478 +162,478 @@ terminal
 
 terminal String  ID, CODE_STRING;
 
+/* purely structural symbols -- no RESULT value */
 non terminal
-  spec, package_spec, import_list, action_code_part, 
-  code_parts, code_part, opt_semi, non_terminal,
-  parser_code_part, symbol_list, start_spec, production_list, 
-  multipart_id, import_spec, import_id, init_code, scan_code, symbol, 
-  type_id, term_name_list, non_term_name_list, production, prod_part_list, 
-  prod_part, new_term_id, new_non_term_id, rhs_list, rhs, empty,
-  precedence_list, preced, terminal_list, precedence_l, declares_term, 
-  declares_non_term, class_name;
+  opt_semi, non_terminal, empty;
 
-non terminal String  nt_id, label_id, opt_label, terminal_id,
-                     term_id, robust_id, typearglist, typearguement, wildcard;
-non terminal ObjectPair<String, String> symbol_id;
-non terminal List<ObjectPair> symbol_id_list;
-
-non terminal SymQuantifier opt_quantifier;
+non terminal SpecNode spec;
+non terminal String package_spec, class_name, start_spec;
+non terminal String nt_id, label_id, opt_label, robust_id;
+non terminal String multipart_id, import_id, type_id;
+non terminal String typearglist, typearguement, wildcard;
+non terminal String new_term_id, new_non_term_id;
+non terminal String star_or_plus, question_or_exclamation, opt_return_type;
 non terminal boolean opt_spread;
-non terminal String star_or_plus, question_or_exclamation;
-non terminal String opt_return_type;
+non terminal ImportNode import_spec;
+non terminal CodePartNode code_part, action_code_part,
+                        parser_code_part, init_code, scan_code;
+non terminal SymbolDeclNode symbol;
+non terminal List<ImportNode> import_list;
+non terminal List<CodePartNode> code_parts;
+non terminal List<SymbolDeclNode> symbol_list;
+non terminal List<String> declares_term, declares_non_term,
+                          term_name_list, non_term_name_list;
+non terminal PrecedenceNode preced;
+non terminal List<PrecedenceNode> precedence_list, precedence_l;
+non terminal SymRef terminal_id, term_id, symbol_id;
+non terminal List<SymRef> terminal_list, symbol_id_list;
+non terminal QuantifierNode opt_quantifier;
+non terminal List<ProductionNode> production_list;
+non terminal ProductionNode production;
+non terminal List<RhsNode> rhs_list;
+non terminal RhsNode rhs;
+non terminal List<PartNode> prod_part_list;
+non terminal PartNode prod_part;
 
-/*----------------------------------------------------------------*/ 
+/*----------------------------------------------------------------*/
 
 start with spec;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-spec ::= 
+spec ::=
 	{:
-          /* declare "error" as a terminal */
-          symbols.put("error", new symbol_part(terminal.error));
-
-          /* declare start non terminal */
-          non_terms.put("$START", non_terminal.START_nt);
+          /* the old seeding of the "error" terminal and the "$START"
+             non terminal is now the pre-pass of Lowering.run() */
 	:}
-	package_spec
-	import_list
-	class_name
-	code_parts
-	symbol_list
-	precedence_list
-	start_spec
-	production_list
+	package_spec:pkg
+	import_list:imports
+	class_name:cls
+	code_parts:codes
+	symbol_list:syms
+	precedence_list:precs
+	start_spec:start
+	production_list:prods
+	{:
+	  RESULT = new SpecNode(pkg, imports, cls, codes, syms, precs,
+	                        start, prods, false);
+	:}
 	|
-	/* error recovery assuming something went wrong before symbols 
-	   and we have TERMINAL or NON TERMINAL to sync on.  if we get
-	   an error after that, we recover inside symbol_list or 
-	   production_list 
+	/* error recovery assuming something went wrong before symbols
+	   and we have TERMINAL or NON TERMINAL to sync on.  if we get an
+	   error after that, we recover inside symbol_list or
+	   production_list
 	*/
-	error 
-	symbol_list
-	precedence_list
-	start_spec
-	production_list
+	error
+	symbol_list:syms
+	precedence_list:precs
+	start_spec:start
+	production_list:prods
+	{:
+	  /* sections parsed before the error are lost from the tree (no
+	     output is produced once a parse error is on record) */
+	  RESULT = new SpecNode(null, new ArrayList<>(), null,
+	                        new ArrayList<>(), syms, precs,
+	                        start, prods, true);
+	:}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-package_spec ::= 
+package_spec ::=
 	PACKAGE
-	multipart_id
-	{:
-	  /* save the package name */
-	  emit.package_name = multipart_name;
-
-	  /* reset the accumulated multipart name */
-	  multipart_name = "";
-	:}
+	multipart_id:name
+	{: :}
 	SEMI
+	{: RESULT = name; :}
 	|
 	empty
+	{: RESULT = null; :}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 import_list ::=
-	import_list
-	import_spec
+	import_list:list
+	import_spec:imp
+	{:
+	  if (list == null) list = new ArrayList<>();
+	  list.add(imp);
+	  RESULT = list;
+	:}
 	|
 	empty
+	{: RESULT = new ArrayList<>(); :}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 import_spec ::=
-	IMPORT 
-	import_id 
-	{: 
-	  /* save this import on the imports list */
-	  emit.import_list.push(multipart_name);
-
-	  /* reset the accumulated multipart name */
-	  multipart_name = "";
-	:}
+	IMPORT
+	import_id:target
+	{: :}
 	SEMI
+	{: RESULT = new ImportNode(false, target); :}
 	|
 	IMPORT STATIC
-	import_id 
-	{: 
-	  /* save this import on the imports list */
-	  emit.import_list.push(" static " + multipart_name);
-
-	  /* reset the accumulated multipart name */
-	  multipart_name = "";
-	:}
+	import_id:target
+	{: :}
 	SEMI
+	{: RESULT = new ImportNode(true, target); :}
 	;
 
 class_name ::=
-    empty |
+    empty
+    {: RESULT = null; :}
+    |
     CLASS ID:id SEMI
-    {:
-     emit.parser_class_name = id;
-     emit.symbol_const_class_name = id + "Sym";
-    :}
+    {: RESULT = id; :}
     ;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 // allow any order; all parts are optional. [CSA, 23-Jul-1999]
-// (we check in the part action to make sure we don't have 2 of any part)
+// (Lowering checks for a second part of any kind and warns)
 code_part ::=
-	action_code_part | parser_code_part | init_code | scan_code ;
-code_parts ::= 
-	| code_parts code_part;
+	action_code_part:cp {: RESULT = cp; :}
+	| parser_code_part:cp {: RESULT = cp; :}
+	| init_code:cp {: RESULT = cp; :}
+	| scan_code:cp {: RESULT = cp; :} ;
+code_parts ::=
+	{: RESULT = new ArrayList<>(); :}
+	| code_parts:list code_part:cp
+	  {:
+	    if (list == null) list = new ArrayList<>();
+	    list.add(cp);
+	    RESULT = list;
+	  :};
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-action_code_part ::= 
+action_code_part ::=
 	ACTION CODE CODE_STRING:user_code opt_semi
 	{:
-	  if (emit.action_code!=null)
-	    ErrorManager.getManager().emit_warning("Redundant action code (skipping)");
-	  else /* save the user included code string */
-	    emit.action_code = attach_debug_symbol(get_new_debug_id(),user_code);
+	  RESULT = new CodePartNode(CodePartNode.Kind.ACTION, user_code,
+	                            (ComplexLocation) user_codeSym.getLocation());
 	:}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-parser_code_part ::= 
+parser_code_part ::=
 	PARSER CODE CODE_STRING:user_code opt_semi
 	{:
-	  if (emit.parser_code!=null)
-	    ErrorManager.getManager().emit_warning("Redundant parser code (skipping)");
-	  else /* save the user included code string */
-	    emit.parser_code = attach_debug_symbol(get_new_debug_id(),user_code);
+	  RESULT = new CodePartNode(CodePartNode.Kind.PARSER, user_code,
+	                            (ComplexLocation) user_codeSym.getLocation());
 	:}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-init_code ::= 
+init_code ::=
 	INIT WITH CODE_STRING:user_code opt_semi
-	{: 
-	  if (emit.init_code!=null)
-	    ErrorManager.getManager().emit_warning("Redundant init code (skipping)");
-	  else /* save the user code */
-	    emit.init_code = attach_debug_symbol(get_new_debug_id(),user_code);
+	{:
+	  RESULT = new CodePartNode(CodePartNode.Kind.INIT, user_code,
+	                            (ComplexLocation) user_codeSym.getLocation());
 	:}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 scan_code ::=
 	SCAN WITH CODE_STRING:user_code opt_semi
-	{: 
-	  if (emit.scan_code!=null)
-	    ErrorManager.getManager().emit_warning("Redundant scan code (skipping)");
-	  else /* save the user code */
-	    emit.scan_code = attach_debug_symbol(get_new_debug_id(),user_code);
+	{:
+	  RESULT = new CodePartNode(CodePartNode.Kind.SCAN, user_code,
+	                            (ComplexLocation) user_codeSym.getLocation());
 	:}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-symbol_list ::= symbol_list symbol | symbol;
+symbol_list ::= symbol_list:list symbol:s
+	{:
+	  if (list == null) list = new ArrayList<>();
+	  if (s != null) list.add(s);
+	  RESULT = list;
+	:}
+	| symbol:s
+	{:
+	  var r = new ArrayList<SymbolDeclNode>();
+	  if (s != null) r.add(s);
+	  RESULT = r;
+	:};
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-symbol ::= 
+symbol ::=
 	TERMINAL
-	type_id	
-	declares_term
+	type_id:type
+	declares_term:names
+	{: RESULT = new SymbolDeclNode(true, type, names); :}
 	|
 	TERMINAL
-	declares_term
+	declares_term:names
+	{: RESULT = new SymbolDeclNode(true, null, names); :}
 	|
 	non_terminal
-	type_id
-	declares_non_term
+	type_id:type
+	declares_non_term:names
+	{: RESULT = new SymbolDeclNode(false, type, names); :}
 	|
 	non_terminal
-	declares_non_term
+	declares_non_term:names
+	{: RESULT = new SymbolDeclNode(false, null, names); :}
 	|
 	/* error recovery productions -- sync on semicolon */
 
 	TERMINAL
-	error 
-	{:
-	  /* reset the accumulated multipart name */
-	  multipart_name = "";
-	:}
+	error
+	{: :}
 	SEMI
+	{: RESULT = null; :}
 	|
 	non_terminal
-	error 
-	{:
-	  /* reset the accumulated multipart name */
-	  multipart_name = "";
-	:}
+	error
+	{: :}
 	SEMI
+	{: RESULT = null; :}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 declares_term ::=
-	term_name_list
-	{: 
-	  /* reset the accumulated multipart name */
-	  multipart_name = "";
-	:}
+	term_name_list:names
+	{: :}
 	SEMI
+	{: RESULT = names; :}
 	;
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 declares_non_term ::=
-	non_term_name_list
-	{: 
-	  /* reset the accumulated multipart name */
-	  multipart_name = "";
-	:}
+	non_term_name_list:names
+	{: :}
 	SEMI
+	{: RESULT = names; :}
 	;
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-term_name_list ::= term_name_list COMMA new_term_id | new_term_id;
+term_name_list ::= term_name_list:list COMMA new_term_id:name
+	{:
+	  if (list == null) list = new ArrayList<>();
+	  list.add(name);
+	  RESULT = list;
+	:}
+	| new_term_id:name
+	{:
+	  var r = new ArrayList<String>();
+	  r.add(name);
+	  RESULT = r;
+	:};
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 non_term_name_list ::=
-	non_term_name_list
+	non_term_name_list:list
 	COMMA
-	new_non_term_id
+	new_non_term_id:name
+	{:
+	  if (list == null) list = new ArrayList<>();
+	  list.add(name);
+	  RESULT = list;
+	:}
 	|
-	new_non_term_id
+	new_non_term_id:name
+	{:
+	  var r = new ArrayList<String>();
+	  r.add(name);
+	  RESULT = r;
+	:}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 
-precedence_list ::= precedence_l | empty; 
+precedence_list ::= precedence_l:l {: RESULT = l; :} | empty
+	{: RESULT = new ArrayList<>(); :};
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-precedence_l ::= precedence_l preced | preced;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
-
-preced ::= 
-	PRECEDENCE LEFT 
+precedence_l ::= precedence_l:list preced:p
 	{:
-	  update_precedence(assoc.left);
-	:}	
-        terminal_list SEMI
+	  if (list == null) list = new ArrayList<>();
+	  list.add(p);
+	  RESULT = list;
+	:}
+	| preced:p
+	{:
+	  var r = new ArrayList<PrecedenceNode>();
+	  r.add(p);
+	  RESULT = r;
+	:};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+preced ::=
+	PRECEDENCE LEFT
+	{: :}
+        terminal_list:refs SEMI
+	{: RESULT = new PrecedenceNode(assoc.left, refs); :}
 	|
-	PRECEDENCE RIGHT 
-	{:
-	  update_precedence(assoc.right);
-	:}	
-        terminal_list SEMI
+	PRECEDENCE RIGHT
+	{: :}
+        terminal_list:refs SEMI
+	{: RESULT = new PrecedenceNode(assoc.right, refs); :}
 	|
-	PRECEDENCE NONASSOC 
-	{:
-	  update_precedence(assoc.nonassoc);
-	:}	
-        terminal_list SEMI
+	PRECEDENCE NONASSOC
+	{: :}
+        terminal_list:refs SEMI
+	{: RESULT = new PrecedenceNode(assoc.nonassoc, refs); :}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-terminal_list ::= terminal_list COMMA terminal_id
+terminal_list ::= terminal_list:list COMMA terminal_id:ref
+	{:
+	  if (list == null) list = new ArrayList<>();
+	  list.add(ref);
+	  RESULT = list;
+	:}
 	|
-	terminal_id
+	terminal_id:ref
+	{:
+	  var r = new ArrayList<SymRef>();
+	  r.add(ref);
+	  RESULT = r;
+	:}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 terminal_id ::= term_id:sym
-	{:	
-	  add_precedence(sym);
-	  RESULT = sym;
-	:};
-	  
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+	{: RESULT = sym; :};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 term_id ::= symbol_id:sym_id
-        {:
-	  /* check that the symbol_id is a terminal */
-	  if (symbols.get(sym_id.getFirst()) == null)
-	    {
-	      /* issue a message */
-	      ErrorManager.getManager().emit_error("Terminal \"" + sym_id.getFirst() +
-			   "\" has not been declared");
-	    }
-          RESULT = sym_id.getFirst();
-         :};
+        {: RESULT = sym_id; :};
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-start_spec ::= 
-	START WITH nt_id:start_name 
-	{: 
-	  /* verify that the name has been declared as a non terminal */
-	  non_terminal nt = (non_terminal)non_terms.get(start_name);
-	  if (nt == null)
-	    {
-	    ErrorManager.getManager().emit_error( "Start non terminal \"" + start_name + 
-	  		         "\" has not been declared");
-	    }
-          else
-	    {
-	      /* remember the non-terminal for later */
-	      start_nt = nt;
-
-	      /* build a special start production */
-	      new_rhs();
-	      add_rhs_part(add_lab(new symbol_part(start_nt), "start_val"));
-	      add_rhs_part(new symbol_part(terminal.EOF));
-	      add_rhs_part(new action_part("RESULT = start_val;"));
-	      emit.start_production = 
-		     new Production(non_terminal.START_nt, rhs_parts, rhs_pos);
-	      new_rhs();
-	    }
-	:}
+start_spec ::=
+	START WITH nt_id:start_name
+	{: :}
 	SEMI
+	{: RESULT = start_name; :}
 	|
 	empty
+	{: RESULT = null; :}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-production_list ::= production_list production | production;
+production_list ::= production_list:list production:p
+	{:
+	  if (list == null) list = new ArrayList<>();
+	  if (p != null) list.add(p);
+	  RESULT = list;
+	:}
+	| production:p
+	{:
+	  var r = new ArrayList<ProductionNode>();
+	  if (p != null) r.add(p);
+	  RESULT = r;
+	:};
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 production ::=
 	nt_id:lhs_id
-	{:
-	  /* lookup the lhs nt */
-	  lhs_nt = (non_terminal)non_terms.get(lhs_id);
-
-          /* if it wasn't declared, emit a message */
-	  if (lhs_nt == null)
-	    {
-	      if (ErrorManager.getManager().getErrorCount() == 0)
-	      ErrorManager.getManager().emit_warning("LHS non terminal \"" + lhs_id + 
-			       "\" has not been declared");
-	    }
-
-	  /* reset the rhs accumulation */
-	  new_rhs();
-	:}
+	{: :}
 	COLON_COLON_EQUALS
-/*	{: :}*/
-	rhs_list
+	rhs_list:alts
 	SEMI
+	{:
+	  RESULT = new ProductionNode(lhs_id,
+	      (ComplexLocation) lhs_idSym.getLocation(), alts, false);
+	:}
 	|
 	error
 	{: ErrorManager.getManager().emit_error("Syntax Error"); :}
 	SEMI
+	{: RESULT = new ProductionNode("ILLEGAL", null,
+	      new ArrayList<RhsNode>(), true); :}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-rhs_list ::= rhs_list BAR rhs | rhs;
+rhs_list ::= rhs_list:list BAR rhs:r
+	{:
+	  if (list == null) list = new ArrayList<>();
+	  list.add(r);
+	  RESULT = list;
+	:}
+	| rhs:r
+	{:
+	  var rr = new ArrayList<RhsNode>();
+	  rr.add(r);
+	  RESULT = rr;
+	:};
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 rhs ::=
-	prod_part_list PERCENT_PREC term_id:term_name PERCENT_NAMER ID:prod_name
-	{: handle_rhs_expr(true, term_name, false, prod_name, true); :}
+	prod_part_list:parts PERCENT_PREC term_id:term_name PERCENT_NAMER ID:prod_name
+	{: RESULT = new RhsNode(parts, term_name, prod_name); :}
 	|
-	prod_part_list PERCENT_NAMER ID:prod_name
-	{: handle_rhs_expr(false, null, true, prod_name, true); :}
+	prod_part_list:parts PERCENT_NAMER ID:prod_name
+	{: RESULT = new RhsNode(parts, null, prod_name); :}
 	|
-	prod_part_list PERCENT_PREC term_id:term_name
-	{: handle_rhs_expr(true, term_name, false, null, true); :}
+	prod_part_list:parts PERCENT_PREC term_id:term_name
+	{: RESULT = new RhsNode(parts, term_name, null); :}
 	|
-	prod_part_list 
-	{: handle_rhs_expr(false, null, false, null, true); :}
+	prod_part_list:parts
+	{: RESULT = new RhsNode(parts, null, null); :}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-prod_part_list ::= prod_part_list prod_part | empty;
+prod_part_list ::= prod_part_list:list prod_part:p
+	{:
+	  if (list == null) list = new ArrayList<>();
+	  if (p != null) list.add(p);
+	  RESULT = list;
+	:}
+	| empty
+	{: RESULT = new ArrayList<>(); :};
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 prod_part ::=
 	opt_spread:spread symbol_id:symid opt_quantifier:quantifier opt_label:labid
 	{:
-	  /* try to look up the id */
-	  production_part symb = (production_part) symbols.get(symid.getFirst());
-
-	  /* if that fails, symbol is undeclared */
-	  if (symb == null) {
-	    if (ErrorManager.getManager().getErrorCount() == 0) {
-	      ErrorManager.getManager().emit_error(
-	        "java_cup.runtime.Symbol \"" + symid.getFirst() + "\" has not been declared"
-	      );
-        }
-      } else if (quantifier != null && symb.is_action()) {
-        if (ErrorManager.getManager().getErrorCount() == 0) {
-	      ErrorManager.getManager().emit_error(
-	        "Action symbol \"" + symid.getFirst() + "\" cannot be used with a quantifier."
-	      );
-        }
-      } else if (spread && symb.is_action()) {
-        if (ErrorManager.getManager().getErrorCount() == 0) {
-          ErrorManager.getManager().emit_error(
-            "Action symbol \"" + symid.getFirst() + "\" cannot use '... 'operator"
-          );
-        }
-      } else if (spread && quantifier != null && quantifier.isList()) {
-        if (ErrorManager.getManager().getErrorCount() == 0) {
-          ErrorManager.getManager().emit_error(
-            "List symbol \"" + symid.getFirst() + "\" cannot use '... 'operator"
-          );
-        }
-      } else {
-        if (quantifier != null) {
-          if (!quantifier.isList()) {
-            // ?
-            non_terminal newNt = ((symbol_part) symb).the_symbol().createOptBox(symbols, null);
-            symb = new symbol_part(newNt, null, symid.getSecond());
-          } else {
-            non_terminal newNt = ((symbol_part) symb).the_symbol().createListBox(
-              symbols, quantifier.getPartList(), quantifier.isAllowTail(), quantifier.isAllowEmpty()
-            );
-            symb = new symbol_part(newNt, null, symid.getSecond() == null ? null : emit.buildListExpr(symid.getSecond()));
-          }
-        } else if (symid.getSecond() != null) {
-          symb = new symbol_part(((symbol_part) symb).the_symbol(), null, symid.getSecond());
-        }
-	    /* add a labeled production part */
-	    production_part part = add_lab(symb, labid);
-	    if (spread) ((symbol_part) part).markInline();
-	    add_rhs_part(part);
-      }
+	  /* the part's anchor: the label token when there is one, otherwise
+	     the whole symbol reference (the ID or the parenthesized group) */
+	  var loc = labid != null
+	      ? (ComplexLocation) labidSym.getLocation()
+	      : (ComplexLocation) symidSym.getLocation();
+	  RESULT = new SymbolPartNode(spread, symid, quantifier, labid, loc);
 	:}
 	|
 	CODE_STRING:code_str
 	{:
-	  /* add a new production part */
-      add_rhs_part(new action_part(attach_debug_symbol(get_new_debug_id(),code_str)));
+	  RESULT = new ActionPartNode(code_str,
+	      (ComplexLocation) code_strSym.getLocation());
 	:}
 	;
 
 opt_spread ::= SPREAD {: RESULT = true; :} | empty {: RESULT = false; :};
 
 opt_quantifier ::=
-  QUESTION {: RESULT = new SymQuantifier(); :}
-  | star_or_plus:sp {: RESULT = new SymQuantifier(null, "*".equals(sp), false); :}
+  QUESTION {: RESULT = QuantifierNode.opt(); :}
+  | star_or_plus:sp {: RESULT = QuantifierNode.starPlus("*".equals(sp)); :}
   | LBRACK symbol_id_list:list question_or_exclamation:qe RBRACK star_or_plus:sp {:
-    List<production_part> partList = new ArrayList<>(list.size());
-    for (ObjectPair<String, String> item : list) {
-      production_part part = symbols.get(item.getFirst());
-      partList.add(part);
-    }
-    RESULT = new SymQuantifier(partList, "*".equals(sp), "?".equals(qe));
-  :}
-  | empty;
+    RESULT = QuantifierNode.bracket(list, "*".equals(sp), "?".equals(qe)); :}
+  | empty {: RESULT = null; :};
 
 star_or_plus ::=
   STAR {: RESULT = "*"; :}
@@ -908,9 +645,9 @@ question_or_exclamation ::=
 
 opt_return_type ::=
     COLON_COLON ID:type {: RESULT = type; :}
-    | empty;
+    | empty {: RESULT = null; :};
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 opt_label ::=
 	COLON label_id:labid
@@ -920,24 +657,23 @@ opt_label ::=
 	{: RESULT = null; :}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 multipart_id ::=
-	multipart_id DOT robust_id:another_id
-	{: multipart_name = multipart_name.concat("."+another_id); :}
-	|multipart_id 
-        {: multipart_names.push(multipart_name); multipart_name="";:}
+	multipart_id:base DOT robust_id:another_id
+	{: RESULT = base + "." + another_id; :}
+	|multipart_id:base
+        {: :}
         LT typearglist:types GT
-         {: multipart_name =
-         ((String)multipart_names.pop()).concat("<"+types+">"); :}
+         {: RESULT = base + "<" + types + ">"; :}
         |
 	robust_id:an_id
-	{: multipart_name = multipart_name.concat(an_id); :}
+	{: RESULT = an_id; :}
 	;
-/*. . . . . . . . . . . .TUM CHANGES. . . . . . . . . . . . . . . */
+/*. . . . . . . . . . . . .TUM CHANGES. . . . . . . . . . . . . . . */
 
 
-typearglist ::= 
+typearglist ::=
             typearguement:arg
             {: RESULT = arg; :}
             | typearglist:list COMMA typearguement:arg
@@ -945,8 +681,8 @@ typearglist ::=
             ;
 
 typearguement ::=
-              type_id
-              {: RESULT = multipart_name; multipart_name = ""; :}
+              type_id:t
+              {: RESULT = t; :}
               | wildcard:w
               {: RESULT = w; :}
               ;
@@ -954,87 +690,47 @@ typearguement ::=
 wildcard ::=
          QUESTION
          {: RESULT = " ? "; :}
-         | QUESTION EXTENDS type_id
-         {: RESULT = " ? extends "+multipart_name; multipart_name = ""; :}
-         | QUESTION SUPER type_id
-         {: RESULT = " ? super "+multipart_name; multipart_name = ""; :}
+         | QUESTION EXTENDS type_id:t
+         {: RESULT = " ? extends " + t; :}
+         | QUESTION SUPER type_id:t
+         {: RESULT = " ? super " + t; :}
          ;
 
-/*. . . . . . . . . . .END TUM CHANGES. . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . .END TUM CHANGES. . . . . . . . . . . . . . . */
 
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-import_id ::= 
-	multipart_id DOT STAR
-	{: multipart_name = multipart_name.concat(".*"); :}
+import_id ::=
+	multipart_id:name DOT STAR
+	{: RESULT = name + ".*"; :}
 	|
-	multipart_id
+	multipart_id:name
+	{: RESULT = name; :}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-type_id ::= multipart_id
-	| type_id LBRACK RBRACK
-	{: multipart_name = multipart_name.concat("[]"); :}
+type_id ::= multipart_id:m {: RESULT = m; :}
+	| type_id:t LBRACK RBRACK
+	{: RESULT = t + "[]"; :}
        	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-new_term_id ::= 
-	ID:term_id 
-	{: 
-	  /* see if this terminal has been declared before */
-	  if (symbols.get(term_id) != null)
-	    {
-	      /* issue a message */
-	      ErrorManager.getManager().emit_error("java_cup.runtime.Symbol \"" + term_id + 
-			   "\" has already been declared");
-	    }
-	  else
-	    {
-	      /* if no type declared, declare one */
-	      if (multipart_name.equals("")) {
-		multipart_name = "Object";
-	      }
-	      /* build a production_part and put it in the table */ 
-	      symbols.put(term_id, 
-	        new symbol_part(new terminal(term_id, multipart_name)));
-	    }
-	:}
+new_term_id ::=
+	ID:term_id
+	{: RESULT = term_id; :}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 new_non_term_id ::=
 	ID:non_term_id
-	{: 
-	  /* see if this non terminal has been declared before */
-	  if (symbols.get(non_term_id) != null)
-	    {
-	      /* issue a message */
-	      ErrorManager.getManager().emit_error( "java_cup.runtime.Symbol \"" + non_term_id + 
-			                      "\" has already been declared");
-	    }
-	  else
-	    {
-	      if (multipart_name.equals("")) {
-                   multipart_name ="Object";
-	      }
-	      /* build the non terminal object */
-              non_terminal this_nt = 
-		new non_terminal(non_term_id, multipart_name);
-
-	      /* put it in the non_terms table */
-	      non_terms.put(non_term_id, this_nt);
-
-	      /* build a production_part and put it in the symbols table */ 
-	      symbols.put(non_term_id, new symbol_part(this_nt));
-	    }
-	:}
+	{: RESULT = non_term_id; :}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 nt_id ::=
 	ID:the_id
@@ -1046,53 +742,44 @@ nt_id ::=
 	:}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 symbol_id ::=
 	ID:the_id
-	{: RESULT = new ObjectPair<>(the_id, null); :}
-	| LPAREN {: cacheRhs(); newSubNtList(); :} opt_return_type:type rhs_list RPAREN
+	{: RESULT = new NamedRefNode(the_id); :}
+	| LPAREN:lp {: :} opt_return_type:type rhs_list:branches RPAREN
 	{:
-	  var subNtList = popSubNtList();
-	  if (subNtList.size() > 1) {
-	    var subNt = lhs_nt.createSubNts(subNtList);
-        lastSubNtName = subNt.name();
-	    symbols.put(lastSubNtName, new symbol_part(subNt));
-	    for (production_part part : subNtList) {
-	      rhs_pos = 1;
-	      rhs_parts[0] = part;
-	      handle_rhs_expr(false, null, false, null, false);
-	    }
-	  }
-	  RESULT = new ObjectPair<>(lastSubNtName, type);
-	  lastSubNtName = null;
-	  popRhsCache();
+	  /* the branches' hidden non terminals and productions are now
+	     created by Lowering.lowerAnonExpr at the point of use */
+	  RESULT = new AnonExprNode(type, branches,
+	                            (ComplexLocation) lpSym.getLocation());
 	:}
 	| error
 	{:
 		ErrorManager.getManager().emit_error("Illegal use of reserved word");
-		RESULT = new ObjectPair<>("ILLEGAL", null);
+		RESULT = new NamedRefNode("ILLEGAL");
 	:}
 	;
 
 symbol_id_list ::= symbol_id:item {:
-    List list = new ArrayList<>();
+    var list = new ArrayList<SymRef>();
     list.add(item);
     RESULT = list;
   :}
   | symbol_id_list:list symbol_id:item {:
+    if (list == null) list = new ArrayList<>();
     list.add(item);
     RESULT = list;
   :};
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-label_id ::= 
+label_id ::=
 	robust_id:the_id
 	{: RESULT = the_id; :}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 robust_id ::= /* all ids that aren't reserved words in Java */
 	ID:the_id	{: RESULT = the_id; :}
@@ -1119,17 +806,17 @@ robust_id ::= /* all ids that aren't reserved words in Java */
 	:}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 non_terminal ::= NON TERMINAL | NONTERMINAL;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 opt_semi ::= /* nothing */
 	| SEMI;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 empty ::= /* nothing */;
 
-/*----------------------------------------------------------------*/ 
+/*----------------------------------------------------------------*/
