@@ -85,11 +85,13 @@ configurations {
 
 dependencies {
     jflex 'de.jflex:jflex:1.9.1'
-    // Self-hosting loop: the generator that regenerates CUP's own parser.
-    // Currently a committed local jar; once a Maven release with a working
-    // -ast mode is published, swap this for the coordinate (e.g.
-    // 'top.kmar.cup:java-cup:<version>') and delete the jar.
-    cup files('bin/java-cup-bootstrap.jar')
+    // Self-hosting loop: the generator that regenerates CUP's own parser,
+    // pulled from Maven Central exactly like any downstream consumer. This
+    // is the frozen released seed -- generateCupParser verifies the committed
+    // bootstrap sources are still what it produces, while checkSelfHost
+    // re-verifies with the working-tree jar. After each release, bump the
+    // coordinate to the newly published version.
+    cup 'top.kmar.cup:java-cup:1.1.0'
 }
 
 sourceSets {
