@@ -20,8 +20,7 @@
       These serve the same purpose as in a normal Java source file
       (and will appear in the generated code for the parser).  In this
       case we are part of the java_cup package and we import the
-      java_cup runtime system and List/ArrayList from the standard Java
-      utilities package.
+      java_cup runtime system.
 
     Action code
       This section provides code that is included with the class encapsulating
@@ -44,24 +43,21 @@
       the grammar itself (with embedded actions).
 
     Operation of the parser
-      The parser acts by building an immutable, sugar-preserving tree of
-      java_cup.spec nodes (SpecNode and friends).  Every semantic action
-      below is pure construction: it reads its labeled symbols through the
-      always-declared <name>Sym locals (the plain label-value locals are
-      suppressed when the parser is generated in -ast mode, so actions use
-      the <name>Sym.<T>value() form that works in both modes), builds a
-      node, and returns it as its own RESULT.  No global state is touched
-      during the parse.  After the parse, Main hands the tree to
-      java_cup.Lowering, which replays the historical graph construction
-      (symbol tables, desugaring, Production numbering) in exactly the old
-      order.
-
-      The grammar is shaped for -ast generation: every list and option uses
-      the fork's own quantifier sugar (X*, X?, X+, [SEP !]+), and labels
-      that appear in only some alternatives of a non-terminal (st, tkw,
-      ntkw, a/p/i/sc, l/r/n, s, q, ...) are deliberate discriminators.
-      Generated node classes derive one field per label, so alternative
-      identity is recoverable from which getters are non-null.
+      This grammar is generated in -ast mode (see the generateCupParser
+      task): the spec tree consists of the generated Node* classes, one
+      field per label, built by the auto actions baked into the generated
+      parser.  Every list and option uses the fork's own quantifier sugar
+      (X*, X?, X+, [SEP !]+), and labels that appear in only some
+      alternatives of a non-terminal (st, tkw/ntkw, a/p/i/sc, l/r/n, s,
+      q, ...) are deliberate discriminators -- alternative identity is
+      recoverable from which getters are non-null.  The few remaining
+      actions either compute plain string values (multipart_id and
+      friends, written against the always-declared <name>Sym locals so
+      they survive -ast's suppression of plain label-value locals) or
+      produce sentinel nodes on the error-recovery alternatives.  After
+      the parse, Main hands the tree to java_cup.Lowering, which replays
+      the historical graph construction (symbol tables, desugaring,
+      Production numbering) in exactly the old order.
 
   Author(s)
     Scott Hudson, GVU Center, Georgia Tech.
@@ -97,16 +93,15 @@
 package java_cup;
 import java_cup.runtime.*;
 import java_cup.runtime.symbol.complex.*;
-import java_cup.spec.*;
-import java.util.List;
-import java.util.ArrayList;
 
 /*----------------------------------------------------------------*/
 
 action code {:
   /* The former helper routines and accumulators (add_lab, add_rhs_part,
      handle_rhs_expr, the symbol tables, ...) now live in java_cup.Lowering.
-     The actions in this grammar only construct spec tree nodes. */
+     The actions in this grammar only compute string values and produce
+     sentinel nodes for error recovery; the spec tree itself is built by
+     the -ast auto actions. */
 :};
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -163,25 +158,21 @@ terminal
 
 terminal String  ID, CODE_STRING;
 
-/* structural symbol -- no RESULT value */
-non terminal opt_semi;
+/* node non-terminals: -ast builds their Node* classes from the labels */
+non terminal AstNode spec, import_spec, code_part, symbol, preced,
+                    production, rhs, prod_part, quantifier,
+                    symbol_id, anon_expr, id_ref;
 
-non terminal SpecNode spec;
+/* value non-terminals: plain Java values computed by explicit actions
+   (every production must carry one -- the auto action would otherwise
+   emit garbage like `new String()` for them) */
 non terminal String package_spec, class_name, start_spec;
 non terminal String nt_id, label_id, opt_label, robust_id;
 non terminal String multipart_id, import_id, type_id;
 non terminal String typearglist, typearguement, wildcard;
 non terminal String star_or_plus, question_or_exclamation, opt_return_type;
-non terminal String id_ref, non_terminal;
-non terminal ImportNode import_spec;
-non terminal CodePartNode code_part;
-non terminal SymbolDeclNode symbol;
-non terminal PrecedenceNode preced;
-non terminal SymRef symbol_id, anon_expr;
-non terminal QuantifierNode quantifier;
-non terminal ProductionNode production;
-non terminal RhsNode rhs;
-non terminal PartNode prod_part;
+non terminal String non_terminal;
+non terminal opt_semi;
 
 /*----------------------------------------------------------------*/
 
@@ -203,17 +194,6 @@ spec ::=
 	preced*:precs
 	start_spec:start
 	production+:prods
-	{:
-	  RESULT = new SpecNode(pkgSym.<String>value(),
-	                        importsSym.<List<ImportNode>>value(),
-	                        clsSym.<String>value(),
-	                        codesSym.<List<CodePartNode>>value(),
-	                        symsSym.<List<SymbolDeclNode>>value(),
-	                        precsSym.<List<PrecedenceNode>>value(),
-	                        startSym.<String>value(),
-	                        prodsSym.<List<ProductionNode>>value(),
-	                        false);
-	:}
 	|
 	/* error recovery assuming something went wrong before symbols
 	   and we have TERMINAL or NON TERMINAL to sync on.  if we get an
@@ -225,17 +205,7 @@ spec ::=
 	preced*:precs
 	start_spec:start
 	production+:prods
-	{:
-	  /* sections parsed before the error are lost from the tree (no
-	     output is produced once a parse error is on record) */
-	  RESULT = new SpecNode(null, new ArrayList<>(), null,
-	                        new ArrayList<>(),
-	                        symsSym.<List<SymbolDeclNode>>value(),
-	                        precsSym.<List<PrecedenceNode>>value(),
-	                        startSym.<String>value(),
-	                        prodsSym.<List<ProductionNode>>value(),
-	                        true);
-	:}
+	{: RESULT = new NodeSpec(); :}
 	;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -255,13 +225,11 @@ import_spec ::=
 	IMPORT
 	import_id:target
 	SEMI
-	{: RESULT = new ImportNode(false, targetSym.<String>value()); :}
 	|
 	IMPORT
 	STATIC:st
 	import_id:target
 	SEMI
-	{: RESULT = new ImportNode(true, targetSym.<String>value()); :}
 	;
 
 class_name ::=
@@ -277,29 +245,9 @@ class_name ::=
 // (Lowering checks for a second part of any kind and warns)
 code_part ::=
 	ACTION:a CODE CODE_STRING:code opt_semi
-	{:
-	  RESULT = new CodePartNode(CodePartNode.Kind.ACTION,
-	      codeSym.<String>value(),
-	      (ComplexLocation) codeSym.getLocation());
-	:}
 	| PARSER:p CODE CODE_STRING:code opt_semi
-	{:
-	  RESULT = new CodePartNode(CodePartNode.Kind.PARSER,
-	      codeSym.<String>value(),
-	      (ComplexLocation) codeSym.getLocation());
-	:}
 	| INIT:i WITH CODE_STRING:code opt_semi
-	{:
-	  RESULT = new CodePartNode(CodePartNode.Kind.INIT,
-	      codeSym.<String>value(),
-	      (ComplexLocation) codeSym.getLocation());
-	:}
 	| SCAN:sc WITH CODE_STRING:code opt_semi
-	{:
-	  RESULT = new CodePartNode(CodePartNode.Kind.SCAN,
-	      codeSym.<String>value(),
-	      (ComplexLocation) codeSym.getLocation());
-	:}
 	;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -309,41 +257,33 @@ symbol ::=
 	type_id:ty
 	id_ref[COMMA !]+:names
 	SEMI
-	{: RESULT = new SymbolDeclNode(true, tySym.<String>value(),
-	      namesSym.<List<String>>value()); :}
 	|
 	TERMINAL:tkw
 	id_ref[COMMA !]+:names
 	SEMI
-	{: RESULT = new SymbolDeclNode(true, null,
-	      namesSym.<List<String>>value()); :}
 	|
 	non_terminal:ntkw
 	type_id:ty
 	id_ref[COMMA !]+:names
 	SEMI
-	{: RESULT = new SymbolDeclNode(false, tySym.<String>value(),
-	      namesSym.<List<String>>value()); :}
 	|
 	non_terminal:ntkw
 	id_ref[COMMA !]+:names
 	SEMI
-	{: RESULT = new SymbolDeclNode(false, null,
-	      namesSym.<List<String>>value()); :}
 	|
-	/* error recovery productions -- sync on semicolon; the empty
-	   declaration lowers to nothing (the old grammar produced null
+	/* error recovery productions -- sync on semicolon; the all-null
+	   sentinel node lowers to nothing (the old grammar produced null
 	   here and filtered it while building the list) */
 
 	TERMINAL
 	error
 	SEMI
-	{: RESULT = new SymbolDeclNode(true, null, new ArrayList<String>()); :}
+	{: RESULT = new NodeSymbol(); :}
 	|
 	non_terminal
 	error
 	SEMI
-	{: RESULT = new SymbolDeclNode(false, null, new ArrayList<String>()); :}
+	{: RESULT = new NodeSymbol(); :}
 	;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -351,18 +291,12 @@ symbol ::=
 preced ::=
 	PRECEDENCE LEFT:l
 	symbol_id[COMMA !]+:refs SEMI
-	{: RESULT = new PrecedenceNode(assoc.left,
-	      refsSym.<List<SymRef>>value()); :}
 	|
 	PRECEDENCE RIGHT:r
 	symbol_id[COMMA !]+:refs SEMI
-	{: RESULT = new PrecedenceNode(assoc.right,
-	      refsSym.<List<SymRef>>value()); :}
 	|
 	PRECEDENCE NONASSOC:n
 	symbol_id[COMMA !]+:refs SEMI
-	{: RESULT = new PrecedenceNode(assoc.nonassoc,
-	      refsSym.<List<SymRef>>value()); :}
 	;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -382,75 +316,39 @@ production ::=
 	COLON_COLON_EQUALS
 	rhs[BAR !]+:alts
 	SEMI
-	{:
-	  RESULT = new ProductionNode(lhsSym.<String>value(),
-	      (ComplexLocation) lhsSym.getLocation(),
-	      altsSym.<List<RhsNode>>value(), false);
-	:}
 	|
 	error
 	{: ErrorManager.getManager().emit_error("Syntax Error"); :}
 	SEMI
-	{: RESULT = new ProductionNode("ILLEGAL", null,
-	      new ArrayList<RhsNode>(), true); :}
+	{: RESULT = new NodeProduction(); :}
 	;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 rhs ::=
 	prod_part*:parts PERCENT_PREC symbol_id:prec PERCENT_NAMER ID:namer
-	{: RESULT = new RhsNode(partsSym.<List<PartNode>>value(),
-	      precSym.<SymRef>value(), namerSym.<String>value()); :}
 	|
 	prod_part*:parts PERCENT_NAMER ID:namer
-	{: RESULT = new RhsNode(partsSym.<List<PartNode>>value(),
-	      null, namerSym.<String>value()); :}
 	|
 	prod_part*:parts PERCENT_PREC symbol_id:prec
-	{: RESULT = new RhsNode(partsSym.<List<PartNode>>value(),
-	      precSym.<SymRef>value(), null); :}
 	|
 	prod_part*:parts
-	{: RESULT = new RhsNode(partsSym.<List<PartNode>>value(),
-	      null, null); :}
 	;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 prod_part ::=
 	SPREAD:s symbol_id:symid quantifier?:quant opt_label:labid
-	{:
-	  /* the part's anchor: the label token when there is one, otherwise
-	     the whole symbol reference (the ID or the parenthesized group) */
-	  var loc = labidSym.<String>value() != null
-	      ? (ComplexLocation) labidSym.getLocation()
-	      : (ComplexLocation) symidSym.getLocation();
-	  RESULT = new SymbolPartNode(true, symidSym.<SymRef>value(),
-	      quantSym.<QuantifierNode>value(), labidSym.<String>value(), loc);
-	:}
 	|
 	symbol_id:symid quantifier?:quant opt_label:labid
-	{:
-	  var loc = labidSym.<String>value() != null
-	      ? (ComplexLocation) labidSym.getLocation()
-	      : (ComplexLocation) symidSym.getLocation();
-	  RESULT = new SymbolPartNode(false, symidSym.<SymRef>value(),
-	      quantSym.<QuantifierNode>value(), labidSym.<String>value(), loc);
-	:}
 	|
 	CODE_STRING:code_str
-	{:
-	  RESULT = new ActionPartNode(code_strSym.<String>value(),
-	      (ComplexLocation) code_strSym.getLocation());
-	:}
 	;
 
 quantifier ::=
-  QUESTION:q {: RESULT = QuantifierNode.opt(); :}
-  | star_or_plus:sp {: RESULT = QuantifierNode.starPlus("*".equals(spSym.<String>value())); :}
-  | LBRACK symbol_id+:seps question_or_exclamation:qe RBRACK star_or_plus:sp {:
-    RESULT = QuantifierNode.bracket(sepsSym.<List<SymRef>>value(),
-        "*".equals(spSym.<String>value()), "?".equals(qeSym.<String>value())); :}
+  QUESTION:q
+  | star_or_plus:sp
+  | LBRACK symbol_id+:seps question_or_exclamation:qe RBRACK star_or_plus:sp
   ;
 
 star_or_plus ::=
@@ -534,11 +432,10 @@ type_id ::= multipart_id:m {: RESULT = mSym.<String>value(); :}
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* a name inside a terminal / non terminal declaration list; a node
-   wrapper in -ast mode, so the list box element is a node type */
+/* a name inside a terminal / non terminal declaration list; the node
+   wrapper keeps the list box element a node type */
 id_ref ::=
 	ID:the_id
-	{: RESULT = the_idSym.<String>value(); :}
 	;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -557,13 +454,11 @@ nt_id ::=
 
 symbol_id ::=
 	ID:the_id
-	{: RESULT = new NamedRefNode(the_idSym.<String>value()); :}
 	| anon_expr:anon
-	{: RESULT = anonSym.<SymRef>value(); :}
 	| error
 	{:
 		ErrorManager.getManager().emit_error("Illegal use of reserved word");
-		RESULT = new NamedRefNode("ILLEGAL");
+		RESULT = new NodeSymbolId();
 	:}
 	;
 
@@ -571,13 +466,6 @@ symbol_id ::=
 
 anon_expr ::=
 	LPAREN:lp opt_return_type:type rhs[BAR !]+:branches RPAREN
-	{:
-	  /* the branches' hidden non terminals and productions are now
-	     created by Lowering.lowerAnonExpr at the point of use */
-	  RESULT = new AnonExprNode(typeSym.<String>value(),
-	      branchesSym.<List<RhsNode>>value(),
-	      (ComplexLocation) lpSym.getLocation());
-	:}
 	;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

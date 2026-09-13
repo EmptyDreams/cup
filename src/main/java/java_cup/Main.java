@@ -525,7 +525,7 @@ public class Main {
         try {
             spec_tree =
                 (opt_do_debug ? parser_obj.debug_parse() : parser_obj.parse())
-                    .<java_cup.spec.SpecNode>value();
+                    .<NodeSpec>value();
             spec_corr = new SpecCorrelation();
             new Lowering(opt_do_debugsymbols, spec_corr).run(spec_tree);
         } catch (Exception e) {
@@ -580,9 +580,10 @@ public class Main {
     /* . . Internal Results of Generating the Parser . . */
     /* . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-    /** The parsed spec tree, retained for the tree-based passes (labels,
-     *  AST node building). */
-    protected static java_cup.spec.SpecNode spec_tree;
+    /** The parsed spec tree (generated Node* classes from the -ast-built
+     *  CupParser), retained for the tree-based passes (labels, AST node
+     *  building). */
+    protected static NodeSpec spec_tree;
 
     /** Correlation between the spec tree and the flat graph Lowering built
      *  from it; consumed by the AST node builder. */

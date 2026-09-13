@@ -102,36 +102,36 @@ public interface GrammarSymConstants {
   };
 
   /* non terminals */
-  int opt_semi = 0;
-  int spec = 1;
-  int package_spec = 2;
-  int class_name = 3;
-  int start_spec = 4;
-  int nt_id = 5;
-  int label_id = 6;
-  int opt_label = 7;
-  int robust_id = 8;
-  int multipart_id = 9;
-  int import_id = 10;
-  int type_id = 11;
-  int typearglist = 12;
-  int typearguement = 13;
-  int wildcard = 14;
-  int star_or_plus = 15;
-  int question_or_exclamation = 16;
-  int opt_return_type = 17;
-  int id_ref = 18;
-  int non_terminal = 19;
-  int import_spec = 20;
-  int code_part = 21;
-  int symbol = 22;
-  int preced = 23;
-  int symbol_id = 24;
-  int anon_expr = 25;
-  int quantifier = 26;
-  int production = 27;
-  int rhs = 28;
-  int prod_part = 29;
+  int spec = 0;
+  int import_spec = 1;
+  int code_part = 2;
+  int symbol = 3;
+  int preced = 4;
+  int production = 5;
+  int rhs = 6;
+  int prod_part = 7;
+  int quantifier = 8;
+  int symbol_id = 9;
+  int anon_expr = 10;
+  int id_ref = 11;
+  int package_spec = 12;
+  int class_name = 13;
+  int start_spec = 14;
+  int nt_id = 15;
+  int label_id = 16;
+  int opt_label = 17;
+  int robust_id = 18;
+  int multipart_id = 19;
+  int import_id = 20;
+  int type_id = 21;
+  int typearglist = 22;
+  int typearguement = 23;
+  int wildcard = 24;
+  int star_or_plus = 25;
+  int question_or_exclamation = 26;
+  int opt_return_type = 27;
+  int non_terminal = 28;
+  int opt_semi = 29;
   int _EBNF_LIST_0 = 30;
   int _EBNF_OPT_1 = 31;
   int _EBNF_LIST_2 = 32;
@@ -151,8 +151,18 @@ public interface GrammarSymConstants {
 
   /* non terminal names */
   String[] NON_TERMINAL_NAMES = new String[] {
-    "opt_semi",
     "spec",
+    "import_spec",
+    "code_part",
+    "symbol",
+    "preced",
+    "production",
+    "rhs",
+    "prod_part",
+    "quantifier",
+    "symbol_id",
+    "anon_expr",
+    "id_ref",
     "package_spec",
     "class_name",
     "start_spec",
@@ -169,18 +179,8 @@ public interface GrammarSymConstants {
     "star_or_plus",
     "question_or_exclamation",
     "opt_return_type",
-    "id_ref",
     "non_terminal",
-    "import_spec",
-    "code_part",
-    "symbol",
-    "preced",
-    "symbol_id",
-    "anon_expr",
-    "quantifier",
-    "production",
-    "rhs",
-    "prod_part",
+    "opt_semi",
     "_EBNF_LIST_0",
     "_EBNF_OPT_1",
     "_EBNF_LIST_2",

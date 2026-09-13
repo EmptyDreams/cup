@@ -25,6 +25,7 @@ abstract class ExecutingTask extends DefaultTask {
         def goldenNames = project.fileTree(dir: goldenDir, include: '*.java')
                 .collect { it.name }.sort()
         goldenNames.each { name ->
+            if (excl.contains(name)) return
             def generated = new File(genDir, name)
             if (!generated.exists()) {
                 failures.add("${genDir}/${name} was not generated (golden exists under ${goldenDir})")
@@ -88,7 +89,7 @@ dependencies {
     // Currently a committed local jar; once a Maven release with a working
     // -ast mode is published, swap this for the coordinate (e.g.
     // 'top.kmar.cup:java-cup:<version>') and delete the jar.
-    cup files('bin/java-cup-11.jar')
+    cup files('bin/java-cup-bootstrap.jar')
 }
 
 sourceSets {
@@ -112,13 +113,15 @@ tasks.register('generateCupParser', ExecutingTask) {
 
     doLast {
         // Regenerate CUP's own parser with the bootstrap generator declared in
-        // the `cup` configuration (self-hosting loop).
+        // the `cup` configuration (self-hosting loop). -ast Node%p makes the
+        // spec-tree node classes (NodeSpec and friends) generated too.
         execOps.exec {
             commandLine 'java', '-cp', configurations.cup.asPath, 'java_cup.Main',
                         '-parser', 'CupParser',
                         '-symbols', 'GrammarSymConstants',
                         '-interface',
                         '-nonterms',
+                        '-ast', 'Node%p',
                         '-destdir', 'build/generated/java_cup',
                         'src/cup/parser.cup'
             workingDir '.'
@@ -395,6 +398,35 @@ tasks.register('testAstLocation', ExecutingTask) {
 }
 
 jar.finalizedBy runtimeJar
+
+// The strong self-hosting gate: regenerate with the jar built from the
+// working tree (NOT the frozen bootstrap jar) and byte-compare against the
+// committed sources. A failure means the generator itself regressed -- the
+// bootstrap-jar-based generateCupParser cannot catch that on its own.
+tasks.register('checkSelfHost', ExecutingTask) {
+    dependsOn tasks.named('jar')
+
+    doLast {
+        execOps.exec {
+            commandLine 'java', '-cp', files(jar.archiveFile).asPath, 'java_cup.Main',
+                        '-parser', 'CupParser',
+                        '-symbols', 'GrammarSymConstants',
+                        '-interface',
+                        '-nonterms',
+                        '-ast', 'Node%p',
+                        '-destdir', 'build/selfhost/java_cup',
+                        'src/cup/parser.cup'
+            workingDir '.'
+        }
+        // Lexer.java is the jflex artifact, not a CUP output, so it has no
+        // counterpart in this regeneration.
+        def failures = diffGoldenNet('build/selfhost/java_cup', 'src/generated/java_cup', 'Lexer.java')
+        if (!failures.isEmpty()) {
+            throw new GradleException(
+                'self-host regeneration diverged from src/generated/java_cup:\n' + failures.join('\n'))
+        }
+    }
+}
 
 tasks.register('testCalc', ExecutingTask) {
     dependsOn(jar)

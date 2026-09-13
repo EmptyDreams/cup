@@ -1,27 +1,13 @@
 package java_cup;
 
-import java_cup.spec.AnonExprNode;
-import java_cup.spec.CodePartNode;
-import java_cup.spec.ImportNode;
-import java_cup.spec.NamedRefNode;
-import java_cup.spec.PartNode;
-import java_cup.spec.ActionPartNode;
-import java_cup.spec.PrecedenceNode;
-import java_cup.spec.ProductionNode;
-import java_cup.spec.QuantifierNode;
-import java_cup.spec.RhsNode;
-import java_cup.spec.SpecNode;
-import java_cup.spec.SymbolDeclNode;
-import java_cup.spec.SymbolPartNode;
-import java_cup.spec.SymRef;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Lowers the sugar-preserving spec tree into the internal grammar graph.
+ * Lowers the sugar-preserving spec tree (the generated Node* classes) into
+ * the internal grammar graph.
  *
  * <p>This class is a verbatim transplant of the semantic actions that used to
  * live in parser.cup's action-code block (add_lab / add_rhs_part /
@@ -53,7 +39,10 @@ public final class Lowering {
      * next constructed Production belongs to; cleared once recorded. Lets
      * handle_rhs_expr stamp the production into the correlation.
      */
-    private java_cup.spec.RhsNode pendingRhs = null;
+    private NodeRhs pendingRhs = null;
+
+    /** The four section kinds of a code part. */
+    private enum CodeKind { ACTION, PARSER, INIT, SCAN }
 
     /*---------------------------------------------------------------*/
     /* Ported instance state (was the parser.cup action-code block)  */
@@ -111,34 +100,39 @@ public final class Lowering {
      * precedence, start, productions), which is exactly the order the
      * parse-time actions ran in.
      */
-    public void run(SpecNode spec) throws Exception {
+    public void run(NodeSpec spec) throws Exception {
         /* declare "error" as a terminal and the start non terminal --
            the old position-0 action of the spec rule */
         symbols.put("error", new symbol_part(terminal.error));
         non_terms.put("$START", non_terminal.START_nt);
 
-        if (spec.packageName != null) {
-            emit.package_name = spec.packageName;
+        String packageName = Tree.str(spec.getPkg());
+        if (packageName != null) {
+            emit.package_name = packageName;
         }
-        for (ImportNode imp : spec.imports) {
-            emit.import_list.push(imp.isStatic ? " static " + imp.target : imp.target);
+        for (var impNode : Tree.elems(spec.getImports())) {
+            var imp = (NodeImportSpec) impNode;
+            emit.import_list.push(imp.getSt() != null
+                    ? " static " + Tree.str(imp.getTarget())
+                    : Tree.str(imp.getTarget()));
         }
-        if (spec.className != null) {
-            emit.parser_class_name = spec.className;
-            emit.symbol_const_class_name = spec.className + "Sym";
+        String className = Tree.str(spec.getCls());
+        if (className != null) {
+            emit.parser_class_name = className;
+            emit.symbol_const_class_name = className + "Sym";
         }
-        for (CodePartNode cp : spec.codeParts) {
-            lowerCodePart(cp);
+        for (var cpNode : Tree.elems(spec.getCodes())) {
+            lowerCodePart((NodeCodePart) cpNode);
         }
-        for (SymbolDeclNode sd : spec.symbolDecls) {
-            lowerSymbolDecl(sd);
+        for (var sdNode : Tree.elems(spec.getSyms())) {
+            lowerSymbolDecl((NodeSymbol) sdNode);
         }
-        for (PrecedenceNode p : spec.precedences) {
-            lowerPrecedence(p);
+        for (var pNode : Tree.elems(spec.getPrecs())) {
+            lowerPrecedence((NodePreced) pNode);
         }
-        lowerStart(spec.startName);
-        for (ProductionNode pn : spec.productions) {
-            lowerProduction(pn);
+        lowerStart(Tree.str(spec.getStart()));
+        for (var prodNode : Tree.elems(spec.getProds())) {
+            lowerProduction((NodeProduction) prodNode);
         }
     }
 
@@ -146,10 +140,18 @@ public final class Lowering {
     /* Directive sections                                             */
     /*---------------------------------------------------------------*/
 
-    private void lowerCodePart(CodePartNode cp) {
-        String current = null;
-        String redundantMessage = null;
-        switch (cp.kind) {
+    private void lowerCodePart(NodeCodePart cp) {
+        /* which keyword introduced the part discriminates the kind */
+        CodeKind kind = cp.getA() != null ? CodeKind.ACTION
+                : cp.getP() != null ? CodeKind.PARSER
+                : cp.getI() != null ? CodeKind.INIT
+                : cp.getSc() != null ? CodeKind.SCAN
+                : null;
+        if (kind == null) return; // error-recovery sentinel
+
+        String current;
+        String redundantMessage;
+        switch (kind) {
             case ACTION:
                 current = emit.action_code;
                 redundantMessage = "Redundant action code (skipping)";
@@ -166,13 +168,15 @@ public final class Lowering {
                 current = emit.scan_code;
                 redundantMessage = "Redundant scan code (skipping)";
                 break;
+            default:
+                throw new IllegalArgumentException(String.valueOf(kind));
         }
         if (current != null) {
             ErrorManager.getManager().emit_warning(redundantMessage);
             return;
         }
-        String decorated = attach_debug_symbol(get_new_debug_id(), cp.code);
-        switch (cp.kind) {
+        String decorated = attach_debug_symbol(get_new_debug_id(), Tree.str(cp.getCode()));
+        switch (kind) {
             case ACTION: emit.action_code = decorated; break;
             case PARSER: emit.parser_code = decorated; break;
             case INIT:   emit.init_code = decorated; break;
@@ -180,13 +184,16 @@ public final class Lowering {
         }
     }
 
-    private void lowerSymbolDecl(SymbolDeclNode sd) throws internal_error {
-        String type = sd.type == null ? "Object" : sd.type;
-        for (String name : sd.names) {
+    private void lowerSymbolDecl(NodeSymbol sd) throws internal_error {
+        boolean isTerminal = sd.getTkw() != null;
+        String type = Tree.str(sd.getTy());
+        if (type == null) type = "Object";
+        for (var nameNode : Tree.elems(sd.getNames())) {
+            String name = Tree.str(((NodeIdRef) nameNode).getTheId());
             if (symbols.get(name) != null) {
                 ErrorManager.getManager().emit_error(
                         "java_cup.runtime.Symbol \"" + name + "\" has already been declared");
-            } else if (sd.isTerminal) {
+            } else if (isTerminal) {
                 symbols.put(name, new symbol_part(new terminal(name, type)));
             } else {
                 non_terminal this_nt = new non_terminal(name, type);
@@ -196,12 +203,15 @@ public final class Lowering {
         }
     }
 
-    private void lowerPrecedence(PrecedenceNode p) throws Exception {
+    private void lowerPrecedence(NodePreced p) throws Exception {
         /* the old mid-rule action: update_precedence(p.side) */
-        _cur_side = p.side;
+        _cur_side = p.getL() != null ? assoc.left
+                : p.getR() != null ? assoc.right
+                : p.getN() != null ? assoc.nonassoc
+                : assoc.no_prec;
         _cur_prec++;
-        for (SymRef ref : p.terminalRefs) {
-            add_precedence(lowerTermId(ref));
+        for (var refNode : Tree.elems(p.getRefs())) {
+            add_precedence(lowerTermId((NodeSymbolId) refNode));
         }
     }
 
@@ -233,44 +243,45 @@ public final class Lowering {
     /* Productions                                                    */
     /*---------------------------------------------------------------*/
 
-    private void lowerProduction(ProductionNode pn) throws Exception {
-        if (pn.hasError) {
+    private void lowerProduction(NodeProduction pn) throws Exception {
+        String lhsName = Tree.str(pn.getLhs());
+        if (lhsName == null) {
             /* production ::= error SEMI */
             ErrorManager.getManager().emit_error("Syntax Error");
             return;
         }
         /* lookup the lhs nt */
-        lhs_nt = (non_terminal) non_terms.get(pn.lhsName);
+        lhs_nt = (non_terminal) non_terms.get(lhsName);
 
         /* if it wasn't declared, emit a message */
         if (lhs_nt == null) {
             if (ErrorManager.getManager().getErrorCount() == 0) {
                 ErrorManager.getManager().emit_warning(
-                        "LHS non terminal \"" + pn.lhsName + "\" has not been declared");
+                        "LHS non terminal \"" + lhsName + "\" has not been declared");
             }
         }
 
         /* reset the rhs accumulation */
         new_rhs();
-        for (RhsNode rn : pn.alternatives) {
-            lowerRhs(rn);
+        for (var rnNode : Tree.elems(pn.getAlts())) {
+            lowerRhs((NodeRhs) rnNode);
         }
     }
 
-    private void lowerRhs(RhsNode rn) throws Exception {
+    private void lowerRhs(NodeRhs rn) throws Exception {
         if (lhs_nt != null) corr.addAlternative(lhs_nt, rn);
-        for (PartNode part : rn.parts) {
-            lowerPart(part);
+        for (var partNode : Tree.elems(rn.getParts())) {
+            lowerPart((NodeProdPart) partNode);
         }
         pendingRhs = rn;
         /* the %prec terminal is checked after all parts, before the rhs
            action runs (that is when the old term_id action reduced) */
-        if (rn.precTerminal != null) {
+        if (rn.getPrec() != null) {
             /* historical quirk: `prod_part_list %prec T %namer N` calls
                handle_rhs_expr with is_namer = false, dropping the namer */
-            handle_rhs_expr(true, lowerTermId(rn.precTerminal), false, null);
-        } else if (rn.namer != null) {
-            handle_rhs_expr(false, null, true, rn.namer);
+            handle_rhs_expr(true, lowerTermId(rn.getPrec()), false, null);
+        } else if (rn.getNamer() != null) {
+            handle_rhs_expr(false, null, true, Tree.str(rn.getNamer()));
         } else {
             handle_rhs_expr(false, null, false, null);
         }
@@ -283,44 +294,49 @@ public final class Lowering {
      * separator list resolves (opt_quantifier), then the symbol lookup,
      * validations and quantifier desugaring run (the prod_part action).
      */
-    private void lowerPart(PartNode node) throws Exception {
-        if (node instanceof ActionPartNode) {
+    private void lowerPart(NodeProdPart part) throws Exception {
+        if (part.getCodeStr() != null) {
             /* add a new production part */
             add_rhs_part(new action_part(
-                    attach_debug_symbol(get_new_debug_id(), ((ActionPartNode) node).code)));
+                    attach_debug_symbol(get_new_debug_id(), Tree.str(part.getCodeStr()))));
             return;
         }
-        SymbolPartNode sp = (SymbolPartNode) node;
+        var symid = part.getSymid();
 
         /* symbol_id: an anonymous expression lowers here, a plain name is
            just a name (the old ObjectPair first/second) */
         String symName;
         String symType;
-        if (sp.ref instanceof AnonExprNode) {
-            AnonExprNode ae = (AnonExprNode) sp.ref;
-            symName = lowerAnonExpr(ae);
-            symType = ae.type;
+        var anon = symid.getAnon();
+        if (anon != null) {
+            symName = lowerAnonExpr(anon);
+            symType = Tree.str(anon.getType());
         } else {
-            symName = ((NamedRefNode) sp.ref).name;
+            symName = Tree.str(symid.getTheId());
             symType = null;
         }
 
         /* opt_quantifier: build the SymQuantifier, resolving the bracket
            separator list (each separator may itself be an anon expression) */
         SymQuantifier quantifier = null;
-        if (sp.quant != null) {
-            QuantifierNode q = sp.quant;
-            if (!q.isList) {
+        var quant = part.getQuant();
+        if (quant != null) {
+            if (quant.getQ() != null) {
+                /* X? */
                 quantifier = new SymQuantifier();
-            } else if (q.separators == null) {
-                quantifier = new SymQuantifier(null, q.allowEmpty, false);
+            } else if (quant.getSeps() == null) {
+                /* X* / X+ */
+                quantifier = new SymQuantifier(null, "*".equals(Tree.str(quant.getSp())), false);
             } else {
-                List<production_part> partList = new ArrayList<>(q.separators.size());
-                for (SymRef sep : q.separators) {
-                    production_part part = symbols.get(lowerSymRef(sep));
-                    partList.add(part);
+                /* [SEP...] !|*  /  [SEP...] !|+ */
+                List<production_part> partList = new ArrayList<>();
+                for (var sepNode : Tree.elems(quant.getSeps())) {
+                    production_part p = symbols.get(lowerSymRef((NodeSymbolId) sepNode));
+                    partList.add(p);
                 }
-                quantifier = new SymQuantifier(partList, q.allowEmpty, q.allowTail);
+                quantifier = new SymQuantifier(partList,
+                        "*".equals(Tree.str(quant.getSp())),
+                        "?".equals(Tree.str(quant.getQe())));
             }
         }
 
@@ -338,12 +354,12 @@ public final class Lowering {
                 ErrorManager.getManager().emit_error(
                         "Action symbol \"" + symName + "\" cannot be used with a quantifier.");
             }
-        } else if (sp.spread && symb.is_action()) {
+        } else if (part.hasS() && symb.is_action()) {
             if (ErrorManager.getManager().getErrorCount() == 0) {
                 ErrorManager.getManager().emit_error(
                         "Action symbol \"" + symName + "\" cannot use '... 'operator");
             }
-        } else if (sp.spread && quantifier != null && quantifier.isList()) {
+        } else if (part.hasS() && quantifier != null && quantifier.isList()) {
             if (ErrorManager.getManager().getErrorCount() == 0) {
                 ErrorManager.getManager().emit_error(
                         "List symbol \"" + symName + "\" cannot use '... 'operator");
@@ -364,9 +380,9 @@ public final class Lowering {
                 symb = new symbol_part(((symbol_part) symb).the_symbol(), null, symType);
             }
             /* add a labeled production part */
-            production_part part = add_lab(symb, sp.label);
-            if (sp.spread) ((symbol_part) part).markInline();
-            add_rhs_part(part);
+            production_part p = add_lab(symb, Tree.str(part.getLabid()));
+            if (part.hasS()) ((symbol_part) p).markInline();
+            add_rhs_part(p);
         }
     }
 
@@ -383,7 +399,7 @@ public final class Lowering {
      * one NT across use sites is incompatible with per-use-site branch
      * labels. Returns the hidden NT's name.
      */
-    private String lowerAnonExpr(AnonExprNode ae) throws Exception {
+    private String lowerAnonExpr(NodeAnonExpr ae) throws Exception {
         if (inAnon) {
             throw new internal_error("Anonymous non-terminals cannot be nested");
         }
@@ -408,10 +424,11 @@ public final class Lowering {
 
         inAnon = true;
         try {
-            for (RhsNode branch : ae.branches) {
+            for (var branchNode : Tree.elems(ae.getBranches())) {
+                var branch = (NodeRhs) branchNode;
                 new_rhs();
-                for (PartNode part : branch.parts) {
-                    lowerPart(part);
+                for (var partNode : Tree.elems(branch.getParts())) {
+                    lowerPart((NodeProdPart) partNode);
                 }
                 finishBranchProduction(hidden, branch);
             }
@@ -433,8 +450,8 @@ public final class Lowering {
      * (including the historical quirk that {@code %prec T %namer N} drops
      * the namer).
      */
-    private void finishBranchProduction(non_terminal hidden, RhsNode branch) throws Exception {
-        String termName = branch.precTerminal == null ? null : lowerTermId(branch.precTerminal);
+    private void finishBranchProduction(non_terminal hidden, NodeRhs branch) throws Exception {
+        String termName = branch.getPrec() == null ? null : lowerTermId(branch.getPrec());
         GrammarSymbol precSym = termName == null
                 ? null
                 : ((symbol_part) symbols.get(termName)).the_symbol();
@@ -452,7 +469,8 @@ public final class Lowering {
 
         Production p = buildProductionCore(
                 hidden, precSym, termName,
-                branch.namer != null && branch.precTerminal == null, branch.namer);
+                branch.getNamer() != null && branch.getPrec() == null,
+                Tree.str(branch.getNamer()));
         corr.recordRhs(branch, p);
         new_rhs();
     }
@@ -462,11 +480,12 @@ public final class Lowering {
      * target, precedence entry). Anonymous expressions lower in place,
      * exactly where the old symbol_id action ran.
      */
-    private String lowerSymRef(SymRef ref) throws Exception {
-        if (ref instanceof NamedRefNode) {
-            return ((NamedRefNode) ref).name;
+    private String lowerSymRef(NodeSymbolId ref) throws Exception {
+        var anon = ref.getAnon();
+        if (anon != null) {
+            return lowerAnonExpr(anon);
         }
-        return lowerAnonExpr((AnonExprNode) ref);
+        return Tree.str(ref.getTheId());
     }
 
     /*---------------------------------------------------------------*/
@@ -474,7 +493,7 @@ public final class Lowering {
     /*---------------------------------------------------------------*/
 
     /** check that the symbol_id is a terminal (ports term_id). */
-    private String lowerTermId(SymRef ref) throws Exception {
+    private String lowerTermId(NodeSymbolId ref) throws Exception {
         String name = lowerSymRef(ref);
         if (symbols.get(name) == null) {
             /* issue a message */
@@ -541,7 +560,7 @@ public final class Lowering {
     private void handle_rhs_expr(
             boolean is_prec, String term_name, boolean is_namer, String prod_name
     ) throws Exception {
-        java_cup.spec.RhsNode pending = pendingRhs;
+        NodeRhs pending = pendingRhs;
         pendingRhs = null;
         if (lhs_nt != null) {
             GrammarSymbol sym = null;

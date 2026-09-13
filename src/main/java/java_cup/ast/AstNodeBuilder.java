@@ -3,17 +3,16 @@ package java_cup.ast;
 import java_cup.ErrorManager;
 import java_cup.GrammarSymbol;
 import java_cup.Main;
+import java_cup.NodeAnonExpr;
+import java_cup.NodeProdPart;
+import java_cup.NodeQuantifier;
+import java_cup.NodeRhs;
+import java_cup.NodeSymbolId;
 import java_cup.Production;
 import java_cup.SpecCorrelation;
+import java_cup.Tree;
 import java_cup.internal_error;
 import java_cup.non_terminal;
-
-import java_cup.spec.ActionPartNode;
-import java_cup.spec.AnonExprNode;
-import java_cup.spec.NamedRefNode;
-import java_cup.spec.PartNode;
-import java_cup.spec.RhsNode;
-import java_cup.spec.SymbolPartNode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,7 +48,7 @@ public class AstNodeBuilder {
     private final Map<non_terminal, VirtualType> ntTypes = new HashMap<>();
 
     /** Memo for anonymous-expression node types (one per use site). */
-    private final IdentityHashMap<AnonExprNode, VirtualType> anonTypes = new IdentityHashMap<>();
+    private final IdentityHashMap<NodeAnonExpr, VirtualType> anonTypes = new IdentityHashMap<>();
 
     /**
      * Class name to type of the most recent build. Read by
@@ -101,7 +100,7 @@ public class AstNodeBuilder {
         classNameToType.put(type.className, type);
 
         Map<String, VirtualProduction> prods = new HashMap<>();
-        for (RhsNode rhs : corr.alternativesOf(nt)) {
+        for (NodeRhs rhs : corr.alternativesOf(nt)) {
             var vp = virtualProduction(rhs);
             if (vp == null) continue;
             prods.putIfAbsent(vp.name, vp);
@@ -116,7 +115,7 @@ public class AstNodeBuilder {
      * non-terminal Lowering expanded it into (the same name its branch
      * productions' auto actions reference), one alternative per branch.
      */
-    private VirtualType typeOfAnon(AnonExprNode ae) throws internal_error {
+    private VirtualType typeOfAnon(NodeAnonExpr ae) throws internal_error {
         var cached = anonTypes.get(ae);
         if (cached != null) return cached;
         non_terminal hidden = corr.anonNtOf(ae);
@@ -128,8 +127,8 @@ public class AstNodeBuilder {
         classNameToType.put(type.className, type);
 
         Map<String, VirtualProduction> prods = new HashMap<>();
-        for (RhsNode branch : ae.branches) {
-            var vp = virtualProduction(branch);
+        for (var branchNode : Tree.elems(ae.getBranches())) {
+            var vp = virtualProduction((NodeRhs) branchNode);
             if (vp == null) continue;
             prods.putIfAbsent(vp.name, vp);
         }
@@ -143,39 +142,58 @@ public class AstNodeBuilder {
      * or an anonymous branch). Null when it is not a builder alternative:
      * no lowered production exists for it, or it ends in a user action.
      */
-    private VirtualProduction virtualProduction(RhsNode rhs) throws internal_error {
+    private VirtualProduction virtualProduction(NodeRhs rhs) throws internal_error {
         Production flat = corr.productionOf(rhs);
         if (flat == null) return null;
         if (flat.hasTailAction()) return null;
 
         List<VirtualField> fields = new ArrayList<>();
-        for (PartNode part : rhs.parts) {
-            if (part instanceof ActionPartNode) continue;
-            var sp = (SymbolPartNode) part;
+        for (var partNode : Tree.elems(rhs.getParts())) {
+            var part = (NodeProdPart) partNode;
+            if (part.getCodeStr() != null) continue; // action part
+            String label = Tree.str(part.getLabid());
+            boolean spread = part.getS() != null;
             /* skip parts that are neither labeled nor spread: they carry no
                value into the node */
-            if (sp.label == null && !sp.spread) continue;
+            if (label == null && !spread) continue;
 
+            var symid = part.getSymid();
+            if (symid == null) continue;
             VirtualType t;
-            if (sp.ref instanceof AnonExprNode) {
-                t = typeOfAnon((AnonExprNode) sp.ref);
+            var anon = symid.getAnon();
+            if (anon != null) {
+                t = typeOfAnon(anon);
             } else {
-                var sym = corr.resolve(((NamedRefNode) sp.ref).name);
+                var sym = corr.resolve(Tree.str(symid.getTheId()));
                 if (sym == null) continue; // undeclared: already reported, no field
                 t = typeOf(sym);
             }
             if (t == null) continue;
 
+            /* decode the quantifier exactly the way Lowering does:
+               q set -> X?; no separators -> X* / X+; separators -> bracket */
+            var quant = part.getQuant();
+            boolean isList = false;
+            boolean allowEmpty = false;
+            if (quant != null) {
+                if (quant.getQ() != null) {
+                    allowEmpty = true;
+                } else {
+                    isList = true;
+                    allowEmpty = "*".equals(Tree.str(quant.getSp()));
+                }
+            }
+
             int mask = 0;
-            if (sp.spread) mask |= 0b1;
-            if (sp.quant != null && (!sp.quant.isList || sp.quant.allowEmpty)) mask |= 0b100;
-            if (sp.quant != null && sp.quant.isList) {
+            if (spread) mask |= 0b1;
+            if (quant != null && (!isList || allowEmpty)) mask |= 0b100;
+            if (quant != null && isList) {
                 /* mirrors the old toList call on the list-box NT; the symbol
                    id argument was never read */
                 t = t.toList(-1);
             }
-            var field = new VirtualField(sp.label, t, mask);
-            field.loc = sp.loc;
+            var field = new VirtualField(label, t, mask);
+            field.loc = Tree.anchor(part);
             fields.add(field);
         }
         return new VirtualProduction(flat.getProdName(), fields);

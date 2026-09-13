@@ -19,13 +19,18 @@ Prerequisites: JDK 11+, Gradle (or use the wrapper)
 
 ```bash
 # Build main and runtime JARs — the bootstrap sources (CupParser,
-# GrammarSymConstants, Lexer) are committed under src/generated, so a fresh
-# clone needs no prerequisite generation step
+# GrammarSymConstants, Lexer and the -ast node classes) are committed under
+# src/generated, so a fresh clone needs no prerequisite generation step
 ./gradlew jar
 
 # Regenerate CUP's own parser/lexer from the grammar (runs jflex too) and
 # verify the output still matches the committed sources byte-for-byte
 ./gradlew generateCupParser
+
+# Stronger self-hosting gate: regenerate with the jar built from the working
+# tree and byte-compare against the committed sources -- fails when the
+# generator itself regressed, not just when the grammar changed
+./gradlew checkSelfHost
 ```
 
 ## 📦 Release

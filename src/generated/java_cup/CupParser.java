@@ -8,9 +8,6 @@ package java_cup;
 import java.util.*;
 import java_cup.runtime.*;
 import java_cup.runtime.symbol.complex.*;
-import java_cup.spec.*;
-import java.util.List;
-import java.util.ArrayList;
 import java_cup.runtime.symbol.complex.ComplexLocation;
 
 /** CUP v0.11b 20160615 (GIT 3d0ae71) generated parser.
@@ -31,38 +28,38 @@ public class CupParser extends java_cup.runtime.lr_parser {
     "\000\002\042\004\000\002\043\003\000\002\043\002\000" +
     "\002\044\003\000\002\044\004\000\002\045\003\000\002" +
     "\045\004\000\002\046\003\000\002\046\002\000\002\047" +
-    "\003\000\002\047\004\000\002\003\012\000\002\003\007" +
-    "\000\002\004\005\000\002\004\002\000\002\026\005\000" +
-    "\002\026\006\000\002\005\002\000\002\005\005\000\002" +
-    "\027\006\000\002\027\006\000\002\027\006\000\002\027" +
-    "\006\000\002\050\003\000\002\050\005\000\002\030\006" +
-    "\000\002\030\005\000\002\030\006\000\002\030\005\000" +
-    "\002\030\005\000\002\030\005\000\002\051\003\000\002" +
-    "\051\005\000\002\031\006\000\002\031\006\000\002\031" +
-    "\006\000\002\006\006\000\002\006\002\000\002\052\003" +
-    "\000\002\052\005\000\002\035\006\000\002\053\002\000" +
-    "\002\035\005\000\002\054\003\000\002\054\004\000\002" +
-    "\055\003\000\002\055\002\000\002\036\007\000\002\036" +
-    "\005\000\002\036\005\000\002\036\003\000\002\056\003" +
-    "\000\002\056\002\000\002\037\006\000\002\037\005\000" +
-    "\002\037\003\000\002\034\003\000\002\034\003\000\002" +
-    "\057\003\000\002\057\004\000\002\034\007\000\002\021" +
-    "\003\000\002\021\003\000\002\022\003\000\002\022\003" +
-    "\000\002\023\004\000\002\023\002\000\002\011\004\000" +
-    "\002\011\002\000\002\013\005\000\002\013\006\000\002" +
-    "\013\003\000\002\016\003\000\002\016\005\000\002\017" +
-    "\003\000\002\017\003\000\002\020\003\000\002\020\005" +
-    "\000\002\020\005\000\002\014\005\000\002\014\003\000" +
-    "\002\015\003\000\002\015\005\000\002\024\003\000\002" +
-    "\007\003\000\002\007\003\000\002\032\003\000\002\032" +
-    "\003\000\002\032\003\000\002\033\006\000\002\010\003" +
-    "\000\002\012\003\000\002\012\003\000\002\012\003\000" +
-    "\002\012\003\000\002\012\003\000\002\012\003\000\002" +
-    "\012\003\000\002\012\003\000\002\012\003\000\002\012" +
-    "\003\000\002\012\003\000\002\012\003\000\002\012\003" +
-    "\000\002\012\003\000\002\012\003\000\002\012\003\000" +
-    "\002\025\004\000\002\025\003\000\002\002\002\000\002" +
-    "\002\003" });
+    "\003\000\002\047\004\000\002\002\012\000\002\002\007" +
+    "\000\002\016\005\000\002\016\002\000\002\003\005\000" +
+    "\002\003\006\000\002\017\002\000\002\017\005\000\002" +
+    "\004\006\000\002\004\006\000\002\004\006\000\002\004" +
+    "\006\000\002\050\003\000\002\050\005\000\002\005\006" +
+    "\000\002\005\005\000\002\005\006\000\002\005\005\000" +
+    "\002\005\005\000\002\005\005\000\002\051\003\000\002" +
+    "\051\005\000\002\006\006\000\002\006\006\000\002\006" +
+    "\006\000\002\020\006\000\002\020\002\000\002\052\003" +
+    "\000\002\052\005\000\002\007\006\000\002\053\002\000" +
+    "\002\007\005\000\002\054\003\000\002\054\004\000\002" +
+    "\055\003\000\002\055\002\000\002\010\007\000\002\010" +
+    "\005\000\002\010\005\000\002\010\003\000\002\056\003" +
+    "\000\002\056\002\000\002\011\006\000\002\011\005\000" +
+    "\002\011\003\000\002\012\003\000\002\012\003\000\002" +
+    "\057\003\000\002\057\004\000\002\012\007\000\002\033" +
+    "\003\000\002\033\003\000\002\034\003\000\002\034\003" +
+    "\000\002\035\004\000\002\035\002\000\002\023\004\000" +
+    "\002\023\002\000\002\025\005\000\002\025\006\000\002" +
+    "\025\003\000\002\030\003\000\002\030\005\000\002\031" +
+    "\003\000\002\031\003\000\002\032\003\000\002\032\005" +
+    "\000\002\032\005\000\002\026\005\000\002\026\003\000" +
+    "\002\027\003\000\002\027\005\000\002\015\003\000\002" +
+    "\021\003\000\002\021\003\000\002\013\003\000\002\013" +
+    "\003\000\002\013\003\000\002\014\006\000\002\022\003" +
+    "\000\002\024\003\000\002\024\003\000\002\024\003\000" +
+    "\002\024\003\000\002\024\003\000\002\024\003\000\002" +
+    "\024\003\000\002\024\003\000\002\024\003\000\002\024" +
+    "\003\000\002\024\003\000\002\024\003\000\002\024\003" +
+    "\000\002\024\003\000\002\024\003\000\002\024\003\000" +
+    "\002\036\004\000\002\036\003\000\002\037\002\000\002" +
+    "\037\003" });
 
   /** Access to production table. */
   @Override
@@ -339,86 +336,86 @@ public class CupParser extends java_cup.runtime.lr_parser {
   /** <code>reduce_goto</code> table. */
   protected static final short[][] _reduce_table = 
     unpackFromStrings(new String[] {
-    "\000\301\000\006\003\006\004\004\001\001\000\006\012" +
-    "\166\013\301\001\001\000\010\026\231\040\232\041\230" +
-    "\001\001\000\010\025\013\030\011\044\014\001\001\000" +
-    "\002\001\001\000\002\001\001\000\014\012\166\013\163" +
-    "\015\220\024\165\050\222\001\001\000\002\001\001\000" +
-    "\002\001\001\000\014\012\166\013\163\015\161\024\165" +
-    "\050\164\001\001\000\014\025\013\030\017\031\023\045" +
+    "\000\301\000\006\002\006\016\004\001\001\000\006\024" +
+    "\166\025\301\001\001\000\010\003\231\040\232\041\230" +
+    "\001\001\000\010\005\011\036\013\044\014\001\001\000" +
+    "\002\001\001\000\002\001\001\000\014\015\165\024\166" +
+    "\025\163\027\220\050\222\001\001\000\002\001\001\000" +
+    "\002\001\001\000\014\015\165\024\166\025\163\027\161" +
+    "\050\164\001\001\000\014\005\017\006\023\036\013\045" +
     "\022\046\021\001\001\000\002\001\001\000\002\001\001" +
-    "\000\002\001\001\000\002\001\001\000\004\006\025\001" +
-    "\001\000\004\031\024\001\001\000\002\001\001\000\002" +
-    "\001\001\000\010\007\034\035\035\047\036\001\001\000" +
-    "\002\001\001\000\004\007\030\001\001\000\002\001\001" +
+    "\000\002\001\001\000\002\001\001\000\004\020\025\001" +
+    "\001\000\004\006\024\001\001\000\002\001\001\000\002" +
+    "\001\001\000\010\007\035\021\034\047\036\001\001\000" +
+    "\002\001\001\000\004\021\030\001\001\000\002\001\001" +
     "\000\002\001\001\000\002\001\001\000\002\001\001\000" +
-    "\002\001\001\000\002\001\001\000\006\007\034\035\042" +
+    "\002\001\001\000\002\001\001\000\006\007\042\021\034" +
     "\001\001\000\004\053\040\001\001\000\002\001\001\000" +
-    "\002\001\001\000\002\001\001\000\020\032\057\033\052" +
-    "\036\054\037\046\052\047\054\045\055\044\001\001\000" +
-    "\002\001\001\000\010\032\057\033\052\037\136\001\001" +
+    "\002\001\001\000\002\001\001\000\020\010\054\011\046" +
+    "\013\057\014\052\052\047\054\045\055\044\001\001\000" +
+    "\002\001\001\000\010\011\136\013\057\014\052\001\001" +
     "\000\002\001\001\000\002\001\001\000\002\001\001\000" +
-    "\004\023\127\001\001\000\002\001\001\000\002\001\001" +
-    "\000\002\001\001\000\002\001\001\000\006\032\123\033" +
-    "\052\001\001\000\010\021\066\034\063\056\060\001\001" +
-    "\000\004\011\077\001\001\000\002\001\001\000\010\032" +
-    "\070\033\052\057\067\001\001\000\002\001\001\000\002" +
-    "\001\001\000\002\001\001\000\002\001\001\000\010\022" +
-    "\072\032\073\033\052\001\001\000\002\001\001\000\002" +
+    "\004\035\127\001\001\000\002\001\001\000\002\001\001" +
+    "\000\002\001\001\000\002\001\001\000\006\013\123\014" +
+    "\052\001\001\000\010\012\063\033\066\056\060\001\001" +
+    "\000\004\023\077\001\001\000\002\001\001\000\010\013" +
+    "\070\014\052\057\067\001\001\000\002\001\001\000\002" +
+    "\001\001\000\002\001\001\000\002\001\001\000\010\013" +
+    "\073\014\052\034\072\001\001\000\002\001\001\000\002" +
     "\001\001\000\002\001\001\000\002\001\001\000\002\001" +
-    "\001\000\004\021\076\001\001\000\002\001\001\000\002" +
-    "\001\001\000\006\010\122\012\115\001\001\000\002\001" +
+    "\001\000\004\033\076\001\001\000\002\001\001\000\002" +
+    "\001\001\000\006\022\122\024\115\001\001\000\002\001" +
     "\001\000\002\001\001\000\002\001\001\000\002\001\001" +
     "\000\002\001\001\000\002\001\001\000\002\001\001\000" +
     "\002\001\001\000\002\001\001\000\002\001\001\000\002" +
     "\001\001\000\002\001\001\000\002\001\001\000\002\001" +
     "\001\000\002\001\001\000\002\001\001\000\002\001\001" +
-    "\000\002\001\001\000\010\021\066\034\063\056\124\001" +
-    "\001\000\004\011\125\001\001\000\002\001\001\000\002" +
-    "\001\001\000\020\032\057\033\052\036\054\037\046\052" +
+    "\000\002\001\001\000\010\012\063\033\066\056\124\001" +
+    "\001\000\004\023\125\001\001\000\002\001\001\000\002" +
+    "\001\001\000\020\010\054\011\046\013\057\014\052\052" +
     "\130\054\045\055\044\001\001\000\002\001\001\000\016" +
-    "\032\057\033\052\036\133\037\046\054\045\055\044\001" +
+    "\010\133\011\046\013\057\014\052\054\045\055\044\001" +
     "\001\000\002\001\001\000\002\001\001\000\002\001\001" +
     "\000\002\001\001\000\002\001\001\000\002\001\001\000" +
-    "\006\032\141\033\052\001\001\000\002\001\001\000\002" +
-    "\001\001\000\002\001\001\000\002\001\001\000\010\032" +
-    "\151\033\052\051\157\001\001\000\010\032\151\033\052" +
-    "\051\155\001\001\000\010\032\151\033\052\051\150\001" +
-    "\001\000\002\001\001\000\002\001\001\000\006\032\154" +
-    "\033\052\001\001\000\002\001\001\000\002\001\001\000" +
+    "\006\013\141\014\052\001\001\000\002\001\001\000\002" +
+    "\001\001\000\002\001\001\000\002\001\001\000\010\013" +
+    "\151\014\052\051\157\001\001\000\010\013\151\014\052" +
+    "\051\155\001\001\000\010\013\151\014\052\051\150\001" +
+    "\001\000\002\001\001\000\002\001\001\000\006\013\154" +
+    "\014\052\001\001\000\002\001\001\000\002\001\001\000" +
     "\002\001\001\000\002\001\001\000\002\001\001\000\002" +
-    "\001\001\000\006\024\165\050\216\001\001\000\002\001" +
+    "\001\001\000\006\015\165\050\216\001\001\000\002\001" +
     "\001\000\002\001\001\000\002\001\001\000\002\001\001" +
-    "\000\002\001\001\000\002\001\001\000\004\024\172\001" +
+    "\000\002\001\001\000\002\001\001\000\004\015\172\001" +
     "\001\000\002\001\001\000\002\001\001\000\002\001\001" +
-    "\000\004\012\214\001\001\000\016\012\166\013\163\015" +
-    "\176\016\202\017\201\020\200\001\001\000\002\001\001" +
+    "\000\004\024\214\001\001\000\016\024\166\025\163\027" +
+    "\176\030\202\031\201\032\200\001\001\000\002\001\001" +
     "\000\002\001\001\000\002\001\001\000\002\001\001\000" +
-    "\002\001\001\000\014\012\166\013\163\015\176\017\205" +
-    "\020\200\001\001\000\002\001\001\000\002\001\001\000" +
-    "\010\012\166\013\163\015\213\001\001\000\010\012\166" +
-    "\013\163\015\210\001\001\000\002\001\001\000\002\001" +
+    "\002\001\001\000\014\024\166\025\163\027\176\031\205" +
+    "\032\200\001\001\000\002\001\001\000\002\001\001\000" +
+    "\010\024\166\025\163\027\213\001\001\000\010\024\166" +
+    "\025\163\027\210\001\001\000\002\001\001\000\002\001" +
     "\001\000\002\001\001\000\002\001\001\000\002\001\001" +
     "\000\002\001\001\000\002\001\001\000\002\001\001\000" +
-    "\006\024\165\050\225\001\001\000\002\001\001\000\002" +
+    "\006\015\165\050\225\001\001\000\002\001\001\000\002" +
     "\001\001\000\002\001\001\000\002\001\001\000\002\001" +
-    "\001\000\002\001\001\000\010\012\166\013\273\014\271" +
-    "\001\001\000\004\005\235\001\001\000\002\001\001\000" +
-    "\004\026\233\001\001\000\002\001\001\000\002\001\001" +
-    "\000\010\027\241\042\243\043\242\001\001\000\002\001" +
+    "\001\000\002\001\001\000\010\024\166\025\273\026\271" +
+    "\001\001\000\004\017\235\001\001\000\002\001\001\000" +
+    "\004\003\233\001\001\000\002\001\001\000\002\001\001" +
+    "\000\010\004\241\042\243\043\242\001\001\000\002\001" +
     "\001\000\002\001\001\000\002\001\001\000\002\001\001" +
-    "\000\010\025\013\030\011\044\252\001\001\000\004\027" +
+    "\000\010\005\011\036\013\044\252\001\001\000\004\004" +
     "\251\001\001\000\002\001\001\000\002\001\001\000\004" +
-    "\002\247\001\001\000\002\001\001\000\002\001\001\000" +
-    "\002\001\001\000\014\025\013\030\017\031\023\045\022" +
-    "\046\253\001\001\000\004\006\254\001\001\000\010\007" +
-    "\034\035\035\047\255\001\001\000\006\007\034\035\042" +
-    "\001\001\000\002\001\001\000\004\002\260\001\001\000" +
-    "\002\001\001\000\002\001\001\000\004\002\263\001\001" +
-    "\000\002\001\001\000\002\001\001\000\004\002\266\001" +
+    "\037\247\001\001\000\002\001\001\000\002\001\001\000" +
+    "\002\001\001\000\014\005\017\006\023\036\013\045\022" +
+    "\046\253\001\001\000\004\020\254\001\001\000\010\007" +
+    "\035\021\034\047\255\001\001\000\006\007\042\021\034" +
+    "\001\001\000\002\001\001\000\004\037\260\001\001\000" +
+    "\002\001\001\000\002\001\001\000\004\037\263\001\001" +
+    "\000\002\001\001\000\002\001\001\000\004\037\266\001" +
     "\001\000\002\001\001\000\002\001\001\000\002\001\001" +
-    "\000\002\001\001\000\010\012\166\013\273\014\276\001" +
-    "\001\000\002\001\001\000\004\012\214\001\001\000\002" +
+    "\000\002\001\001\000\010\024\166\025\273\026\276\001" +
+    "\001\000\002\001\001\000\004\024\214\001\001\000\002" +
     "\001\001\000\002\001\001\000\002\001\001\000\002\001" +
     "\001\000\002\001\001\000\002\001\001" });
 
@@ -520,7 +517,9 @@ protected class CUP$CupParser$actions {
 
   /* The former helper routines and accumulators (add_lab, add_rhs_part,
      handle_rhs_expr, the symbol tables, ...) now live in java_cup.Lowering.
-     The actions in this grammar only construct spec tree nodes. */
+     The actions in this grammar only compute string values and produce
+     sentinel nodes for error recovery; the spec tree itself is built by
+     the -ast auto actions. */
 
 
   /** Method 0 with the actual generated action code for actions 0 to 300. */
@@ -541,8 +540,7 @@ protected class CUP$CupParser$actions {
               Object RESULT =null;
 
               var start_valSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var start_valLoc = (java_cup.runtime.symbol.complex.ComplexLocation) start_valSym.getLocation();
-              SpecNode start_val = start_valSym.<SpecNode>value();
+              AstNode start_val = start_valSym.<AstNode>value();
 		RESULT = start_val;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 0,
@@ -555,10 +553,10 @@ protected class CUP$CupParser$actions {
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 1: { // _EBNF_LIST_0 ::= import_spec 
-              List<ImportNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-var list = new ArrayList<ImportNode>();
-list.add(CUP$CupParser$stack.peek().<ImportNode>value());
+var list = new ArrayList<AstNode>();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 30,
@@ -569,10 +567,10 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 2: { // _EBNF_LIST_0 ::= _EBNF_LIST_0 import_spec 
-              List<ImportNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-List<ImportNode> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-1).<List<ImportNode>>value();
-list.add(CUP$CupParser$stack.peek().<ImportNode>value());
+List<AstNode> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-1).<List<AstNode>>value();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 30,
@@ -583,9 +581,9 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 3: { // _EBNF_OPT_1 ::= _EBNF_LIST_0 
-              List<ImportNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-RESULT = CUP$CupParser$stack.peek().<List<ImportNode>>value();
+RESULT = CUP$CupParser$stack.peek().<List<AstNode>>value();
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 31,
                 CUP$CupParser$stack.peek(),
@@ -595,22 +593,22 @@ RESULT = CUP$CupParser$stack.peek().<List<ImportNode>>value();
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 4: { // _EBNF_OPT_1 ::= 
-              List<ImportNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-RESULT = java.util.Collections.<ImportNode>emptyList();
+RESULT = java.util.Collections.<AstNode>emptyList();
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 31,
-                CUP$CupParser$stack.peek(),
+                cur_token,
                 RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 5: { // _EBNF_LIST_2 ::= code_part 
-              List<CodePartNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-var list = new ArrayList<CodePartNode>();
-list.add(CUP$CupParser$stack.peek().<CodePartNode>value());
+var list = new ArrayList<AstNode>();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 32,
@@ -621,10 +619,10 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 6: { // _EBNF_LIST_2 ::= _EBNF_LIST_2 code_part 
-              List<CodePartNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-List<CodePartNode> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-1).<List<CodePartNode>>value();
-list.add(CUP$CupParser$stack.peek().<CodePartNode>value());
+List<AstNode> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-1).<List<AstNode>>value();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 32,
@@ -635,9 +633,9 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 7: { // _EBNF_OPT_3 ::= _EBNF_LIST_2 
-              List<CodePartNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-RESULT = CUP$CupParser$stack.peek().<List<CodePartNode>>value();
+RESULT = CUP$CupParser$stack.peek().<List<AstNode>>value();
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 33,
                 CUP$CupParser$stack.peek(),
@@ -647,22 +645,22 @@ RESULT = CUP$CupParser$stack.peek().<List<CodePartNode>>value();
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 8: { // _EBNF_OPT_3 ::= 
-              List<CodePartNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-RESULT = java.util.Collections.<CodePartNode>emptyList();
+RESULT = java.util.Collections.<AstNode>emptyList();
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 33,
-                CUP$CupParser$stack.peek(),
+                cur_token,
                 RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 9: { // _EBNF_LIST_4 ::= symbol 
-              List<SymbolDeclNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-var list = new ArrayList<SymbolDeclNode>();
-list.add(CUP$CupParser$stack.peek().<SymbolDeclNode>value());
+var list = new ArrayList<AstNode>();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 34,
@@ -673,10 +671,10 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 10: { // _EBNF_LIST_4 ::= _EBNF_LIST_4 symbol 
-              List<SymbolDeclNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-List<SymbolDeclNode> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-1).<List<SymbolDeclNode>>value();
-list.add(CUP$CupParser$stack.peek().<SymbolDeclNode>value());
+List<AstNode> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-1).<List<AstNode>>value();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 34,
@@ -687,10 +685,10 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 11: { // _EBNF_LIST_5 ::= preced 
-              List<PrecedenceNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-var list = new ArrayList<PrecedenceNode>();
-list.add(CUP$CupParser$stack.peek().<PrecedenceNode>value());
+var list = new ArrayList<AstNode>();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 35,
@@ -701,10 +699,10 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 12: { // _EBNF_LIST_5 ::= _EBNF_LIST_5 preced 
-              List<PrecedenceNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-List<PrecedenceNode> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-1).<List<PrecedenceNode>>value();
-list.add(CUP$CupParser$stack.peek().<PrecedenceNode>value());
+List<AstNode> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-1).<List<AstNode>>value();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 35,
@@ -715,9 +713,9 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 13: { // _EBNF_OPT_6 ::= _EBNF_LIST_5 
-              List<PrecedenceNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-RESULT = CUP$CupParser$stack.peek().<List<PrecedenceNode>>value();
+RESULT = CUP$CupParser$stack.peek().<List<AstNode>>value();
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 36,
                 CUP$CupParser$stack.peek(),
@@ -727,22 +725,22 @@ RESULT = CUP$CupParser$stack.peek().<List<PrecedenceNode>>value();
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 14: { // _EBNF_OPT_6 ::= 
-              List<PrecedenceNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-RESULT = java.util.Collections.<PrecedenceNode>emptyList();
+RESULT = java.util.Collections.<AstNode>emptyList();
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 36,
-                CUP$CupParser$stack.peek(),
+                cur_token,
                 RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 15: { // _EBNF_LIST_7 ::= production 
-              List<ProductionNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-var list = new ArrayList<ProductionNode>();
-list.add(CUP$CupParser$stack.peek().<ProductionNode>value());
+var list = new ArrayList<AstNode>();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 37,
@@ -753,10 +751,10 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 16: { // _EBNF_LIST_7 ::= _EBNF_LIST_7 production 
-              List<ProductionNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-List<ProductionNode> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-1).<List<ProductionNode>>value();
-list.add(CUP$CupParser$stack.peek().<ProductionNode>value());
+List<AstNode> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-1).<List<AstNode>>value();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 37,
@@ -767,45 +765,29 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 17: { // spec ::= package_spec _EBNF_OPT_1 class_name _EBNF_OPT_3 _EBNF_LIST_4 _EBNF_OPT_6 start_spec _EBNF_LIST_7 
-              SpecNode RESULT =null;
+              AstNode RESULT =null;
 
               var pkgSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-7);
-              var pkgLoc = (java_cup.runtime.symbol.complex.ComplexLocation) pkgSym.getLocation();
-              String pkg = pkgSym.<String>value();
               var importsSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-6);
-              var importsLoc = (java_cup.runtime.symbol.complex.ComplexLocation) importsSym.getLocation();
-              List<ImportNode> imports = importsSym.<List<ImportNode>>value();
               var clsSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-5);
-              var clsLoc = (java_cup.runtime.symbol.complex.ComplexLocation) clsSym.getLocation();
-              String cls = clsSym.<String>value();
               var codesSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-4);
-              var codesLoc = (java_cup.runtime.symbol.complex.ComplexLocation) codesSym.getLocation();
-              List<CodePartNode> codes = codesSym.<List<CodePartNode>>value();
               var symsSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-3);
-              var symsLoc = (java_cup.runtime.symbol.complex.ComplexLocation) symsSym.getLocation();
-              List<SymbolDeclNode> syms = symsSym.<List<SymbolDeclNode>>value();
               var precsSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var precsLoc = (java_cup.runtime.symbol.complex.ComplexLocation) precsSym.getLocation();
-              List<PrecedenceNode> precs = precsSym.<List<PrecedenceNode>>value();
               var startSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var startLoc = (java_cup.runtime.symbol.complex.ComplexLocation) startSym.getLocation();
-              String start = startSym.<String>value();
               var prodsSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var prodsLoc = (java_cup.runtime.symbol.complex.ComplexLocation) prodsSym.getLocation();
-              List<ProductionNode> prods = prodsSym.<List<ProductionNode>>value();
-		
-	  RESULT = new SpecNode(pkgSym.<String>value(),
-	                        importsSym.<List<ImportNode>>value(),
-	                        clsSym.<String>value(),
-	                        codesSym.<List<CodePartNode>>value(),
-	                        symsSym.<List<SymbolDeclNode>>value(),
-	                        precsSym.<List<PrecedenceNode>>value(),
-	                        startSym.<String>value(),
-	                        prodsSym.<List<ProductionNode>>value(),
-	                        false);
-	
+              NodeSpec CUP$CupParser$treeNode = NodeSpec.buildSjZdUcPYP(
+                pkgSym,
+                importsSym,
+                clsSym,
+                codesSym,
+                symsSym,
+                precsSym,
+                startSym,
+                prodsSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                1,
+                0,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-7, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -813,33 +795,15 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 18: { // spec ::= error _EBNF_LIST_4 _EBNF_OPT_6 start_spec _EBNF_LIST_7 
-              SpecNode RESULT =null;
+              AstNode RESULT =null;
 
               var symsSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-3);
-              var symsLoc = (java_cup.runtime.symbol.complex.ComplexLocation) symsSym.getLocation();
-              List<SymbolDeclNode> syms = symsSym.<List<SymbolDeclNode>>value();
               var precsSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var precsLoc = (java_cup.runtime.symbol.complex.ComplexLocation) precsSym.getLocation();
-              List<PrecedenceNode> precs = precsSym.<List<PrecedenceNode>>value();
               var startSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var startLoc = (java_cup.runtime.symbol.complex.ComplexLocation) startSym.getLocation();
-              String start = startSym.<String>value();
               var prodsSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var prodsLoc = (java_cup.runtime.symbol.complex.ComplexLocation) prodsSym.getLocation();
-              List<ProductionNode> prods = prodsSym.<List<ProductionNode>>value();
-		
-	  /* sections parsed before the error are lost from the tree (no
-	     output is produced once a parse error is on record) */
-	  RESULT = new SpecNode(null, new ArrayList<>(), null,
-	                        new ArrayList<>(),
-	                        symsSym.<List<SymbolDeclNode>>value(),
-	                        precsSym.<List<PrecedenceNode>>value(),
-	                        startSym.<String>value(),
-	                        prodsSym.<List<ProductionNode>>value(),
-	                        true);
-	
+		 RESULT = new NodeSpec(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                1,
+                0,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-4, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -850,11 +814,9 @@ RESULT = list;
               String RESULT =null;
 
               var nameSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var nameLoc = (java_cup.runtime.symbol.complex.ComplexLocation) nameSym.getLocation();
-              String name = nameSym.<String>value();
 		 RESULT = nameSym.<String>value(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                2,
+                12,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-2, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -866,22 +828,23 @@ RESULT = list;
 
 		 RESULT = null; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                2,
-                CUP$CupParser$stack.peek(),
+                12,
+                cur_token,
                 RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 21: { // import_spec ::= IMPORT import_id SEMI 
-              ImportNode RESULT =null;
+              AstNode RESULT =null;
 
               var targetSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var targetLoc = (java_cup.runtime.symbol.complex.ComplexLocation) targetSym.getLocation();
-              String target = targetSym.<String>value();
-		 RESULT = new ImportNode(false, targetSym.<String>value()); 
+              NodeImportSpec CUP$CupParser$treeNode = NodeImportSpec.buildSTSaJNIJy(
+                targetSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                20,
+                1,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-2, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -889,17 +852,17 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 22: { // import_spec ::= IMPORT STATIC import_id SEMI 
-              ImportNode RESULT =null;
+              AstNode RESULT =null;
 
               var stSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var stLoc = (java_cup.runtime.symbol.complex.ComplexLocation) stSym.getLocation();
-              Object st = stSym.<Object>value();
               var targetSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var targetLoc = (java_cup.runtime.symbol.complex.ComplexLocation) targetSym.getLocation();
-              String target = targetSym.<String>value();
-		 RESULT = new ImportNode(true, targetSym.<String>value()); 
+              NodeImportSpec CUP$CupParser$treeNode = NodeImportSpec.buildS8TEhbwzn(
+                stSym,
+                targetSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                20,
+                1,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-3, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -911,8 +874,8 @@ RESULT = list;
 
 		 RESULT = null; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                3,
-                CUP$CupParser$stack.peek(),
+                13,
+                cur_token,
                 RESULT
               );
             break;
@@ -922,11 +885,9 @@ RESULT = list;
               String RESULT =null;
 
               var idSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var idLoc = (java_cup.runtime.symbol.complex.ComplexLocation) idSym.getLocation();
-              String id = idSym.<String>value();
 		 RESULT = idSym.<String>value(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                3,
+                13,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-2, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -934,21 +895,17 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 25: { // code_part ::= ACTION CODE CODE_STRING opt_semi 
-              CodePartNode RESULT =null;
+              AstNode RESULT =null;
 
               var aSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-3);
-              var aLoc = (java_cup.runtime.symbol.complex.ComplexLocation) aSym.getLocation();
-              Object a = aSym.<Object>value();
               var codeSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var codeLoc = (java_cup.runtime.symbol.complex.ComplexLocation) codeSym.getLocation();
-              String code = codeSym.<String>value();
-		
-	  RESULT = new CodePartNode(CodePartNode.Kind.ACTION,
-	      codeSym.<String>value(),
-	      (ComplexLocation) codeSym.getLocation());
-	
+              NodeCodePart CUP$CupParser$treeNode = NodeCodePart.buildSyPTwF0rI(
+                aSym,
+                codeSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                21,
+                2,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-3, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -956,21 +913,17 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 26: { // code_part ::= PARSER CODE CODE_STRING opt_semi 
-              CodePartNode RESULT =null;
+              AstNode RESULT =null;
 
               var pSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-3);
-              var pLoc = (java_cup.runtime.symbol.complex.ComplexLocation) pSym.getLocation();
-              Object p = pSym.<Object>value();
               var codeSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var codeLoc = (java_cup.runtime.symbol.complex.ComplexLocation) codeSym.getLocation();
-              String code = codeSym.<String>value();
-		
-	  RESULT = new CodePartNode(CodePartNode.Kind.PARSER,
-	      codeSym.<String>value(),
-	      (ComplexLocation) codeSym.getLocation());
-	
+              NodeCodePart CUP$CupParser$treeNode = NodeCodePart.buildSDUKf9l5I(
+                pSym,
+                codeSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                21,
+                2,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-3, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -978,21 +931,17 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 27: { // code_part ::= INIT WITH CODE_STRING opt_semi 
-              CodePartNode RESULT =null;
+              AstNode RESULT =null;
 
               var iSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-3);
-              var iLoc = (java_cup.runtime.symbol.complex.ComplexLocation) iSym.getLocation();
-              Object i = iSym.<Object>value();
               var codeSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var codeLoc = (java_cup.runtime.symbol.complex.ComplexLocation) codeSym.getLocation();
-              String code = codeSym.<String>value();
-		
-	  RESULT = new CodePartNode(CodePartNode.Kind.INIT,
-	      codeSym.<String>value(),
-	      (ComplexLocation) codeSym.getLocation());
-	
+              NodeCodePart CUP$CupParser$treeNode = NodeCodePart.buildSrqYp4yKA(
+                iSym,
+                codeSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                21,
+                2,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-3, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1000,21 +949,17 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 28: { // code_part ::= SCAN WITH CODE_STRING opt_semi 
-              CodePartNode RESULT =null;
+              AstNode RESULT =null;
 
               var scSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-3);
-              var scLoc = (java_cup.runtime.symbol.complex.ComplexLocation) scSym.getLocation();
-              Object sc = scSym.<Object>value();
               var codeSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var codeLoc = (java_cup.runtime.symbol.complex.ComplexLocation) codeSym.getLocation();
-              String code = codeSym.<String>value();
-		
-	  RESULT = new CodePartNode(CodePartNode.Kind.SCAN,
-	      codeSym.<String>value(),
-	      (ComplexLocation) codeSym.getLocation());
-	
+              NodeCodePart CUP$CupParser$treeNode = NodeCodePart.buildSC4kdk1eM(
+                scSym,
+                codeSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                21,
+                2,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-3, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1022,10 +967,10 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 29: { // _EBNF_LIST_8 ::= id_ref 
-              List<String> RESULT =null;
+              List<AstNode> RESULT =null;
 
-var list = new ArrayList<String>();
-list.add(CUP$CupParser$stack.peek().<String>value());
+var list = new ArrayList<AstNode>();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 38,
@@ -1036,10 +981,10 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 30: { // _EBNF_LIST_8 ::= _EBNF_LIST_8 COMMA id_ref 
-              List<String> RESULT =null;
+              List<AstNode> RESULT =null;
 
-List<String> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-2).<List<String>>value();
-list.add(CUP$CupParser$stack.peek().<String>value());
+List<AstNode> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-2).<List<AstNode>>value();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 38,
@@ -1050,21 +995,19 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 31: { // symbol ::= TERMINAL type_id _EBNF_LIST_8 SEMI 
-              SymbolDeclNode RESULT =null;
+              AstNode RESULT =null;
 
               var tkwSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-3);
-              var tkwLoc = (java_cup.runtime.symbol.complex.ComplexLocation) tkwSym.getLocation();
-              Object tkw = tkwSym.<Object>value();
               var tySym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var tyLoc = (java_cup.runtime.symbol.complex.ComplexLocation) tySym.getLocation();
-              String ty = tySym.<String>value();
               var namesSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var namesLoc = (java_cup.runtime.symbol.complex.ComplexLocation) namesSym.getLocation();
-              List<String> names = namesSym.<List<String>>value();
-		 RESULT = new SymbolDeclNode(true, tySym.<String>value(),
-	      namesSym.<List<String>>value()); 
+              NodeSymbol CUP$CupParser$treeNode = NodeSymbol.buildSnmZxdqDZ(
+                tkwSym,
+                tySym,
+                namesSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                22,
+                3,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-3, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1072,18 +1015,17 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 32: { // symbol ::= TERMINAL _EBNF_LIST_8 SEMI 
-              SymbolDeclNode RESULT =null;
+              AstNode RESULT =null;
 
               var tkwSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var tkwLoc = (java_cup.runtime.symbol.complex.ComplexLocation) tkwSym.getLocation();
-              Object tkw = tkwSym.<Object>value();
               var namesSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var namesLoc = (java_cup.runtime.symbol.complex.ComplexLocation) namesSym.getLocation();
-              List<String> names = namesSym.<List<String>>value();
-		 RESULT = new SymbolDeclNode(true, null,
-	      namesSym.<List<String>>value()); 
+              NodeSymbol CUP$CupParser$treeNode = NodeSymbol.buildSdbyHXVBK(
+                tkwSym,
+                namesSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                22,
+                3,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-2, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1091,21 +1033,19 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 33: { // symbol ::= non_terminal type_id _EBNF_LIST_8 SEMI 
-              SymbolDeclNode RESULT =null;
+              AstNode RESULT =null;
 
               var ntkwSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-3);
-              var ntkwLoc = (java_cup.runtime.symbol.complex.ComplexLocation) ntkwSym.getLocation();
-              String ntkw = ntkwSym.<String>value();
               var tySym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var tyLoc = (java_cup.runtime.symbol.complex.ComplexLocation) tySym.getLocation();
-              String ty = tySym.<String>value();
               var namesSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var namesLoc = (java_cup.runtime.symbol.complex.ComplexLocation) namesSym.getLocation();
-              List<String> names = namesSym.<List<String>>value();
-		 RESULT = new SymbolDeclNode(false, tySym.<String>value(),
-	      namesSym.<List<String>>value()); 
+              NodeSymbol CUP$CupParser$treeNode = NodeSymbol.buildSGnxuabgE(
+                ntkwSym,
+                tySym,
+                namesSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                22,
+                3,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-3, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1113,18 +1053,17 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 34: { // symbol ::= non_terminal _EBNF_LIST_8 SEMI 
-              SymbolDeclNode RESULT =null;
+              AstNode RESULT =null;
 
               var ntkwSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var ntkwLoc = (java_cup.runtime.symbol.complex.ComplexLocation) ntkwSym.getLocation();
-              String ntkw = ntkwSym.<String>value();
               var namesSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var namesLoc = (java_cup.runtime.symbol.complex.ComplexLocation) namesSym.getLocation();
-              List<String> names = namesSym.<List<String>>value();
-		 RESULT = new SymbolDeclNode(false, null,
-	      namesSym.<List<String>>value()); 
+              NodeSymbol CUP$CupParser$treeNode = NodeSymbol.buildSAoojkyc7(
+                ntkwSym,
+                namesSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                22,
+                3,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-2, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1132,11 +1071,11 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 35: { // symbol ::= TERMINAL error SEMI 
-              SymbolDeclNode RESULT =null;
+              AstNode RESULT =null;
 
-		 RESULT = new SymbolDeclNode(true, null, new ArrayList<String>()); 
+		 RESULT = new NodeSymbol(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                22,
+                3,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-2, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1144,11 +1083,11 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 36: { // symbol ::= non_terminal error SEMI 
-              SymbolDeclNode RESULT =null;
+              AstNode RESULT =null;
 
-		 RESULT = new SymbolDeclNode(false, null, new ArrayList<String>()); 
+		 RESULT = new NodeSymbol(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                22,
+                3,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-2, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1156,10 +1095,10 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 37: { // _EBNF_LIST_9 ::= symbol_id 
-              List<SymRef> RESULT =null;
+              List<AstNode> RESULT =null;
 
-var list = new ArrayList<SymRef>();
-list.add(CUP$CupParser$stack.peek().<SymRef>value());
+var list = new ArrayList<AstNode>();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 39,
@@ -1170,10 +1109,10 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 38: { // _EBNF_LIST_9 ::= _EBNF_LIST_9 COMMA symbol_id 
-              List<SymRef> RESULT =null;
+              List<AstNode> RESULT =null;
 
-List<SymRef> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-2).<List<SymRef>>value();
-list.add(CUP$CupParser$stack.peek().<SymRef>value());
+List<AstNode> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-2).<List<AstNode>>value();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 39,
@@ -1184,18 +1123,17 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 39: { // preced ::= PRECEDENCE LEFT _EBNF_LIST_9 SEMI 
-              PrecedenceNode RESULT =null;
+              AstNode RESULT =null;
 
               var lSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var lLoc = (java_cup.runtime.symbol.complex.ComplexLocation) lSym.getLocation();
-              Object l = lSym.<Object>value();
               var refsSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var refsLoc = (java_cup.runtime.symbol.complex.ComplexLocation) refsSym.getLocation();
-              List<SymRef> refs = refsSym.<List<SymRef>>value();
-		 RESULT = new PrecedenceNode(assoc.left,
-	      refsSym.<List<SymRef>>value()); 
+              NodePreced CUP$CupParser$treeNode = NodePreced.buildSfa12DIYO(
+                lSym,
+                refsSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                23,
+                4,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-3, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1203,18 +1141,17 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 40: { // preced ::= PRECEDENCE RIGHT _EBNF_LIST_9 SEMI 
-              PrecedenceNode RESULT =null;
+              AstNode RESULT =null;
 
               var rSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var rLoc = (java_cup.runtime.symbol.complex.ComplexLocation) rSym.getLocation();
-              Object r = rSym.<Object>value();
               var refsSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var refsLoc = (java_cup.runtime.symbol.complex.ComplexLocation) refsSym.getLocation();
-              List<SymRef> refs = refsSym.<List<SymRef>>value();
-		 RESULT = new PrecedenceNode(assoc.right,
-	      refsSym.<List<SymRef>>value()); 
+              NodePreced CUP$CupParser$treeNode = NodePreced.buildSGUmIHTa7(
+                rSym,
+                refsSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                23,
+                4,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-3, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1222,18 +1159,17 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 41: { // preced ::= PRECEDENCE NONASSOC _EBNF_LIST_9 SEMI 
-              PrecedenceNode RESULT =null;
+              AstNode RESULT =null;
 
               var nSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var nLoc = (java_cup.runtime.symbol.complex.ComplexLocation) nSym.getLocation();
-              Object n = nSym.<Object>value();
               var refsSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var refsLoc = (java_cup.runtime.symbol.complex.ComplexLocation) refsSym.getLocation();
-              List<SymRef> refs = refsSym.<List<SymRef>>value();
-		 RESULT = new PrecedenceNode(assoc.nonassoc,
-	      refsSym.<List<SymRef>>value()); 
+              NodePreced CUP$CupParser$treeNode = NodePreced.buildSxeqI5YAV(
+                nSym,
+                refsSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                23,
+                4,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-3, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1244,11 +1180,9 @@ RESULT = list;
               String RESULT =null;
 
               var start_nameSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var start_nameLoc = (java_cup.runtime.symbol.complex.ComplexLocation) start_nameSym.getLocation();
-              String start_name = start_nameSym.<String>value();
 		 RESULT = start_nameSym.<String>value(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                4,
+                14,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-3, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1260,18 +1194,18 @@ RESULT = list;
 
 		 RESULT = null; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                4,
-                CUP$CupParser$stack.peek(),
+                14,
+                cur_token,
                 RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 44: { // _EBNF_LIST_10 ::= rhs 
-              List<RhsNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-var list = new ArrayList<RhsNode>();
-list.add(CUP$CupParser$stack.peek().<RhsNode>value());
+var list = new ArrayList<AstNode>();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 40,
@@ -1282,10 +1216,10 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 45: { // _EBNF_LIST_10 ::= _EBNF_LIST_10 BAR rhs 
-              List<RhsNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-List<RhsNode> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-2).<List<RhsNode>>value();
-list.add(CUP$CupParser$stack.peek().<RhsNode>value());
+List<AstNode> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-2).<List<AstNode>>value();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 40,
@@ -1296,21 +1230,17 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 46: { // production ::= nt_id COLON_COLON_EQUALS _EBNF_LIST_10 SEMI 
-              ProductionNode RESULT =null;
+              AstNode RESULT =null;
 
               var lhsSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-3);
-              var lhsLoc = (java_cup.runtime.symbol.complex.ComplexLocation) lhsSym.getLocation();
-              String lhs = lhsSym.<String>value();
               var altsSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var altsLoc = (java_cup.runtime.symbol.complex.ComplexLocation) altsSym.getLocation();
-              List<RhsNode> alts = altsSym.<List<RhsNode>>value();
-		
-	  RESULT = new ProductionNode(lhsSym.<String>value(),
-	      (ComplexLocation) lhsSym.getLocation(),
-	      altsSym.<List<RhsNode>>value(), false);
-	
+              NodeProduction CUP$CupParser$treeNode = NodeProduction.buildSiKkWaoMM(
+                lhsSym,
+                altsSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                27,
+                5,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-3, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1321,20 +1251,19 @@ RESULT = list;
  ErrorManager.getManager().emit_error("Syntax Error"); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 41,
-                CUP$CupParser$stack.peek()
+                cur_token
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 48: { // production ::= error NT$11 SEMI 
-              ProductionNode RESULT =null;
+              AstNode RESULT =null;
               // propagate RESULT from NT$11
-                RESULT = CUP$CupParser$stack.elementAt(CUP$CupParser$top-1).<ProductionNode>value();
+                RESULT = CUP$CupParser$stack.elementAt(CUP$CupParser$top-1).<AstNode>value();
 
-		 RESULT = new ProductionNode("ILLEGAL", null,
-	      new ArrayList<RhsNode>(), true); 
+		 RESULT = new NodeProduction(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                27,
+                5,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-2, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1342,10 +1271,10 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 49: { // _EBNF_LIST_12 ::= prod_part 
-              List<PartNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-var list = new ArrayList<PartNode>();
-list.add(CUP$CupParser$stack.peek().<PartNode>value());
+var list = new ArrayList<AstNode>();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 42,
@@ -1356,10 +1285,10 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 50: { // _EBNF_LIST_12 ::= _EBNF_LIST_12 prod_part 
-              List<PartNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-List<PartNode> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-1).<List<PartNode>>value();
-list.add(CUP$CupParser$stack.peek().<PartNode>value());
+List<AstNode> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-1).<List<AstNode>>value();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 42,
@@ -1370,9 +1299,9 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 51: { // _EBNF_OPT_13 ::= _EBNF_LIST_12 
-              List<PartNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-RESULT = CUP$CupParser$stack.peek().<List<PartNode>>value();
+RESULT = CUP$CupParser$stack.peek().<List<AstNode>>value();
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 43,
                 CUP$CupParser$stack.peek(),
@@ -1382,33 +1311,31 @@ RESULT = CUP$CupParser$stack.peek().<List<PartNode>>value();
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 52: { // _EBNF_OPT_13 ::= 
-              List<PartNode> RESULT =null;
+              List<AstNode> RESULT =null;
 
-RESULT = java.util.Collections.<PartNode>emptyList();
+RESULT = java.util.Collections.<AstNode>emptyList();
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 43,
-                CUP$CupParser$stack.peek(),
+                cur_token,
                 RESULT
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 53: { // rhs ::= _EBNF_OPT_13 PERCENT_PREC symbol_id PERCENT_NAMER ID 
-              RhsNode RESULT =null;
+              AstNode RESULT =null;
 
               var partsSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-4);
-              var partsLoc = (java_cup.runtime.symbol.complex.ComplexLocation) partsSym.getLocation();
-              List<PartNode> parts = partsSym.<List<PartNode>>value();
               var precSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var precLoc = (java_cup.runtime.symbol.complex.ComplexLocation) precSym.getLocation();
-              SymRef prec = precSym.<SymRef>value();
               var namerSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var namerLoc = (java_cup.runtime.symbol.complex.ComplexLocation) namerSym.getLocation();
-              String namer = namerSym.<String>value();
-		 RESULT = new RhsNode(partsSym.<List<PartNode>>value(),
-	      precSym.<SymRef>value(), namerSym.<String>value()); 
+              NodeRhs CUP$CupParser$treeNode = NodeRhs.buildSd4cptMn7(
+                partsSym,
+                precSym,
+                namerSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                28,
+                6,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-4, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1416,18 +1343,17 @@ RESULT = java.util.Collections.<PartNode>emptyList();
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 54: { // rhs ::= _EBNF_OPT_13 PERCENT_NAMER ID 
-              RhsNode RESULT =null;
+              AstNode RESULT =null;
 
               var partsSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var partsLoc = (java_cup.runtime.symbol.complex.ComplexLocation) partsSym.getLocation();
-              List<PartNode> parts = partsSym.<List<PartNode>>value();
               var namerSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var namerLoc = (java_cup.runtime.symbol.complex.ComplexLocation) namerSym.getLocation();
-              String namer = namerSym.<String>value();
-		 RESULT = new RhsNode(partsSym.<List<PartNode>>value(),
-	      null, namerSym.<String>value()); 
+              NodeRhs CUP$CupParser$treeNode = NodeRhs.buildSv8zucSg0(
+                partsSym,
+                namerSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                28,
+                6,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-2, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1435,18 +1361,17 @@ RESULT = java.util.Collections.<PartNode>emptyList();
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 55: { // rhs ::= _EBNF_OPT_13 PERCENT_PREC symbol_id 
-              RhsNode RESULT =null;
+              AstNode RESULT =null;
 
               var partsSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var partsLoc = (java_cup.runtime.symbol.complex.ComplexLocation) partsSym.getLocation();
-              List<PartNode> parts = partsSym.<List<PartNode>>value();
               var precSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var precLoc = (java_cup.runtime.symbol.complex.ComplexLocation) precSym.getLocation();
-              SymRef prec = precSym.<SymRef>value();
-		 RESULT = new RhsNode(partsSym.<List<PartNode>>value(),
-	      precSym.<SymRef>value(), null); 
+              NodeRhs CUP$CupParser$treeNode = NodeRhs.buildSCTU3YRlq(
+                partsSym,
+                precSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                28,
+                6,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-2, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1454,15 +1379,15 @@ RESULT = java.util.Collections.<PartNode>emptyList();
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 56: { // rhs ::= _EBNF_OPT_13 
-              RhsNode RESULT =null;
+              AstNode RESULT =null;
 
               var partsSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var partsLoc = (java_cup.runtime.symbol.complex.ComplexLocation) partsSym.getLocation();
-              List<PartNode> parts = partsSym.<List<PartNode>>value();
-		 RESULT = new RhsNode(partsSym.<List<PartNode>>value(),
-	      null, null); 
+              NodeRhs CUP$CupParser$treeNode = NodeRhs.buildSAAikLpo2(
+                partsSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                28,
+                6,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -1470,9 +1395,9 @@ RESULT = java.util.Collections.<PartNode>emptyList();
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 57: { // _EBNF_OPT_14 ::= quantifier 
-              QuantifierNode RESULT =null;
+              AstNode RESULT =null;
 
-RESULT = CUP$CupParser$stack.peek().<QuantifierNode>value();
+RESULT = CUP$CupParser$stack.peek().<AstNode>value();
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 44,
                 CUP$CupParser$stack.peek(),
@@ -1485,37 +1410,27 @@ RESULT = CUP$CupParser$stack.peek().<QuantifierNode>value();
 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 44,
-                CUP$CupParser$stack.peek()
+                cur_token
               );
             break;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 59: { // prod_part ::= SPREAD symbol_id _EBNF_OPT_14 opt_label 
-              PartNode RESULT =null;
+              AstNode RESULT =null;
 
               var sSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-3);
-              var sLoc = (java_cup.runtime.symbol.complex.ComplexLocation) sSym.getLocation();
-              Object s = sSym.<Object>value();
               var symidSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var symidLoc = (java_cup.runtime.symbol.complex.ComplexLocation) symidSym.getLocation();
-              SymRef symid = symidSym.<SymRef>value();
               var quantSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var quantLoc = (java_cup.runtime.symbol.complex.ComplexLocation) quantSym.getLocation();
-              QuantifierNode quant = quantSym.<QuantifierNode>value();
               var labidSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var labidLoc = (java_cup.runtime.symbol.complex.ComplexLocation) labidSym.getLocation();
-              String labid = labidSym.<String>value();
-		
-	  /* the part's anchor: the label token when there is one, otherwise
-	     the whole symbol reference (the ID or the parenthesized group) */
-	  var loc = labidSym.<String>value() != null
-	      ? (ComplexLocation) labidSym.getLocation()
-	      : (ComplexLocation) symidSym.getLocation();
-	  RESULT = new SymbolPartNode(true, symidSym.<SymRef>value(),
-	      quantSym.<QuantifierNode>value(), labidSym.<String>value(), loc);
-	
+              NodeProdPart CUP$CupParser$treeNode = NodeProdPart.buildSHMB7RGMj(
+                sSym,
+                symidSym,
+                quantSym,
+                labidSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                29,
+                7,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-3, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1523,26 +1438,19 @@ RESULT = CUP$CupParser$stack.peek().<QuantifierNode>value();
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 60: { // prod_part ::= symbol_id _EBNF_OPT_14 opt_label 
-              PartNode RESULT =null;
+              AstNode RESULT =null;
 
               var symidSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var symidLoc = (java_cup.runtime.symbol.complex.ComplexLocation) symidSym.getLocation();
-              SymRef symid = symidSym.<SymRef>value();
               var quantSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var quantLoc = (java_cup.runtime.symbol.complex.ComplexLocation) quantSym.getLocation();
-              QuantifierNode quant = quantSym.<QuantifierNode>value();
               var labidSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var labidLoc = (java_cup.runtime.symbol.complex.ComplexLocation) labidSym.getLocation();
-              String labid = labidSym.<String>value();
-		
-	  var loc = labidSym.<String>value() != null
-	      ? (ComplexLocation) labidSym.getLocation()
-	      : (ComplexLocation) symidSym.getLocation();
-	  RESULT = new SymbolPartNode(false, symidSym.<SymRef>value(),
-	      quantSym.<QuantifierNode>value(), labidSym.<String>value(), loc);
-	
+              NodeProdPart CUP$CupParser$treeNode = NodeProdPart.buildSFyIqfVF9(
+                symidSym,
+                quantSym,
+                labidSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                29,
+                7,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-2, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1550,17 +1458,15 @@ RESULT = CUP$CupParser$stack.peek().<QuantifierNode>value();
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 61: { // prod_part ::= CODE_STRING 
-              PartNode RESULT =null;
+              AstNode RESULT =null;
 
               var code_strSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var code_strLoc = (java_cup.runtime.symbol.complex.ComplexLocation) code_strSym.getLocation();
-              String code_str = code_strSym.<String>value();
-		
-	  RESULT = new ActionPartNode(code_strSym.<String>value(),
-	      (ComplexLocation) code_strSym.getLocation());
-	
+              NodeProdPart CUP$CupParser$treeNode = NodeProdPart.buildSdqXPtYi7(
+                code_strSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                29,
+                7,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -1568,14 +1474,15 @@ RESULT = CUP$CupParser$stack.peek().<QuantifierNode>value();
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 62: { // quantifier ::= QUESTION 
-              QuantifierNode RESULT =null;
+              AstNode RESULT =null;
 
               var qSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var qLoc = (java_cup.runtime.symbol.complex.ComplexLocation) qSym.getLocation();
-              Object q = qSym.<Object>value();
-		 RESULT = QuantifierNode.opt(); 
+              NodeQuantifier CUP$CupParser$treeNode = NodeQuantifier.buildSzNzZhHVW(
+                qSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                26,
+                8,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -1583,14 +1490,15 @@ RESULT = CUP$CupParser$stack.peek().<QuantifierNode>value();
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 63: { // quantifier ::= star_or_plus 
-              QuantifierNode RESULT =null;
+              AstNode RESULT =null;
 
               var spSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var spLoc = (java_cup.runtime.symbol.complex.ComplexLocation) spSym.getLocation();
-              String sp = spSym.<String>value();
-		 RESULT = QuantifierNode.starPlus("*".equals(spSym.<String>value())); 
+              NodeQuantifier CUP$CupParser$treeNode = NodeQuantifier.buildSGT3fosEj(
+                spSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                26,
+                8,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -1598,10 +1506,10 @@ RESULT = CUP$CupParser$stack.peek().<QuantifierNode>value();
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 64: { // _EBNF_LIST_15 ::= symbol_id 
-              List<SymRef> RESULT =null;
+              List<AstNode> RESULT =null;
 
-var list = new ArrayList<SymRef>();
-list.add(CUP$CupParser$stack.peek().<SymRef>value());
+var list = new ArrayList<AstNode>();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 45,
@@ -1612,10 +1520,10 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 65: { // _EBNF_LIST_15 ::= _EBNF_LIST_15 symbol_id 
-              List<SymRef> RESULT =null;
+              List<AstNode> RESULT =null;
 
-List<SymRef> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-1).<List<SymRef>>value();
-list.add(CUP$CupParser$stack.peek().<SymRef>value());
+List<AstNode> list = CUP$CupParser$stack.elementAt(CUP$CupParser$top-1).<List<AstNode>>value();
+list.add(CUP$CupParser$stack.peek().<AstNode>value());
 RESULT = list;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
                 45,
@@ -1626,22 +1534,19 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 66: { // quantifier ::= LBRACK _EBNF_LIST_15 question_or_exclamation RBRACK star_or_plus 
-              QuantifierNode RESULT =null;
+              AstNode RESULT =null;
 
               var sepsSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-3);
-              var sepsLoc = (java_cup.runtime.symbol.complex.ComplexLocation) sepsSym.getLocation();
-              List<SymRef> seps = sepsSym.<List<SymRef>>value();
               var qeSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var qeLoc = (java_cup.runtime.symbol.complex.ComplexLocation) qeSym.getLocation();
-              String qe = qeSym.<String>value();
               var spSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var spLoc = (java_cup.runtime.symbol.complex.ComplexLocation) spSym.getLocation();
-              String sp = spSym.<String>value();
-		
-    RESULT = QuantifierNode.bracket(sepsSym.<List<SymRef>>value(),
-        "*".equals(spSym.<String>value()), "?".equals(qeSym.<String>value())); 
+              NodeQuantifier CUP$CupParser$treeNode = NodeQuantifier.buildS20yimO52(
+                sepsSym,
+                qeSym,
+                spSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                26,
+                8,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-4, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1653,7 +1558,7 @@ RESULT = list;
 
 		 RESULT = "*"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                15,
+                25,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -1665,7 +1570,7 @@ RESULT = list;
 
 		 RESULT = "+"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                15,
+                25,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -1677,7 +1582,7 @@ RESULT = list;
 
 		 RESULT = "?"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                16,
+                26,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -1689,7 +1594,7 @@ RESULT = list;
 
 		 RESULT = "!"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                16,
+                26,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -1700,11 +1605,9 @@ RESULT = list;
               String RESULT =null;
 
               var typeSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var typeLoc = (java_cup.runtime.symbol.complex.ComplexLocation) typeSym.getLocation();
-              String type = typeSym.<String>value();
 		 RESULT = typeSym.<String>value(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                17,
+                27,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-1, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1716,8 +1619,8 @@ RESULT = list;
 
 		 RESULT = null; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                17,
-                CUP$CupParser$stack.peek(),
+                27,
+                cur_token,
                 RESULT
               );
             break;
@@ -1727,11 +1630,9 @@ RESULT = list;
               String RESULT =null;
 
               var labidSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var labidLoc = (java_cup.runtime.symbol.complex.ComplexLocation) labidSym.getLocation();
-              String labid = labidSym.<String>value();
 		 RESULT = labidSym.<String>value(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                7,
+                17,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-1, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1743,8 +1644,8 @@ RESULT = list;
 
 		 RESULT = null; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                7,
-                CUP$CupParser$stack.peek(),
+                17,
+                cur_token,
                 RESULT
               );
             break;
@@ -1754,14 +1655,10 @@ RESULT = list;
               String RESULT =null;
 
               var baseSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var baseLoc = (java_cup.runtime.symbol.complex.ComplexLocation) baseSym.getLocation();
-              String base = baseSym.<String>value();
               var another_idSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var another_idLoc = (java_cup.runtime.symbol.complex.ComplexLocation) another_idSym.getLocation();
-              String another_id = another_idSym.<String>value();
 		 RESULT = baseSym.<String>value() + "." + another_idSym.<String>value(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                9,
+                19,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-2, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1772,14 +1669,10 @@ RESULT = list;
               String RESULT =null;
 
               var baseSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-3);
-              var baseLoc = (java_cup.runtime.symbol.complex.ComplexLocation) baseSym.getLocation();
-              String base = baseSym.<String>value();
               var typesSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var typesLoc = (java_cup.runtime.symbol.complex.ComplexLocation) typesSym.getLocation();
-              String types = typesSym.<String>value();
 		 RESULT = baseSym.<String>value() + "<" + typesSym.<String>value() + ">"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                9,
+                19,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-3, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1790,11 +1683,9 @@ RESULT = list;
               String RESULT =null;
 
               var an_idSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var an_idLoc = (java_cup.runtime.symbol.complex.ComplexLocation) an_idSym.getLocation();
-              String an_id = an_idSym.<String>value();
 		 RESULT = an_idSym.<String>value(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                9,
+                19,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -1805,11 +1696,9 @@ RESULT = list;
               String RESULT =null;
 
               var argSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var argLoc = (java_cup.runtime.symbol.complex.ComplexLocation) argSym.getLocation();
-              String arg = argSym.<String>value();
 		 RESULT = argSym.<String>value(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                12,
+                22,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -1820,14 +1709,10 @@ RESULT = list;
               String RESULT =null;
 
               var listSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var listLoc = (java_cup.runtime.symbol.complex.ComplexLocation) listSym.getLocation();
-              String list = listSym.<String>value();
               var argSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var argLoc = (java_cup.runtime.symbol.complex.ComplexLocation) argSym.getLocation();
-              String arg = argSym.<String>value();
 		 RESULT = listSym.<String>value() + "," + argSym.<String>value(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                12,
+                22,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-2, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1838,11 +1723,9 @@ RESULT = list;
               String RESULT =null;
 
               var tSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var tLoc = (java_cup.runtime.symbol.complex.ComplexLocation) tSym.getLocation();
-              String t = tSym.<String>value();
 		 RESULT = tSym.<String>value(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                13,
+                23,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -1853,11 +1736,9 @@ RESULT = list;
               String RESULT =null;
 
               var wSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var wLoc = (java_cup.runtime.symbol.complex.ComplexLocation) wSym.getLocation();
-              String w = wSym.<String>value();
 		 RESULT = wSym.<String>value(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                13,
+                23,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -1869,7 +1750,7 @@ RESULT = list;
 
 		 RESULT = " ? "; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                14,
+                24,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -1880,11 +1761,9 @@ RESULT = list;
               String RESULT =null;
 
               var tSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var tLoc = (java_cup.runtime.symbol.complex.ComplexLocation) tSym.getLocation();
-              String t = tSym.<String>value();
 		 RESULT = " ? extends " + tSym.<String>value(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                14,
+                24,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-2, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1895,11 +1774,9 @@ RESULT = list;
               String RESULT =null;
 
               var tSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var tLoc = (java_cup.runtime.symbol.complex.ComplexLocation) tSym.getLocation();
-              String t = tSym.<String>value();
 		 RESULT = " ? super " + tSym.<String>value(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                14,
+                24,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-2, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1910,11 +1787,9 @@ RESULT = list;
               String RESULT =null;
 
               var nameSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var nameLoc = (java_cup.runtime.symbol.complex.ComplexLocation) nameSym.getLocation();
-              String name = nameSym.<String>value();
 		 RESULT = nameSym.<String>value() + ".*"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                10,
+                20,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-2, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1925,11 +1800,9 @@ RESULT = list;
               String RESULT =null;
 
               var nameSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var nameLoc = (java_cup.runtime.symbol.complex.ComplexLocation) nameSym.getLocation();
-              String name = nameSym.<String>value();
 		 RESULT = nameSym.<String>value(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                10,
+                20,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -1940,11 +1813,9 @@ RESULT = list;
               String RESULT =null;
 
               var mSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var mLoc = (java_cup.runtime.symbol.complex.ComplexLocation) mSym.getLocation();
-              String m = mSym.<String>value();
 		 RESULT = mSym.<String>value(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                11,
+                21,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -1955,11 +1826,9 @@ RESULT = list;
               String RESULT =null;
 
               var tSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var tLoc = (java_cup.runtime.symbol.complex.ComplexLocation) tSym.getLocation();
-              String t = tSym.<String>value();
 		 RESULT = tSym.<String>value() + "[]"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                11,
+                21,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-2, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -1967,14 +1836,15 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 89: { // id_ref ::= ID 
-              String RESULT =null;
+              AstNode RESULT =null;
 
               var the_idSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var the_idLoc = (java_cup.runtime.symbol.complex.ComplexLocation) the_idSym.getLocation();
-              String the_id = the_idSym.<String>value();
-		 RESULT = the_idSym.<String>value(); 
+              NodeIdRef CUP$CupParser$treeNode = NodeIdRef.buildSHA4oJhCM(
+                the_idSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                18,
+                11,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -1985,11 +1855,9 @@ RESULT = list;
               String RESULT =null;
 
               var the_idSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var the_idLoc = (java_cup.runtime.symbol.complex.ComplexLocation) the_idSym.getLocation();
-              String the_id = the_idSym.<String>value();
 		 RESULT = the_idSym.<String>value(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                5,
+                15,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2004,7 +1872,7 @@ RESULT = list;
 		RESULT="ILLEGAL";
 	
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                5,
+                15,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2012,14 +1880,15 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 92: { // symbol_id ::= ID 
-              SymRef RESULT =null;
+              AstNode RESULT =null;
 
               var the_idSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var the_idLoc = (java_cup.runtime.symbol.complex.ComplexLocation) the_idSym.getLocation();
-              String the_id = the_idSym.<String>value();
-		 RESULT = new NamedRefNode(the_idSym.<String>value()); 
+              NodeSymbolId CUP$CupParser$treeNode = NodeSymbolId.buildSHA4oJhCM(
+                the_idSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                24,
+                9,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2027,14 +1896,15 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 93: { // symbol_id ::= anon_expr 
-              SymRef RESULT =null;
+              AstNode RESULT =null;
 
               var anonSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var anonLoc = (java_cup.runtime.symbol.complex.ComplexLocation) anonSym.getLocation();
-              SymRef anon = anonSym.<SymRef>value();
-		 RESULT = anonSym.<SymRef>value(); 
+              NodeSymbolId CUP$CupParser$treeNode = NodeSymbolId.buildS8ywhTF8L(
+                anonSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                24,
+                9,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2042,14 +1912,14 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 94: { // symbol_id ::= error 
-              SymRef RESULT =null;
+              AstNode RESULT =null;
 
 		
 		ErrorManager.getManager().emit_error("Illegal use of reserved word");
-		RESULT = new NamedRefNode("ILLEGAL");
+		RESULT = new NodeSymbolId();
 	
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                24,
+                9,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2057,26 +1927,19 @@ RESULT = list;
           }
           /*. . . . . . . . . . . . . . . . . . . .*/
           case 95: { // anon_expr ::= LPAREN opt_return_type _EBNF_LIST_10 RPAREN 
-              SymRef RESULT =null;
+              AstNode RESULT =null;
 
               var lpSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-3);
-              var lpLoc = (java_cup.runtime.symbol.complex.ComplexLocation) lpSym.getLocation();
-              Object lp = lpSym.<Object>value();
               var typeSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-2);
-              var typeLoc = (java_cup.runtime.symbol.complex.ComplexLocation) typeSym.getLocation();
-              String type = typeSym.<String>value();
               var branchesSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.elementAt(CUP$CupParser$top-1);
-              var branchesLoc = (java_cup.runtime.symbol.complex.ComplexLocation) branchesSym.getLocation();
-              List<RhsNode> branches = branchesSym.<List<RhsNode>>value();
-		
-	  /* the branches' hidden non terminals and productions are now
-	     created by Lowering.lowerAnonExpr at the point of use */
-	  RESULT = new AnonExprNode(typeSym.<String>value(),
-	      branchesSym.<List<RhsNode>>value(),
-	      (ComplexLocation) lpSym.getLocation());
-	
+              NodeAnonExpr CUP$CupParser$treeNode = NodeAnonExpr.buildSG3r5zv2S(
+                lpSym,
+                typeSym,
+                branchesSym
+              );
+              RESULT = CUP$CupParser$treeNode;
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                25,
+                10,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-3, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -2087,11 +1950,9 @@ RESULT = list;
               String RESULT =null;
 
               var the_idSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var the_idLoc = (java_cup.runtime.symbol.complex.ComplexLocation) the_idSym.getLocation();
-              String the_id = the_idSym.<String>value();
 		 RESULT = the_idSym.<String>value(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                6,
+                16,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2102,11 +1963,9 @@ RESULT = list;
               String RESULT =null;
 
               var the_idSym = (java_cup.runtime.symbol.complex.ComplexSymbol) CUP$CupParser$stack.peek();
-              var the_idLoc = (java_cup.runtime.symbol.complex.ComplexLocation) the_idSym.getLocation();
-              String the_id = the_idSym.<String>value();
 		 RESULT = the_idSym.<String>value(); 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                8,
+                18,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2118,7 +1977,7 @@ RESULT = list;
 
 		 RESULT = "code"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                8,
+                18,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2130,7 +1989,7 @@ RESULT = list;
 
 		 RESULT = "action"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                8,
+                18,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2142,7 +2001,7 @@ RESULT = list;
 
 		 RESULT = "parser"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                8,
+                18,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2154,7 +2013,7 @@ RESULT = list;
 
 		 RESULT = "terminal"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                8,
+                18,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2166,7 +2025,7 @@ RESULT = list;
 
 		 RESULT = "non"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                8,
+                18,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2178,7 +2037,7 @@ RESULT = list;
 
 		 RESULT = "nonterminal"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                8,
+                18,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2190,7 +2049,7 @@ RESULT = list;
 
 		 RESULT = "init"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                8,
+                18,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2202,7 +2061,7 @@ RESULT = list;
 
 		 RESULT = "scan"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                8,
+                18,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2214,7 +2073,7 @@ RESULT = list;
 
 		 RESULT = "with"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                8,
+                18,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2226,7 +2085,7 @@ RESULT = list;
 
 		 RESULT = "start"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                8,
+                18,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2238,7 +2097,7 @@ RESULT = list;
 
 		 RESULT = "precedence"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                8,
+                18,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2250,7 +2109,7 @@ RESULT = list;
 
 		 RESULT = "left"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                8,
+                18,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2262,7 +2121,7 @@ RESULT = list;
 
 		 RESULT = "right"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                8,
+                18,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2274,7 +2133,7 @@ RESULT = list;
 
 		 RESULT = "nonassoc"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                8,
+                18,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2289,7 +2148,7 @@ RESULT = list;
 		RESULT="ILLEGAL";
 	
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                8,
+                18,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2301,7 +2160,7 @@ RESULT = list;
 
 		 RESULT = "nonterminal"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                19,
+                28,
                 CUP$CupParser$stack.subList(CUP$CupParser$top-1, CUP$CupParser$top + 1),
                 RESULT
               );
@@ -2313,7 +2172,7 @@ RESULT = list;
 
 		 RESULT = "nonterminal"; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                19,
+                28,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
@@ -2325,8 +2184,8 @@ RESULT = list;
 
 		 RESULT = null; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                0,
-                CUP$CupParser$stack.peek(),
+                29,
+                cur_token,
                 RESULT
               );
             break;
@@ -2337,7 +2196,7 @@ RESULT = list;
 
 		 RESULT = null; 
               CUP$CupParser$result = getSymbolFactory().newSymbol(
-                0,
+                29,
                 CUP$CupParser$stack.peek(),
                 RESULT
               );
