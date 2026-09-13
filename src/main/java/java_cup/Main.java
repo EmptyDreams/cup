@@ -134,6 +134,7 @@ public class Main {
         lalr_state.clear();
         ErrorManager.clear();
         spec_tree = null;
+        spec_corr = null;
 
         /* process user options and arguments */
         parse_args(argv);
@@ -524,7 +525,8 @@ public class Main {
             spec_tree =
                 (opt_do_debug ? parser_obj.debug_parse() : parser_obj.parse())
                     .<java_cup.spec.SpecNode>value();
-            new Lowering(opt_do_debugsymbols).run(spec_tree);
+            spec_corr = new SpecCorrelation();
+            new Lowering(opt_do_debugsymbols, spec_corr).run(spec_tree);
         } catch (Exception e) {
             /*
              * something threw an exception. catch it and emit a message so we have a line
@@ -580,6 +582,10 @@ public class Main {
     /** The parsed spec tree, retained for the tree-based passes (labels,
      *  AST node building). */
     protected static java_cup.spec.SpecNode spec_tree;
+
+    /** Correlation between the spec tree and the flat graph Lowering built
+     *  from it; consumed by the AST node builder. */
+    public static SpecCorrelation spec_corr;
 
     /** Start state in the overall state machine. */
     protected static lalr_state start_state;

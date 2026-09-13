@@ -1,8 +1,8 @@
 package java_cup.ast;
 
 import java_cup.emit;
-import java_cup.production_part;
-import java_cup.symbol_part;
+
+import java_cup.runtime.symbol.complex.ComplexLocation;
 
 import java.util.Collections;
 import java.util.List;
@@ -12,22 +12,19 @@ public class VirtualField implements Comparable<VirtualField> {
 
     public final String label;
     public final VirtualType type;
-    private final production_part part;
     private final int mask;
 
-    private VirtualField fromField;
+    /**
+     * Source position of the field's anchor token (the label token), carried
+     * for error messages. Null when not applicable; not part of equality.
+     */
+    ComplexLocation loc;
 
-    public VirtualField(String label, VirtualType type, production_part part) {
-        this.label = label;
-        this.type = type;
-        this.part = part;
-        this.mask = 0;
-    }
+    private VirtualField fromField;
 
     public VirtualField(String label, VirtualType type, int mask) {
         this.label = label;
         this.type = type;
-        this.part = null;
         this.mask = mask;
     }
 
@@ -52,15 +49,11 @@ public class VirtualField implements Comparable<VirtualField> {
     }
 
     public boolean isInline() {
-        return (mask & 0b1) != 0 || (part != null && !part.is_action() && ((symbol_part) part).isInline());
-    }
-
-    public boolean isExistCheck() {
-        return (mask & 0b10) != 0 || (part != null && part.isExistCheck());
+        return (mask & 0b1) != 0;
     }
 
     public boolean isOptBox() {
-        return (mask & 0b100) != 0 || (part != null && !part.is_action() && ((symbol_part) part).the_symbol().isOptBox());
+        return (mask & 0b100) != 0;
     }
 
     public boolean isFinal() {
@@ -77,7 +70,7 @@ public class VirtualField implements Comparable<VirtualField> {
     }
 
     public VirtualMethod buildGetter() {
-        if (isExistCheck() || isInline()) return null;
+        if (isInline()) return null;
         if (fromField != null && fromField.label != null) {
             // hoisted by a labeled spread: delegate into the container field
             String expr;
@@ -139,15 +132,8 @@ public class VirtualField implements Comparable<VirtualField> {
     }
 
     public VirtualField createSub(VirtualField fromField) {
-        int newMask = 0;
-        if (part == null) {
-            newMask = mask;
-        } else {
-            if (isInline()) newMask |= 0b1;
-            if (isExistCheck()) newMask |= 0b10;
-            if (isOptBox()) newMask |= 0b100;
-        }
-        var result = new VirtualField(label, type, newMask);
+        var result = new VirtualField(label, type, mask);
+        result.loc = loc;
         result.fromField = fromField;
         return result;
     }

@@ -47,6 +47,16 @@ public final class Lowering {
     /** Whether -debugsymbols was requested (debug markers on user code). */
     private final boolean debugSymbols;
 
+    /** Records the tree-to-graph correlation while lowering. */
+    private final SpecCorrelation corr;
+
+    /**
+     * The right-hand side (top-level alternative or anonymous branch) the
+     * next constructed Production belongs to; cleared once recorded. Lets
+     * handle_rhs_expr stamp the production into the correlation.
+     */
+    private java_cup.spec.RhsNode pendingRhs = null;
+
     /*---------------------------------------------------------------*/
     /* Ported instance state (was the parser.cup action-code block)  */
     /*---------------------------------------------------------------*/
@@ -94,8 +104,10 @@ public final class Lowering {
     /** Shared id counter for debug symbols on code parts and embedded actions. */
     private int cur_debug_id = 0;
 
-    public Lowering(boolean debugSymbols) {
+    public Lowering(boolean debugSymbols, SpecCorrelation corr) {
         this.debugSymbols = debugSymbols;
+        this.corr = corr;
+        corr.symbols = symbols;
     }
 
     /*---------------------------------------------------------------*/
@@ -255,9 +267,11 @@ public final class Lowering {
     }
 
     private void lowerRhs(RhsNode rn) throws Exception {
+        if (lhs_nt != null) corr.addAlternative(lhs_nt, rn);
         for (PartNode part : rn.parts) {
             lowerPart(part);
         }
+        pendingRhs = rn;
         /* the %prec terminal is checked after all parts, before the rhs
            action runs (that is when the old term_id action reduced) */
         if (rn.precTerminal != null) {
@@ -397,6 +411,7 @@ public final class Lowering {
                 for (PartNode part : branch.parts) {
                     lowerPart(part);
                 }
+                pendingRhs = branch;
                 if (branch.precTerminal != null) {
                     handle_rhs_expr(true, lowerTermId(branch.precTerminal), false, null, true);
                 } else if (branch.namer != null) {
@@ -423,6 +438,11 @@ public final class Lowering {
         }
         String result = lastSubNtName;
         lastSubNtName = null;
+        /* correlate the use site with the hidden NT it resolved to (the
+           group NT, or the single branch NT) */
+        if (result != null) {
+            corr.recordAnon(ae, (non_terminal) ((symbol_part) symbols.get(result)).the_symbol());
+        }
 
         /* the old popRhsCache(): restore the enclosing rhs accumulation */
         if (shelvedPos != 0) {
@@ -525,6 +545,8 @@ public final class Lowering {
             boolean is_prec, String term_name, boolean is_namer, String prod_name, boolean isSubList
     ) throws Exception {
         java_cup.GrammarSymbol sym = null;
+        java_cup.spec.RhsNode pending = pendingRhs;
+        pendingRhs = null;
         if (lhs_nt != null) {
             non_terminal subNt = null;
             if (inAnon && isSubList) {
@@ -598,6 +620,7 @@ public final class Lowering {
                 }
                 p = new Production(nt, rhs_parts, rhs_pos);
             }
+            if (pending != null) corr.recordRhs(pending, p);
             if (is_namer) {
                 if (prod_name == null || prod_name.isEmpty()) {
                     System.err.println("No production name for precedence assignment");

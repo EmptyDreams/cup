@@ -50,16 +50,6 @@ public abstract class production_part {
         return type;
     }
 
-    private boolean isExistCheck = false;
-
-    public boolean isExistCheck() {
-        return isExistCheck;
-    }
-
-    public void markExistCheck() {
-        isExistCheck = true;
-    }
-
     /*-----------------------------------------------------------*/
     /*--- General Methods ---------------------------------------*/
     /*-----------------------------------------------------------*/

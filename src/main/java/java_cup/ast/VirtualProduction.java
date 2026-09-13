@@ -12,7 +12,6 @@ public class VirtualProduction {
 
     public final String name;
     public final List<VirtualField> fields;
-    public final List<String> srcExprs = new ArrayList<>();
 
     public VirtualProduction(String name, List<VirtualField> fields) {
         this.name = name;

@@ -44,7 +44,6 @@ public class VirtualType {
 
     public String className;
     public List<VirtualProduction> prods;
-    public boolean isAnno = false;
 
     public VirtualType(int symId, boolean isAstNode, String basicName) {
         this.symId = symId;
@@ -129,7 +128,6 @@ public class VirtualType {
             clazz.addMethod(method);
         }
         for (VirtualField field : allMethodField) {
-            if (field.isExistCheck()) continue;
             var method = new VirtualMethod(
                 emit.joinName("get", field.joinLabel()),
                 field.type.className,

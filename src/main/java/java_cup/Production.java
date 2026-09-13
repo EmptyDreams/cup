@@ -184,7 +184,6 @@ public class Production {
                             var symPart = (symbol_part) part;
                             String arg;
                             if (symPart.label() != null) {
-                                if (symPart.isExistCheck()) continue;
                                 arg = emit.joinName(symPart.label(), "sym");
                             } else if (symPart.isInline()) {
                                 // unlabeled spread: read the symbol straight off the stack
@@ -605,8 +604,6 @@ public class Production {
                 String label;
                 /* if it has a label, make declaration! */
                 if ((label = part.label()) != null) {
-                    var sym = part.the_symbol();
-                    if (part.isExistCheck() && !sym.isOptBox()) continue;
                     var type = part.getType();
                     if (type == null) type = part.the_symbol().stack_type();
                     declaration.append(make_declaration(label, type, rhs_len - pos - 1));
